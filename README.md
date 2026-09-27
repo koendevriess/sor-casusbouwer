@@ -13,6 +13,7 @@ Website waarmee kandidaten van de opleiding Schipper Open Rondvaartboot (SOR) st
 - Medewerkers voegen kandidaten en collega's toe via **Kandidaat toevoegen** / **Medewerker toevoegen** in het overzicht en geven de code door.
 - **Wachtwoord vergeten:** klik op *Nieuwe code*. Het oude account vervalt, de casus blijft bewaard.
 - **Na het examen:** klik op *Verwijderen*. Dat wist de casus, feedback, foto's en het account.
+- Toegang is alleen mogelijk met een uitnodigingscode. Feedback mailen gaat via de knop *Feedback mailen*; die opent een e-mail aan de kandidaat in het mailprogramma van de medewerker.
 - In Supabase moet onder Authentication → Sign In / Providers → Email de optie **Confirm email** uit staan (de ingebouwde mail van Supabase stuurt geen mail naar kandidaten).
 - Het gratis Supabase-plan pauzeert een project na een week zonder gebruik. Zet het dan in het Supabase-dashboard weer aan; de gegevens blijven bewaard.
 
