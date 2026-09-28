@@ -433,7 +433,7 @@ const MANS=[
  {k:'achteruitBrug',code:'AB',t:'Achteruit door een brug varen',tip:'Kies een brug zonder druk verkeer, waar je recht achteruit doorheen kunt.'},
  {k:'aanmeren',code:'AM',t:'Aanmeren',tip:'Kies een steiger of kade waar aanleggen mag.'},
  {k:'vijfLengtes',code:'5L',t:'Vijf scheepslengtes achteruit in nauw vaarwater',tip:'Kies een smalle gracht waar je niet kunt keren.'}];
-const BOATS=[{id:'meike',naam:'Meike',lengte:9.96,breedte:3.07,pax:35}];
+const BOATS=[{id:'meike',naam:'Meike',lengte:9.96,breedte:3.07,pax:35},{id:'sloepvrienden',naam:'Sloepvrienden',lengte:10,breedte:3,pax:null}];
 
 /* ---------- graph & routing ---------- */
 const G={xy:[],adj:[],key:new Map()};
@@ -953,7 +953,7 @@ panel.addEventListener('click',e=>{const fs=e.target.closest('[data-fbst]');if(f
   if(act==='man-zoom'){const x=state.manoeuvres[b.dataset.k];if(x.pos)map.setView(toLL(x.pos),17.5);return}
   if(!editable())return;
   switch(act){
-  case'boat':{const s=state.schip;if(id==='eigen')s.preset='eigen';else{const bt=BOATS.find(x=>x.id===id);Object.assign(s,{preset:bt.id,naam:bt.naam,lengte:bt.lengte,breedte:bt.breedte,pax:bt.pax})}markDirty('schip');computeRoute();changed({panel:true,route:true});break}
+  case'boat':{const s=state.schip;if(id==='eigen')s.preset='eigen';else{const bt=BOATS.find(x=>x.id===id);Object.assign(s,{preset:bt.id,naam:bt.naam,lengte:bt.lengte,breedte:bt.breedte,pax:bt.pax!=null?bt.pax:s.pax})}markDirty('schip');computeRoute();changed({panel:true,route:true});break}
   case'wp-del':pushHist();state.route.wps.splice(+b.dataset.i,1);afterRoute();break;
   case'wp-undo':if(HIST.length){state.route.wps=HIST.pop();afterRoute()}break;
   case'wp-close':{const w=state.route.wps;if(w.length>1){pushHist();w.push(w[0].slice());afterRoute()}break}
