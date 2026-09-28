@@ -340,7 +340,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:17px;hei
 <body>
 <div class="app" id="app">
   <header class="top">
-    <span class="logo-tab"><img id="logoImg" alt="Flagship Academy"></span>
+    <a class="logo-tab" href="./" id="homeLink" title="Naar de startpagina" aria-label="Flagship Academy, naar de startpagina"><img id="logoImg" alt=""></a>
     <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR</div></div>
     <div class="prog" id="prog" title="Voortgang van de casus"><div class="bar"><span id="pbar"></span></div><span class="pct" id="ppct">0%</span></div>
     <div class="top-actions" id="topActions"></div>
@@ -635,6 +635,11 @@ async function mailFeedback(){try{await flushNow()}catch(e){}const to=APP.target
   const body='Hoi '+voornaam+',\n\nIk heb feedback gegeven op je casus voor praktijktoets 3.\n\n'+(items.length?items.join('\n')+'\n\n':'')+'Je ziet de feedback ook bij de stappen in de casusbouwer:\n'+siteUrl()+'\n\nGroet,\n'+((APP.lid&&APP.lid.naam)||'Flagship Academy');
   const a=document.createElement('a');a.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent('Feedback op je casus praktijktoets 3')+'&body='+encodeURIComponent(body);document.body.appendChild(a);a.click();a.remove()}
 document.addEventListener('click',e=>{if(e.target.closest('[data-top-mail]'))mailFeedback()});
+async function goHome(){if(APP.role==='login'||!APP.sb)return;try{await flushNow()}catch(e){}
+  if(APP.lid&&APP.isStaff){openDashboard();return}
+  if(APP.lid&&APP.mode==='edit'&&APP.role==='kandidaat'){setStep('kandidaat');return}
+  if(APP.user)afterLogin();else showLogin()}
+document.getElementById('homeLink').addEventListener('click',e=>{e.preventDefault();goHome()});
 
 /* ---------- route analysis ---------- */
 let R=null;
