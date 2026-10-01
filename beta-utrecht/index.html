@@ -590,7 +590,7 @@ function restrOf(wi){const w=WAYS[wi];const r={mw:w.mw||0,ml:w.ml||0,md:w.md||0,
 function violation(wi){if(wi<0)return[];const r=restrOf(wi),b=state.schip||{};const v=[];if(r.mw&&b.breedte&&b.breedte>r.mw)v.push('breedte '+nf(b.breedte)+' m, max. '+nf(r.mw)+' m');if(r.ml&&b.lengte&&b.lengte>r.ml)v.push('lengte '+nf(b.lengte)+' m, max. '+nf(r.ml)+' m');if(r.md&&b.diepgang&&b.diepgang>r.md)v.push('diepgang '+nf(b.diepgang)+' m, max. '+nf(r.md)+' m');return v}
 
 /* ---------- state ---------- */
-const LS_KEY='sor-casusbouwer-utrecht-beta-v1';
+const LS_KEY='sor-casusbouwer-utrecht-beta-v1-'+(window.__betaUid||'');
 const CASUS_KEYS=['kandidaat','opstap','schip','waterstand','snelheid','manTijd','route','hoogtes','aandacht','borden','manoeuvres','meldpunten','teksten','veiligheid','milieu'];
 function emptyState(){return{v:2,isVoorbeeld:false,kandidaat:{naam:'',geboortedatum:'',cbr:''},opstap:'',schip:{preset:'',naam:'',lengte:null,breedte:null,hoogte:null,diepgang:null,pax:null},waterstand:0,snelheid:4.5,manTijd:2,route:{wps:[],eenrichting:true},hoogtes:{},aandacht:[],borden:[],manoeuvres:{keren:{pos:null,tekst:''},achteruitBrug:{pos:null,tekst:''},aanmeren:{pos:null,tekst:''},vijfLengtes:{pos:null,tekst:''}},meldpunten:[],teksten:{welkomNL:'',welkomEN:'',slotNL:'',slotEN:'',bez:[]},veiligheid:{vesten:null,vestenLoc:'',crew:null,crewType:'',boeien:null,pikhaak:false,ehboLoc:'',overig:'',fotos:[],picto:'',blusType:'',blusLoc:'',werking:[],werkingToel:''},milieu:{maatregelen:'',elektrisch:'',elektrischToel:'',nul:'',ontw:''},ui:{step:'kandidaat'}}}
 const OLD_MIL={rustig:'Rustig accelereren',constant:'Constante, lage snelheid aanhouden',anticiperen:'Anticiperen: op tijd uitrollen in plaats van remmen',stroom:'Niet onnodig tegen de stroom in werken',route:'Efficiënte route kiezen (minder keren, geen omwegen)',stationair:'Niet onnodig stationair draaien',onderhoud:'Schip schoon en licht houden'};
@@ -624,7 +624,7 @@ const siteUrl=()=>location.origin+location.pathname.replace(/index\.html$/,'');
 function setSaveState(t,bad){const el=$('#saveState');el.textContent=t||'';el.style.color=bad?'var(--err)':''}
 function markDirty(key){if(APP.role==='local'){saveLocal();return}if(APP.role==='voorbeeld'||!APP.target)return;if(key)APP.dirty.add(key);clearTimeout(APP.t);APP.t=setTimeout(flush,900);setSaveState('Wijzigingen opslaan…')}
 let saveTimer=null;
-function saveLocal(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{const s=Object.assign(casusData(),{v:2,isVoorbeeld:state.isVoorbeeld,ui:{step:state.ui.step}});localStorage.setItem(LS_KEY,JSON.stringify(s));setSaveState('Automatisch opgeslagen in deze browser')}catch(e){setSaveState('Niet opgeslagen: de browseropslag is vol of geblokkeerd. Maak een back-up.',true)}},350)}
+function saveLocal(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{const s=Object.assign(casusData(),{v:2,isVoorbeeld:state.isVoorbeeld,ui:{step:state.ui.step}});localStorage.setItem(LS_KEY,JSON.stringify(s));utrSync(s)}catch(e){setSaveState('Niet opgeslagen: de browseropslag is vol of geblokkeerd. Maak een back-up.',true)}},350)}
 async function flush(){if(!APP.target||!APP.sb)return;if(APP.saving){clearTimeout(APP.t);APP.t=setTimeout(flush,500);return}if(!APP.dirty.size&&APP.exists)return;APP.saving=true;const id=APP.target;let keys=[];
   try{
     if(!APP.exists){const {data,error}=await APP.sb.from('casussen').select('casus,rev').eq('kandidaat_id',id).maybeSingle();if(error)throw error;
@@ -643,7 +643,17 @@ function dbError(e,what){const c=e&&e.code,msg=(e&&e.message)||'';
 async function checkStillMember(){if(!APP.sb||!APP.user)return;const {data,error}=await APP.sb.from('leden').select('id').eq('user_id',APP.user.id).maybeSingle();if(!error&&!data)showBlocked()}
 
 /* login & session */
-async function initPlatform(){startLocal();return;
+/* Utrecht-beta: casus van de medewerker in de database (stad_casussen), met de browser als reserve */
+let utrT=null,utrBusy=false,utrNext=null;
+function utrSync(s){utrNext=s;clearTimeout(utrT);utrT=setTimeout(utrPush,700);setSaveState('Opslaan…')}
+async function utrPush(){const sb=window.__betaSb,uid=window.__betaUid;if(!sb||!uid||!utrNext){setSaveState('Alleen in deze browser opgeslagen',true);return}if(utrBusy){utrT=setTimeout(utrPush,400);return}utrBusy=true;const s=utrNext;utrNext=null;
+  try{const {error}=await sb.from('stad_casussen').upsert({user_id:uid,stad:'utrecht',casus:s,voortgang:progressPct(),bijgewerkt:nowIso()});if(error)throw error;if(!utrNext)setSaveState('Opgeslagen · '+fmtDate(nowIso()).split(' ').pop())}
+  catch(e){if(!utrNext)utrNext=s;setSaveState('Niet opgeslagen in de database'+(e&&e.message?' ('+e.message+')':'')+'. We proberen het opnieuw.',true);clearTimeout(utrT);utrT=setTimeout(utrPush,4000)}
+  finally{utrBusy=false}}
+async function startUtrecht(){showScreen('Casus laden','Even geduld…',null,true);const sb=window.__betaSb,uid=window.__betaUid;
+  if(sb&&uid){try{const {data,error}=await sb.from('stad_casussen').select('casus').eq('user_id',uid).eq('stad','utrecht').maybeSingle();if(error)throw error;if(data&&data.casus&&Object.keys(data.casus).length)localStorage.setItem(LS_KEY,JSON.stringify(data.casus))}catch(e){toast('De casus kon niet uit de database worden geladen. Je werkt verder met de versie in deze browser.',true)}}
+  startLocal()}
+async function initPlatform(){startUtrecht();return;
   if(!(window.supabase&&window.supabase.createClient)){showScreen('Geen verbinding','De casusbouwer kan nu geen verbinding maken. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload']]);return}
   APP.sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sor-casusbouwer-auth'}});
   APP.sb.auth.onAuthStateChange((ev,session)=>{if(ev==='SIGNED_OUT'){APP.user=null;APP.uid=null;APP.lid=null;if(APP.role!=='local')showLogin()}else if(session&&session.user){APP.user=session.user;APP.uid=session.user.id}});
@@ -909,7 +919,7 @@ $('#topActions').addEventListener('change',async e=>{if(e.target.id==='fileImpor
 function stepStatus(id){const cs=CHECKS.filter(c=>c.step===id);if(id==='controle'){const all=CHECKS.length,ok=CHECKS.filter(c=>c.ok).length;return ok===all?'done':(ok?'part':'todo')}if(!cs.length)return'todo';const ok=cs.filter(c=>c.ok).length;return ok===cs.length?'done':(ok?'part':'todo')}
 function renderRail(){$('#steps').innerHTML=STEPS.map((s,i)=>{const f=fbStep(s.id);const fm=f&&f.status==='aanpassen'?'<span class="fbm aanpassen" title="Feedback: aanpassen">!</span>':(f&&f.status==='ok'?'<span class="fbm ok" title="Akkoord van opleider">✓</span>':'');return'<button type="button" class="stp '+stepStatus(s.id)+(state.ui.step===s.id?' on':'')+'" data-step="'+s.id+'"'+(state.ui.step===s.id?' aria-current="step"':'')+'><span class="n">'+(i+1)+'</span><span class="t">'+esc(s.t)+'<span class="o">'+esc(s.o)+'</span></span><span class="d">'+fm+'<span class="dot" aria-hidden="true"></span></span></button>'}).join('');fillWho()}
 function renderProgress(){const all=CHECKS.length,ok=CHECKS.filter(c=>c.ok).length;const p=all?Math.round(ok/all*100):0;$('#pbar').style.width=p+'%';$('#ppct').textContent=p+'%'}
-function renderBanner(){const b=$('#banner');if(APP.mode==='edit'&&APP.role==='local'&&state.isVoorbeeld){b.hidden=false;b.innerHTML='<span><b>Utrecht beta · alleen voor medewerkers.</b> Proefversie met een voorbeeldroute over de Oudegracht. Wat je hier maakt blijft in deze browser.</span><button class="btn sm primary" type="button" data-act="new">Eigen casus beginnen</button>'}else if(APP.mode==='edit'&&APP.role==='staff'){b.hidden=false;b.innerHTML='<span>Je bewerkt de casus van een kandidaat. Wijzigingen en feedback worden direct opgeslagen en zijn zichtbaar voor de kandidaat.</span>'}else b.hidden=true}
+function renderBanner(){const b=$('#banner');if(APP.mode==='edit'&&APP.role==='local'&&state.isVoorbeeld){b.hidden=false;b.innerHTML='<span><b>Utrecht beta · alleen voor medewerkers.</b> Proefversie met een voorbeeldroute over de Oudegracht. Je casus wordt opgeslagen in de database, onder je eigen account.</span><button class="btn sm primary" type="button" data-act="new">Eigen casus beginnen</button>'}else if(APP.mode==='edit'&&APP.role==='staff'){b.hidden=false;b.innerHTML='<span>Je bewerkt de casus van een kandidaat. Wijzigingen en feedback worden direct opgeslagen en zijn zichtbaar voor de kandidaat.</span>'}else b.hidden=true}
 $('#banner').addEventListener('click',e=>{if(e.target.closest('[data-act="new"]'))newCase()});
 
 /* ---------- panel views ---------- */
@@ -1588,7 +1598,7 @@ window.betaGate=async function(){const m=t=>{const el=document.getElementById('b
   if(!s||!s.user)return deny('Log eerst in de casusbouwer in met je medewerkersaccount en kies daarna Utrecht (beta).');
   const {data,error}=await sb.from('leden').select('rol').eq('user_id',s.user.id).maybeSingle();if(error)throw new Error(error.message||'controle mislukt');
   if(!data||data.rol!=='medewerker')return deny('Deze proefversie voor Utrecht is alleen beschikbaar voor medewerkers van Flagship Academy.');
-  return true};
+  window.__betaSb=sb;window.__betaUid=s.user.id;return true};
 /* Utrecht beta: haalt de kaart eenmalig op bij OpenStreetMap (Overpass) en bewaart die in deze browser. */
 (function(){
 const KEY='sor-utrecht-kaart-v1';
