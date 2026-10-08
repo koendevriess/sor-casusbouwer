@@ -532,3 +532,6 @@ begin
 end $$;
 revoke all on function public.lid_toevoegen(text, text, text) from public, anon;
 grant execute on function public.lid_toevoegen(text, text, text) to authenticated;
+
+-- 009_feedback_gemaild: wanneer de feedback voor het laatst per e-mail naar de kandidaat is gestuurd (gezet door de Edge Function feedback-mail)
+alter table public.feedback add column if not exists gemaild_op timestamptz;
