@@ -39,7 +39,14 @@ Deno.serve(async (req) => {
   if (me.rol === "leermeester") {
     const { data: t } = await admin.from("leermeester_toegang").select("kandidaat_id")
       .eq("leermeester_id", me.id).eq("kandidaat_id", kid).maybeSingle();
-    if (!t) return json({ error: "geen toegang" }, 403);
+    let mag = !!t;
+    if (!mag) {
+      const { data: kk } = await admin.from("leden").select("stad").eq("id", kid).maybeSingle();
+      const { data: g } = await admin.from("leermeester_gebied").select("stad")
+        .eq("leermeester_id", me.id).eq("stad", kk?.stad || "amsterdam").maybeSingle();
+      mag = !!g;
+    }
+    if (!mag) return json({ error: "geen toegang" }, 403);
   }
   const { data: k } = await admin.from("leden").select("id,naam,email,rol").eq("id", kid).maybeSingle();
   if (!k || k.rol !== "kandidaat" || !k.email) return json({ error: "geen e-mailadres bekend" }, 400);
