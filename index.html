@@ -503,8 +503,36 @@ button.pill.stad.groningen,button.pill.stad.utrecht{background:var(--accent-soft
 .lxcard{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--tint)}
 .lxcard div{display:flex;flex-direction:column}
 .lxcard span{color:var(--ink-2);font-size:14px}
-.lxframe{display:block;width:100%;height:calc(100vh - 170px);min-height:520px;border:1px solid var(--line);border-radius:14px;background:#fff}
-.leer-in.wide{max-width:1240px}
+.lxcard .lmeta{font-size:13px;margin-top:2px}
+.gxsteps{counter-reset:gx;list-style:none;padding:0!important;margin:6px 0}
+.gxsteps li{counter-increment:gx;display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);margin:0!important}
+.gxsteps li:first-child{border-top:0}
+.gxsteps li::before{content:counter(gx);flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700}
+.ltip.gxbad{background:var(--err-soft);border-left-color:var(--err)}
+.ltip.gxgood{background:var(--ok-soft);border-left-color:var(--ok)}
+.lsec h3{font-size:16px;margin:14px 0 4px}
+.gxsmall{max-width:360px}
+.gxtbl tr.gxlow td{background:var(--accent-soft)}
+.gxsort{justify-content:flex-start;margin:4px 0 8px;gap:8px}
+.gxfig{background:var(--panel)!important}
+.gxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.gxgrid svg{display:block;width:100%;height:auto;max-width:400px;margin:0 auto;color:var(--ink);font-family:inherit}
+.gxfig figcaption{text-align:left!important}
+.gxscale{position:relative;height:84px;margin:18px 6px 6px}
+.gxscale .line{position:absolute;left:0;right:0;top:34px;height:8px;border-radius:99px;background:var(--tint-2)}
+.gxscale .rng{position:absolute;top:34px;height:8px;border-radius:99px;background:var(--accent);opacity:.5}
+.gxscale .mk{position:absolute;top:22px;transform:translateX(-50%);text-align:center;font-size:12px;font-weight:700;white-space:nowrap}
+.gxscale .mk::after{content:"";display:block;width:2px;height:32px;margin:2px auto 0;background:var(--ink)}
+.gxscale .mk.up{top:0}.gxscale .mk.up::after{height:30px;margin-top:2px}
+.gxscale .mk.dn{top:44px}.gxscale .mk.dn::after{display:none}
+.gxscale .mk.dn::before{content:"";display:block;width:2px;height:12px;margin:0 auto 2px;background:var(--ink)}
+.gxticks{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin:0 6px;font-variant-numeric:tabular-nums}
+.gxformula{font-size:clamp(17px,3vw,22px);font-weight:700;text-align:center;background:var(--accent-soft);border-radius:12px;padding:14px 12px;margin:8px 0}
+.gx3{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
+.gxtool .field small{font-size:12.5px}
+.gxverdict>b{font-size:20px}
+.gxverdict p{margin:6px 0 0}
+.gxsrc{margin-top:4px;text-align:left}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -842,7 +870,7 @@ window.addEventListener('popstate',async e=>{const st=e.state;if(!st||!st.k)retu
     if(st.role==='voorbeeld'&&APP.isStaff){unsubAll();APP.role='voorbeeld';APP.target=null;APP.fb=null;state=exampleState();enterEditor();setStep(st.step);return}
     if(st.id&&APP.sb){try{await flushNow()}catch(_){}await openCasus(st.id,st.role);if(APP.target===st.id)setStep(st.step)}return}
   if(st.k==='dash'&&APP.sb&&(APP.isStaff||APP.isLm)){try{await flushNow()}catch(_){}openDashboard();return}
-  if(st.k==='leer'&&APP.lid){if(APP.mode!=='leer'){if(APP.isStaff||APP.isLm)openLeerPreview();else await openLeer(false)}LQ=null;LV.v=st.v==='les'||st.v==='extra'?st.v:'home';LV.id=st.id||null;renderLeer();leerScroll()}
+  if(st.k==='leer'&&APP.lid){if(APP.mode!=='leer'){if(APP.isStaff||APP.isLm)openLeerPreview();else await openLeer(false)}LQ=null;LV.v=st.v==='les'||st.v==='extra'?st.v:'home';if(st.v==='extra'){GXV.v=st.gx||'home';GXV.i=st.i||0;GXV.q=null}LV.id=st.id||null;renderLeer();leerScroll()}
 }finally{NAV.busy=false}});
 
 /* ---------- route analysis ---------- */
@@ -1436,7 +1464,7 @@ async function thWrite(){const t=APP.th;const row={kandidaat_id:APP.lid.id,data:
 function leerScroll(){const el=$('#leer');if(el)el.scrollTop=0;window.scrollTo(0,0)}
 function renderLeer(){if(APP.mode!=='leer')return;const el=$('#leer');let h='';
   if(LV.v==='extra')h=viewExtra();else if(LV.v==='les')h=viewLes();else if(LV.v==='quiz')h=viewQuiz();else if(LV.v==='klaar')h=viewKlaar();else h=viewHome();
-  el.innerHTML='<div class="dash-in leer-in'+(LV.v==='extra'?' wide':'')+'">'+h+'</div>'}
+  el.innerHTML='<div class="dash-in leer-in">'+h+'</div>'}
 function voornaam(){return((APP.lid&&APP.lid.naam)||'').trim().split(/\s+/)[0]||''}
 
 function viewHome(){const th=APP.th||thEmpty();const xp=thXP(th.data);const rk=rankOf(xp);const done=LEER.filter(c=>chPassed(c.id)).length;const stars=LEER.reduce((s,c)=>s+starsOf(chRes(c.id)),0);const er=eindRes();const open=casusOpen();
@@ -1451,15 +1479,14 @@ function viewHome(){const th=APP.th||thEmpty();const xp=thXP(th.data);const rk=r
       (un?'<div class="lcard-a"><button type="button" class="btn sm'+(isCur?' primary':'')+'" data-lact="les" data-id="'+c.id+'">'+(pass?'Les':'Les lezen')+'</button>'+(bz&&bz.b.id===c.id?'<button type="button" class="btn sm primary" data-lact="resume">Ga verder</button>':'<button type="button" class="btn sm'+(pass||isCur?'':' soft')+'" data-lact="quiz" data-id="'+c.id+'">'+(pass?'Opnieuw':r?'Quiz opnieuw':'Quiz')+'</button>')+'</div>':'')+'</div></li>'}).join('')+
     (()=>{const un=isPreview()||allPassed(),ok=theoryDone();return'<li class="lnode eind '+(ok?'done':un?'open':'lock')+(un&&!ok?' cur':'')+'"><span class="dot" aria-hidden="true">'+(ok?'✓':'★')+'</span><div class="lcard"><div class="lcard-t"><small>Afsluiting</small><b>Eindtoets</b><span>'+EIND.n+' vragen uit alle hoofdstukken · 80% om te slagen</span>'+(er?'<span class="lmeta">Beste score '+Math.round(pctOf(er)*100)+'%'+(ok?'':' · nog niet gehaald')+'</span>':un?'':'<span class="lmeta">Haal eerst alle hoofdstukken</span>')+'</div>'+(un?'<div class="lcard-a"><button type="button" class="btn sm'+(ok?'':' primary')+'" data-lact="quiz" data-id="eind">'+(ok?'Opnieuw':er?'Nog een keer':'Start eindtoets')+'</button></div>':'')+'</div></li>'})()+
     '<li class="lnode casus '+(open?'done':'lock')+'"><span class="dot" aria-hidden="true">⚓</span><div class="lcard"><div class="lcard-t"><small>Praktijktoets 3</small><b>Je casus</b><span>'+(open?(theoryDone()?'Theorie gehaald. Je kunt aan je casus beginnen.':LEER_GATE?'Je opleider heeft je casus vrijgegeven.':'Je casus staat open. Werk eraan wanneer je wilt.'):'Gaat open zodra je de eindtoets hebt gehaald.')+'</span></div>'+(open&&!isPreview()?'<div class="lcard-a"><button type="button" class="btn sm primary" data-lact="casus">Naar je casus</button></div>':'')+'</div></li></ol>';
-  const ex=leerExtras();if(ex.length)h+='<section class="lsec lextra"><div class="lsec-h"><h2>'+(isPreview()?'Extra per vaargebied':'Extra voor '+esc(CITY.naam))+'</h2></div>'+(isPreview()?'<p class="note">Kandidaten zien alleen de extra’s van hun eigen vaargebied.</p>':'')+ex.map(x=>'<div class="lxcard"><div><b>'+(isPreview()?esc(x.stad)+' · ':'')+esc(x.t)+'</b><span>'+esc(x.s)+'</span></div><button type="button" class="btn sm primary" data-lact="extra" data-id="'+esc(x.id)+'">Openen</button></div>').join('')+'</section>';
+  const ex=leerExtras();if(ex.length)h+='<section class="lsec lextra"><div class="lsec-h"><h2>'+(isPreview()?'Extra per vaargebied':'Extra voor '+esc(CITY.naam))+'</h2></div>'+(isPreview()?'<p class="note">Kandidaten zien alleen de extra’s van hun eigen vaargebied.</p>':'')+ex.map(x=>'<div class="lxcard"><div><b>'+(isPreview()?esc(x.stad)+' · ':'')+esc(x.t)+'</b><span>'+esc(x.s)+'</span><span class="lmeta">'+gxCount(gxSt())+' van '+GX.CH.length+' hoofdstukken afgerond</span></div><button type="button" class="btn sm primary" data-lact="extra" data-id="'+esc(x.id)+'">Openen</button></div>').join('')+'</section>';
   h+='<div class="info"><b>Zo werkt het</b><ol><li>Lees per hoofdstuk de les. De stof komt uit het theorieboek van Flagship Academy; bij elk onderdeel staat de pagina.</li><li>Maak de quiz van '+LEER_N+' vragen. Bij elke vraag zie je direct of het goed is en waarom.</li><li>80% goed? Dan gaat het volgende hoofdstuk open. Meer sterren en XP haal je met een hogere score; je beste score telt.</li><li>'+(LEER_GATE?'Na de eindtoets gaat je casus open. ':'')+'Je opleider ziet je voortgang.</li></ol></div>';
   return h}
 
 /* extra informatie per vaargebied: kandidaten zien die van hun eigen stad, medewerkers en leermeesters (voorbeeld) alles */
-const LEER_EXTRA={groningen:[{id:'gro-waterstand',t:'Waterstand en bruggen',s:'Waterinfo, streefpeil, de 17 bruggen op de route en uitrekenen of je eronder past',url:'assets/extra/groningen-waterstand-bruggen.html'}]};
+const LEER_EXTRA={groningen:[{id:'gro-waterstand',t:'Waterstand en bruggen',s:'Waterinfo, streefpeil, de 17 bruggen op de route en uitrekenen of je eronder past'}]};
 function leerExtras(){const all=[];Object.keys(LEER_EXTRA).forEach(st=>LEER_EXTRA[st].forEach(x=>all.push(Object.assign({stad:STAD_NAAM[st]||st,st},x))));return isPreview()?all:all.filter(x=>x.st===CITY.id)}
-function viewExtra(){const x=leerExtras().find(e=>e.id===LV.id);if(!x)return viewHome();x.url=CITY.assets+x.url.replace(/^(\.\.\/)+/,'');
-  return'<div class="lbar"><button type="button" class="btn soft sm" data-lact="home">← Overzicht</button><span class="lcrumb">Extra voor '+esc(x.stad)+'</span><a class="btn sm" href="'+esc(x.url)+'" target="_blank" rel="noopener">Open in nieuw venster</a></div><iframe class="lxframe" src="'+esc(x.url)+'" title="'+esc(x.t)+'"></iframe>'}
+function viewExtra(){const x=leerExtras().find(e=>e.id===LV.id);if(!x)return viewHome();return gxView()}
 function viewLes(){const i=LEER.findIndex(c=>c.id===LV.id),c=LEER[i];if(!c)return viewHome();
   let h='<div class="lbar"><button type="button" class="btn soft sm" data-lact="home">← Overzicht</button><span class="lcrumb">Hoofdstuk '+(i+1)+' van '+LEER.length+'</span></div>';
   h+='<header class="lhead"><div class="eyebrow">Hoofdstuk '+(i+1)+' · theorieboek p. '+c.p+'</div><h1>'+esc(c.t)+'</h1><p>'+esc(c.intro)+'</p></header>';
@@ -1501,10 +1528,11 @@ function viewKlaar(){const r=LQ.res,eind=LQ.id==='eind';const i=LEER.findIndex(c
     '<div class="row qres-a">'+(r.nieuwDoor&&!isPreview()?'<button type="button" class="btn primary" data-lact="casus">Naar je casus</button>':'')+(nxt&&nxt!=='eind'?'<button type="button" class="btn primary" data-lact="les" data-id="'+nxt.id+'">Naar hoofdstuk '+(i+2)+'</button>':'')+(nxt==='eind'?'<button type="button" class="btn primary" data-lact="quiz" data-id="eind">Start eindtoets</button>':'')+(!r.pass&&!eind?'<button type="button" class="btn primary" data-lact="les" data-id="'+LQ.id+'">Les nog eens lezen</button>':'')+'<button type="button" class="btn" data-lact="quiz" data-id="'+LQ.id+'">'+(r.pass?'Nog een keer':'Opnieuw proberen')+'</button><button type="button" class="btn soft" data-lact="home">Overzicht</button></div></section>';
   if(LQ.fout.length)h+='<section class="lsec"><div class="lsec-h"><h2>Bekijk je fouten</h2></div><ul class="qerr">'+LQ.fout.map(f=>'<li><b>'+esc(f.q)+'</b><span class="bad">Jouw antwoord: '+esc(f.jij)+'</span><span class="good">Goed antwoord: '+esc(f.goed)+'</span><small>Theorieboek p. '+f.p+'</small></li>').join('')+'</ul></section>';
   return h}
-$('#leer').addEventListener('click',async e=>{const o=e.target.closest('[data-q]');if(o){answer(+o.dataset.q);return}const b=e.target.closest('[data-lact]');if(!b)return;const a=b.dataset.lact,id=b.dataset.id;
+$('#leer').addEventListener('click',async e=>{const o=e.target.closest('[data-q]');if(o){answer(+o.dataset.q);return}const g=e.target.closest('[data-gxo]');if(g){gxPick(+g.dataset.gxo);return}const b=e.target.closest('[data-lact]');if(!b)return;const a=b.dataset.lact,id=b.dataset.id;
   if(a==='home'){LV.v='home';LQ=null;renderLeer();leerScroll();navPush({k:'leer',v:'home'})}
   else if(a==='les'){LV.v='les';LV.id=id;LQ=null;renderLeer();leerScroll();navPush({k:'leer',v:'les',id});const r=chRes(id);if(!isPreview()&&!(r&&r.gelezen)){APP.th.data.h[id]=Object.assign({},r||{},{gelezen:true});thSave()}}
-  else if(a==='extra'){LV.v='extra';LV.id=id;LQ=null;renderLeer();leerScroll();navPush({k:'leer',v:'extra',id})}
+  else if(a==='gx')gxAct(b);
+  else if(a==='extra'){LV.v='extra';LV.id=id;LQ=null;GXV.v='home';GXV.q=null;renderLeer();leerScroll();navPush({k:'leer',v:'extra',id})}
   else if(a==='quiz')startQuiz(id);
   else if(a==='resume')resumeQuiz();
   else if(a==='next')nextQ();
@@ -1518,11 +1546,159 @@ function thCell(r){const t=r.th,ok=t&&t.geslaagd_op,n=(t&&t.hoofdstukken)||0;
   return'<button type="button" class="thcell" data-dact="theorie" data-id="'+esc(r.id)+'" title="Theorie-voortgang bekijken">'+(ok?'<span class="pill ok">Theorie gehaald</span>':'<span class="row" style="gap:6px"><span class="pbar sm"><span style="width:'+Math.round(n/LEER.length*100)+'%"></span></span><span class="num">'+n+'/'+LEER.length+'</span></span>')+(!ok&&r.casus_vrij?'<small>Casus vrijgegeven</small>':'')+'</button>'}
 async function showTheorie(r){const t=r.th||{},d=t.data||{h:{}},ok=!!t.geslaagd_op;const xp=t.xp||0,rk=rankOf(xp);const e=d.eind;
   const row=(nm,res,extra)=>'<tr><td>'+nm+'</td><td class="num">'+(res&&res.van?Math.round(pctOf(res)*100)+'%':'–')+'</td><td>'+(extra||'')+'</td><td class="num">'+((res&&res.n)||0)+'</td><td>'+(res&&res.op?esc(fmtDate(res.op)):res&&res.gelezen?'<small>les gelezen</small>':'–')+'</td></tr>';
-  const body='<div class="threp"><p class="note">'+esc(rk.naam)+' · '+xp+' XP · '+((t.hoofdstukken)||0)+' van '+LEER.length+' hoofdstukken gehaald'+(ok?' · theorie gehaald op '+esc(fmtDate(t.geslaagd_op)):'')+(r.casus_vrij&&!ok?' · casus handmatig vrijgegeven':'')+(d.bezig&&d.bezig.qs?' · nu bezig met '+esc(d.bezig.id==='eind'?'de eindtoets':'hoofdstuk '+(LEER.findIndex(c=>c.id===d.bezig.id)+1))+' (vraag '+Math.min(d.bezig.qs.length,(d.bezig.i||0)+1)+' van '+d.bezig.qs.length+', '+(d.bezig.score||0)+' goed)':'')+'</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Onderdeel</th><th>Beste</th><th></th><th>Pogingen</th><th>Laatst</th></tr></thead><tbody>'+
+  const body='<div class="threp"><p class="note">'+esc(rk.naam)+' · '+xp+' XP · '+((t.hoofdstukken)||0)+' van '+LEER.length+' hoofdstukken gehaald'+(ok?' · theorie gehaald op '+esc(fmtDate(t.geslaagd_op)):'')+(r.casus_vrij&&!ok?' · casus handmatig vrijgegeven':'')+(d.x&&d.x.gro?' · Waterstand en bruggen Groningen: '+gxCount(Object.assign({read:{},best:{}},d.x.gro))+' van '+GX.CH.length+' hoofdstukken afgerond':'')+(d.bezig&&d.bezig.qs?' · nu bezig met '+esc(d.bezig.id==='eind'?'de eindtoets':'hoofdstuk '+(LEER.findIndex(c=>c.id===d.bezig.id)+1))+' (vraag '+Math.min(d.bezig.qs.length,(d.bezig.i||0)+1)+' van '+d.bezig.qs.length+', '+(d.bezig.score||0)+' goed)':'')+'</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Onderdeel</th><th>Beste</th><th></th><th>Pogingen</th><th>Laatst</th></tr></thead><tbody>'+
     LEER.map((c,i)=>{const res=d.h&&d.h[c.id];return row((i+1)+'. '+esc(c.t),res,res&&res.van?starRow(starsOf(res)):'')}).join('')+row('<b>Eindtoets</b>',e,e&&e.van?(pctOf(e)>=EIND.pass?'<span class="pill ok">gehaald</span>':'<span class="pill acc">niet gehaald</span>'):'')+'</tbody></table></div></div>';
   if(ok||APP.isLm||!LEER_GATE){await modalBox('Theorie van '+r.naam,'',body,'Sluiten',null);return}
   const y=await modalBox('Theorie van '+r.naam,'',body+'<p class="note">'+(r.casus_vrij?'De casus is vrijgegeven, ook al is de theorie nog niet gehaald.':'De casus gaat open zodra de eindtoets is gehaald. Je kunt de casus ook nu al vrijgeven.')+'</p>',r.casus_vrij?'Vrijgave intrekken':'Casus nu vrijgeven','Sluiten');
   if(!y)return;const {error}=await APP.sb.from('leden').update({casus_vrij:!r.casus_vrij}).eq('id',r.id);if(error){toast('Opslaan is mislukt: '+error.message,true);return}toast(r.casus_vrij?'Vrijgave ingetrokken':'Casus vrijgegeven voor '+r.naam);loadRoster()}
+/* ---------- extra Groningen: waterstand en bruggen (onderdeel van de leeromgeving, in dezelfde opmaak) ---------- */
+const GX={
+ CH:[
+  {t:'Het water van nu opzoeken',s:'Waterinfo, Slochtersluis, centimeters'},
+  {t:'Peil en streefpeil',s:'NAP, streefpeil, hoe hoog het water meestal staat'},
+  {t:'De 17 bruggen',s:'Hoogte van elke brug op de route'},
+  {t:'Uitrekenen',s:'Ruimte onder de brug, marge, rekenvoorbeeld'}],
+ /* naam, vaarweg, soort, breedte, hoogte m NAP, ruimte bij 0,62, vast? */
+ BR:[
+  ['Poelebrug','Schuitendiep','Draaibrug',7.00,1.60,0.98,0],
+  ['Kattenbrug','Schuitendiep','Vast',7.00,2.13,1.51,1],
+  ['Steentilbrug','Schuitendiep','Vast',7.34,2.13,1.51,1],
+  ['Trompbrug','Verbindingskanaal','Draaibrug',10.00,3.57,2.95,0],
+  ['Oosterbrug','Verbindingskanaal','Basculebrug',10.00,3.32,2.70,0],
+  ['Herebrug','Verbindingskanaal','Basculebrug',10.00,4.42,3.80,0],
+  ['H.N. Werkmanbrug','Verbindingskanaal','Basculebrug',14.00,3.57,2.95,0],
+  ['Emmabrug','Verbindingskanaal','Basculebrug',10.00,3.77,3.15,0],
+  ['Museumbrug','A','Basculebrug',9.70,1.67,1.05,0],
+  ['A-brug','A','Draaibrug',9.95,2.37,1.75,0],
+  ['Tijdelijke Visserbrug','A','Overig',9.00,2.22,1.60,0],
+  ['Visserbrug','A','Basculebrug',9.70,2.22,1.60,0],
+  ["Kijk in 't Jatbrug",'Noorderhaven','Vast',10.80,3.42,2.80,1],
+  ['Boteringebrug','Noorderhaven','Vast',9.00,3.62,3.00,1],
+  ['Ebbingebrug','Noorderhaven','Vast',9.20,3.62,3.00,1],
+  ['Maagdenbrug','Schuitendiep','Basculebrug',7.00,0.85,0.23,0],
+  ['Sint Jansbrug','Schuitendiep','Basculebrug',7.00,1.00,0.38,0]],
+ QZ:[
+  [{q:'Waterinfo laat 58 cm zien. Hoeveel meter NAP is dat?',o:['5,8 m','0,058 m','0,58 m','58 m'],c:2,e:'Waterinfo geeft centimeters. Deel door 100: 58 cm = 0,58 m.'},
+   {q:'Welk meetpunt gebruik je voor het waterpeil in Groningen?',o:['De groene bol "-88 cm" bij Groningen','Slochtersluis (het grijze rondje bij Meerstad)','Elk meetpunt dat toevallig dichtbij is','Geen. Je schat het peil'],c:1,e:'Slochtersluis is het meetpunt voor de stad. De bol "-88 cm" hoort bij een andere sluis, waar het water veel lager staat.'},
+   {q:'Je tikt op de Slochtersluis en ziet alleen een streepje. Wat doe je?',o:['Rekenen met 0 m','Rekenen met -88 cm','Doorvaren zonder te rekenen','Kijken op de peilschaal die er op dat moment is'],c:3,e:'Een streepje betekent: even geen gegevens. Het water is dan niet 0. Gebruik de peilschaal.'}],
+  [{q:'Wat is het streefpeil?',o:['Het waterpeil waar de brughoogtes van uitgaan','Het hoogste peil dat ooit is gemeten','De hoogte van de brug','De diepte van de gracht'],c:0,e:'De ruimte in de brugtabel geldt alleen als het water precies op het streefpeil staat (0,62 m NAP in de brongegevens).'},
+   {q:'Wat was het gemiddelde peil bij de Slochtersluis van 08-09-2026 tot 01-10-2026?',o:['0,35 m NAP','0,55 m NAP','0,75 m NAP','1,05 m NAP'],c:1,e:'Gemiddeld 0,55 m NAP, en 9 van de 10 keer tussen 0,47 en 0,62.'},
+   {q:'Waarom kijk je altijd naar de waterstand van die dag?',o:['Het water kan in een paar uur 10 tot 20 cm stijgen of zakken','De brughoogtes veranderen elke dag','De brugtabel klopt niet','Het peil is altijd 0,62'],c:0,e:'De hoogte van de brug (in m NAP) verandert niet. Het water wel. Daarom trek je het water van nu af.'}],
+  [{q:'Welke brug op de route heeft de minste ruimte?',o:['Poelebrug','Trompbrug','Maagdenbrug','Herebrug'],c:2,e:'De Maagdenbrug heeft maar 0,23 m ruimte bij 0,62. Laat deze brug openen.'},
+   {q:'Wat is het verschil tussen een vaste en een beweegbare brug?',o:['Een vaste brug is hoger','Een beweegbare brug heeft geen hoogte','Een vaste brug is altijd breder','Een vaste brug gaat niet open, je moet er onderdoor passen'],c:3,e:"Vaste bruggen op de route: Kattenbrug, Steentilbrug, Kijk in 't Jatbrug, Boteringebrug en Ebbingebrug. Reken altijd na."},
+   {q:'Bij de Sint Jansbrug staat in de bron 1,00 m ruimte, maar de brug is +1,00 m NAP. Waarmee reken je?',o:['Met de ruimte uit de bron','Met de brughoogte min het water van nu','Met 0,62','Je rekent niet'],c:1,e:'De ruimte uit de bron past niet bij de brughoogte. Reken met de brughoogte (+1,00) min het water van nu, en controleer de brug voor je gaat.'}],
+  [{q:'De Poelebrug is +1,60 m NAP. Het water staat op 55 cm. Hoeveel ruimte heb je?',o:['2,15 m','0,95 m','1,05 m','1,60 m'],c:2,e:'1,60 min 0,55 = 1,05 m.'},
+   {q:'Je boot is 0,90 m hoog en je wilt 10 cm marge. Poelebrug (+1,60), water op 68 cm. Past je?',o:['Nee: de ruimte is 0,92 m en je hebt 1,00 m nodig','Ja, ruim','Ja, want 0,92 is meer dan 0,90','Dat kun je niet uitrekenen'],c:0,e:'1,60 min 0,68 = 0,92 m ruimte. Je hebt 0,90 plus 0,10 marge = 1,00 m nodig. Past niet.'},
+   {q:'Het water stijgt. Wat gebeurt er met de ruimte onder de brug?',o:['Die wordt groter','Die blijft gelijk','Dat hangt van de brug af','Die wordt kleiner'],c:3,e:'Hoger water betekent minder ruimte onder de brug.'}]]
+};
+const GXV={v:'home',i:0,q:null,sortL:false,tool:{b:0,cm:'55',h:'0.90',m:'10'}};
+const gxF2=x=>x.toFixed(2).replace('.',',');
+const gxSg=x=>(x>=0?'+':'−')+gxF2(Math.abs(x));
+function gxSt(){const d=APP.th&&APP.th.data;if(!d)return{read:{},best:{}};d.x=d.x||{};const s=d.x.gro=d.x.gro||{};s.read=s.read||{};s.best=s.best||{};return s}
+const gxDone=(s,i)=>!!(s.read[i]&&s.best[i]>=2);
+const gxCount=s=>GX.CH.filter((c,i)=>gxDone(s,i)).length;
+const gxSrc='<p class="note small gxsrc">Bronnen: Vaarweginformatie.nl (Rijkswaterstaat), brugpagina’s Groningen, opgehaald 06-10-2026. Rijkswaterstaat Waterinfo, meetpunt Slochtersluis, 08-09-2026 tot 01-10-2026. Dit is een hulpmiddel en geen officieel advies. Jij bent als schipper altijd zelf verantwoordelijk voor wat je ter plekke besluit.</p>';
+const gxBar=(crumb,sub)=>'<div class="lbar"><button type="button" class="btn soft sm" data-lact="'+(sub?'gx':'home')+'"'+(sub?' data-sub="home"':'')+'>'+(sub?'← Waterstand en bruggen':'← Overzicht')+'</button><span class="lcrumb">'+crumb+'</span></div>';
+const gxSteps=items=>'<ol class="gxsteps">'+items.map(t=>'<li><div>'+t+'</div></li>').join('')+'</ol>';
+function gxNav(){navPush({k:'leer',v:'extra',id:LV.id,gx:GXV.v,i:GXV.i})}
+
+function gxView(){if(GXV.v==='ch')return gxChapter(GXV.i);if(GXV.v==='quiz'&&GXV.q)return gxQuiz();if(GXV.v==='res'&&GXV.q)return gxRes();if(GXV.v==='tool')return gxTool();return gxHome()}
+function gxHome(){const s=gxSt();let h=gxBar('Extra voor Groningen');
+  h+='<header class="lhead"><div class="eyebrow">Extra voor Groningen · '+gxCount(s)+' van '+GX.CH.length+' hoofdstukken afgerond</div><h1>Waterstand en bruggen in Groningen</h1><p>Zo reken je op de dag zelf uit of je onder een brug past.</p></header>';
+  h+='<section class="lsec"><div class="lsec-h"><h2>In 3 stappen</h2></div>'+gxSteps(['<b>Kijk hoe hoog het water nu staat.</b><br>Dit is een getal in m NAP (hoofdstuk 1).','<b>Zoek je brug op.</b><br>Kijk naar de hoogte van de brug (hoofdstuk 3).','<b>Reken.</b><br>Hoogte van de brug min hoogte van het water = ruimte onder de brug. Is je boot plus 10 cm marge lager dan de ruimte? Dan past je. Past je niet, of twijfel je? Laat de brug openen of ga niet door (hoofdstuk 4).'])+'<div class="ltip"><b>Onthoud:</b> hoger water = minder ruimte onder de brug.</div></section>';
+  h+='<ol class="lpath" aria-label="Hoofdstukken">'+GX.CH.map((c,i)=>{const done=gxDone(s,i),b=s.best[i];const meta=b!=null?'Oefenvragen '+b+'/3'+(b>=2?'':' · haal er minstens 2 goed'):s.read[i]?'Les gelezen':'Nog niet begonnen';
+    return'<li class="lnode '+(done?'done':'open')+'"><span class="dot" aria-hidden="true">'+(done?'✓':(i+1))+'</span><div class="lcard"><div class="lcard-t"><small>Hoofdstuk '+(i+1)+'</small><b>'+esc(c.t)+'</b><span>'+esc(c.s)+'</span><span class="lmeta">'+meta+'</span></div><div class="lcard-a"><button type="button" class="btn sm'+(done?'':' primary')+'" data-lact="gx" data-sub="ch" data-i="'+i+'">'+(s.read[i]?'Les':'Les lezen')+'</button><button type="button" class="btn sm" data-lact="gx" data-sub="quiz" data-i="'+i+'">'+(b!=null?'Opnieuw':'Oefenvragen')+'</button></div></div></li>'}).join('')+'</ol>';
+  h+='<div class="lnext"><div><b>Brugcheck</b><span>Kies een brug, vul de waterstand in en zie direct of je past.</span></div><button type="button" class="btn primary" data-lact="gx" data-sub="tool">Naar de Brugcheck</button></div>';
+  return h+gxSrc}
+
+function gxPanel(id,cm,title,sub,was){const base=280,top=m=>base-m*100,wy=top(cm/100),bu=top(1.6),cx=205,ruimte=1.6-cm/100;
+  let s='<svg viewBox="0 0 360 330" role="img" aria-label="'+title+', '+sub+': ruimte onder de brug is '+gxF2(ruimte)+' m">';
+  s+='<defs><marker id="'+id+'" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--accent-2)"/></marker></defs>';
+  s+='<text x="8" y="34" font-size="15" font-weight="700" fill="currentColor">'+title+'</text><text x="8" y="53" font-size="12.5" style="fill:var(--ink-2)">'+sub+'</text>';
+  s+='<rect x="110" y="'+wy+'" width="190" height="'+(300-wy)+'" style="fill:var(--m-water)"/><line x1="110" y1="'+wy+'" x2="300" y2="'+wy+'" stroke-width="3" style="stroke:var(--blue)"/>';
+  if(was){const wsy=top(was/100);s+='<line x1="110" y1="'+wsy+'" x2="300" y2="'+wsy+'" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" opacity=".6"/><text x="116" y="'+(wsy+15)+'" font-size="11.5" style="fill:var(--ink-2)">was '+gxF2(was/100)+' (tabel)</text>'}
+  s+='<rect x="70" y="'+bu+'" width="40" height="'+(300-bu)+'" stroke="currentColor" stroke-width="1.5" style="fill:var(--tint)"/><rect x="300" y="'+bu+'" width="40" height="'+(300-bu)+'" stroke="currentColor" stroke-width="1.5" style="fill:var(--tint)"/>';
+  s+='<rect x="70" y="96" width="270" height="24" stroke="currentColor" stroke-width="1.5" style="fill:var(--tint)"/><text x="205" y="113" font-size="12.5" font-weight="700" text-anchor="middle" fill="currentColor">Poelebrug</text>';
+  s+='<line x1="64" y1="280" x2="346" y2="280" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" opacity=".5"/><text x="60" y="284" font-size="12" text-anchor="end" style="fill:var(--ink-2)">NAP 0</text>';
+  s+='<line x1="64" y1="'+bu+'" x2="70" y2="'+bu+'" stroke="currentColor"/><text x="60" y="'+(bu+4)+'" font-size="12" font-weight="700" text-anchor="end" fill="currentColor">brug +1,60</text>';
+  s+='<line x1="64" y1="'+wy+'" x2="110" y2="'+wy+'" stroke-width="2" style="stroke:var(--blue)"/><text x="60" y="'+(wy+4)+'" font-size="12" font-weight="700" text-anchor="end" style="fill:var(--blue)">water '+gxF2(cm/100)+'</text>';
+  s+='<line x1="'+cx+'" y1="'+(bu+3)+'" x2="'+cx+'" y2="'+(wy-3)+'" stroke-width="2.2" marker-start="url(#'+id+')" marker-end="url(#'+id+')" style="stroke:var(--accent-2)"/>';
+  const my=(bu+wy)/2;s+='<text x="'+(cx+12)+'" y="'+(my-4)+'" font-size="12.5" style="fill:var(--accent-2)">ruimte</text><text x="'+(cx+12)+'" y="'+(my+15)+'" font-size="18" font-weight="800" style="fill:var(--accent-2)">'+gxF2(ruimte)+' m</text>';
+  return s+'</svg>'}
+function gxBoat(id,cm){const base=280,top=m=>base-m*100,wy=top(cm/100),bu=top(1.6),ruimte=1.6-cm/100,ok=ruimte>=1.0-1e-9,col=ok?'var(--ok)':'var(--err)';
+  let s='<svg viewBox="0 0 360 330" role="img" aria-label="Water op '+gxF2(cm/100)+' m: ruimte '+gxF2(ruimte)+' m, boot plus marge 1,00 m, '+(ok?'je past':'je past niet')+'">';
+  s+='<text x="8" y="34" font-size="15" font-weight="800" style="fill:'+col+'">Water op '+gxF2(cm/100)+': '+(ok?'je past':'je past niet')+'</text><text x="8" y="53" font-size="12.5" style="fill:var(--ink-2)">Poelebrug, boot van 0,90 m</text>';
+  s+='<rect x="110" y="'+wy+'" width="190" height="'+(300-wy)+'" style="fill:var(--m-water)"/><line x1="110" y1="'+wy+'" x2="300" y2="'+wy+'" stroke-width="3" style="stroke:var(--blue)"/>';
+  s+='<rect x="70" y="'+bu+'" width="40" height="'+(300-bu)+'" stroke="currentColor" stroke-width="1.5" style="fill:var(--tint)"/><rect x="300" y="'+bu+'" width="40" height="'+(300-bu)+'" stroke="currentColor" stroke-width="1.5" style="fill:var(--tint)"/>';
+  s+='<rect x="70" y="96" width="270" height="24" stroke="currentColor" stroke-width="1.5" style="fill:var(--tint)"/><text x="82" y="113" font-size="12.5" font-weight="700" fill="currentColor">Poelebrug</text>';
+  const bt=wy-90;s+='<rect x="175" y="'+bt+'" width="100" height="90" rx="6" stroke="currentColor" stroke-width="1.8" style="fill:var(--accent-soft)"/><rect x="190" y="'+(bt+22)+'" width="18" height="16" rx="2" style="fill:var(--m-water)"/><rect x="216" y="'+(bt+22)+'" width="18" height="16" rx="2" style="fill:var(--m-water)"/><rect x="242" y="'+(bt+22)+'" width="18" height="16" rx="2" style="fill:var(--m-water)"/><text x="225" y="'+(bt+68)+'" font-size="13" font-weight="700" text-anchor="middle" fill="currentColor">boot 0,90</text>';
+  s+='<rect x="175" y="'+(bt-10)+'" width="100" height="10" stroke-width="2" stroke-dasharray="4 3" style="fill:none;stroke:'+(ok?'var(--accent-2)':'var(--err)')+'"/>';
+  s+='<text x="60" y="'+(bu+4)+'" font-size="12" font-weight="700" text-anchor="end" fill="currentColor">brug +1,60</text><line x1="64" y1="'+bu+'" x2="70" y2="'+bu+'" stroke="currentColor"/>';
+  s+='<line x1="64" y1="'+wy+'" x2="110" y2="'+wy+'" stroke-width="2" style="stroke:var(--blue)"/><text x="60" y="'+(wy+4)+'" font-size="12" font-weight="700" text-anchor="end" style="fill:var(--blue)">water '+gxF2(cm/100)+'</text>';
+  s+='<line x1="64" y1="280" x2="346" y2="280" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" opacity=".5"/><text x="60" y="284" font-size="12" text-anchor="end" style="fill:var(--ink-2)">NAP 0</text>';
+  s+='<line x1="128" y1="'+(bu+3)+'" x2="128" y2="'+(wy-3)+'" stroke-width="2.2" marker-start="url(#'+id+')" marker-end="url(#'+id+')" style="stroke:var(--accent-2)"/>';
+  s+='<defs><marker id="'+id+'" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--accent-2)"/></marker></defs>';
+  s+='<text x="118" y="'+(wy+24)+'" font-size="14" font-weight="800" style="fill:var(--accent-2)">ruimte '+gxF2(ruimte)+' m</text><text x="118" y="'+(wy+43)+'" font-size="12.5" fill="currentColor">nodig 1,00 m (boot + marge)</text>';
+  return s+'</svg>'}
+function gxTable(){const rows=GX.BR.map((b,ix)=>({b,ix}));if(GXV.sortL)rows.sort((a,c)=>a.b[5]-c.b[5]);
+  return'<div class="tbl-wrap"><table class="tbl gxtbl"><thead><tr><th>#</th><th>Brug</th><th>Vaarweg</th><th>Soort</th><th class="num">Breedte (m)</th><th class="num">Hoogte (m NAP)</th><th class="num">Ruimte bij 0,62 (m)</th></tr></thead><tbody>'+
+    rows.map(({b,ix})=>'<tr'+(b[5]<0.5?' class="gxlow"':'')+'><td class="num">'+(ix+1)+'</td><td><b>'+esc(b[0])+'</b>'+(b[6]?' <span class="pill">vast</span>':'')+(b[0]==='Sint Jansbrug'?' <span class="pill acc">check</span>':'')+'</td><td>'+esc(b[1])+'</td><td>'+esc(b[2])+'</td><td class="num">'+gxF2(b[3])+'</td><td class="num">'+gxSg(b[4])+'</td><td class="num"><b>'+gxF2(b[5])+'</b></td></tr>').join('')+'</tbody></table></div>'}
+function gxChapter(i){const c=GX.CH[i];if(!c)return gxHome();let h=gxBar('Hoofdstuk '+(i+1)+' van '+GX.CH.length,true);
+  h+='<header class="lhead"><div class="eyebrow">Extra voor Groningen · hoofdstuk '+(i+1)+'</div><h1>'+esc(c.t)+'</h1><p>'+esc(c.s)+'</p></header>';
+  const sec=(t,b)=>'<section class="lsec"><div class="lsec-h"><h2>'+t+'</h2></div>'+b+'</section>';
+  if(i===0){
+    h+=sec('Waterinfo openen','<p>Open <a href="https://waterinfo.rws.nl" target="_blank" rel="noopener">waterinfo.rws.nl</a> op je telefoon of computer. Kijk op de kaart bij Groningen.</p><figure><a href="'+CITY.assets+'assets/extra/gro-waterinfo.jpg" target="_blank" rel="noopener"><img src="'+CITY.assets+'assets/extra/gro-waterinfo.jpg" alt="Kaart van Groningen met de Slochtersluis groen omcirkeld en de bol -88 cm rood doorgestreept" width="900" height="687" loading="lazy"></a><figcaption>Kaart op Waterinfo (gezien op 06-10-2026). Posities van de bolletjes kunnen veranderen.</figcaption></figure><ul><li><b>Gebruik de Slochtersluis.</b> Dat is het grijze rondje rechts, bij Meerstad. Tik erop.</li><li><b>Gebruik NIET de groene bol "-88 cm"</b> bij Groningen. Dat is een ander meetpunt, bij een andere sluis. Daar staat het water veel lager en dat peil geldt niet voor de bruggen in de stad.</li></ul>');
+    h+=sec('Centimeters en meters','<p>Waterinfo geeft <b>centimeters</b>. Jij rekent met <b>meters</b>. Deel het getal door 100.</p><div class="tbl-wrap gxsmall"><table class="tbl"><thead><tr><th>Waterinfo</th><th>Jij rekent met</th></tr></thead><tbody><tr><td>48 cm</td><td>0,48 m</td></tr><tr><td>55 cm</td><td>0,55 m</td></tr><tr><td>62 cm</td><td>0,62 m</td></tr><tr><td>68 cm</td><td>0,68 m</td></tr></tbody></table></div><p>Schrijf de tijd van de meting erbij.</p>');
+    h+=sec('Staat er een streepje?','<div class="ltip gxbad">Een streepje betekent: er zijn nu even geen gegevens. Het water is dan <b>niet 0</b>.</div><p>Gebruik dan de peilschaal die er op dat moment is.</p><h3>Peilschaal naast Waterinfo</h3><p>Staat er een peilschaal bij een brug of sluis in de stad? Kijk er ook naar. Verschilt het meer dan 5 cm met Waterinfo? Ga dan uit van de peilschaal.</p>')}
+  if(i===1){const L=v=>((v-.3)/.5*100)+'%';
+    h+=sec('NAP','<p>NAP is de hoogte-lat van Nederland. Alle hoogtes hier zijn "meter boven NAP". Dus +1,60 m NAP is 1,60 meter boven die lat.</p>');
+    h+=sec('Streefpeil','<p>Het streefpeil is het waterpeil waar de brughoogtes van uitgaan. In de brongegevens van de bruggen is dat <b>+0,62 m NAP</b>. De "ruimte" in de brugtabel klopt dus alleen als het water precies op 0,62 staat.</p><figure class="gxfig"><div class="gxgrid">'+gxPanel('gxa0',62,'Zo staat het in de tabel','water op 0,62 (streefpeil)',0)+gxPanel('gxa1',74,'Zo is het op de dag zelf','voorbeeld: water op 0,74',62)+'</div><figcaption>De brug (+1,60 m NAP) verandert nooit. Alleen het water beweegt, en daarmee de ruimte onder de brug. Staat het water lager, bijvoorbeeld op 0,50, dan is er juist meer ruimte.</figcaption></figure><div class="ltip gxgood"><b>Handig:</b> de hoogte van de brug (in m NAP) verandert nooit. Je trekt gewoon het water van nu af van de hoogte van de brug. Daarom hoef je niet te weten welk streefpeil er precies geldt.</div><p>Het waterschap noemde 0,55 voor het centrum. Bij het Eendrachtskanaal is het −0,93. Voor de 17 bruggen hier reken je met het water van nu.</p>');
+    h+=sec('Hoe hoog staat het water meestal?','<p>Gemeten bij de Slochtersluis, van 08-09-2026 tot 01-10-2026 (ruim 2700 metingen, om de 10 minuten).</p><div class="gxscale" aria-label="Schaal van 0,30 tot 0,80 meter met laagste, gemiddelde en hoogste peil"><div class="line"></div><div class="rng" style="left:'+L(.47)+';width:'+((.62-.47)/.5*100)+'%"></div><div class="mk up" style="left:'+L(.34)+'">laagste 0,34</div><div class="mk up" style="left:'+L(.55)+'">gemiddeld 0,55</div><div class="mk up" style="left:'+L(.68)+'">hoogste 0,68</div><div class="mk dn" style="left:'+L(.62)+'">streefpeil 0,62</div></div><div class="gxticks"><span>0,30</span><span>0,40</span><span>0,50</span><span>0,60</span><span>0,70</span><span>0,80</span></div><p class="note small">De oranje balk is waar het water 9 van de 10 keer stond: tussen 0,47 en 0,62.</p><ul><li><b>Gemiddeld 0,55 m NAP</b> (55 cm). Dat is ongeveer 7 cm onder het streefpeil. Meestal heb je dus iets meer ruimte dan de tabel zegt.</li><li>’s Nachts staat het water iets hoger (rond 0,57), aan het eind van de middag iets lager (rond 0,53).</li><li>Het water kan in een paar uur wel 10 tot 20 cm omhoog of omlaag gaan.</li></ul><div class="ltip">Dit zijn maar ruim 3 weken in de herfst, met een gat van 27-09 tot 01-10. Bij veel regen of storm kan het anders zijn. Kijk daarom altijd naar de waterstand van die dag.</div>')}
+  if(i===2){
+    h+=sec('De 17 bruggen op de route','<p>Dit zijn 17 relevante bruggen voor jullie. De ruimte in de laatste kolom geldt alleen als het water op 0,62 staat. Het water staat gemiddeld op 0,55, dus meestal heb je ongeveer 7 cm meer ruimte. Reken altijd zelf met de waterstand van vandaag. Oranje regels zijn heel laag.</p><div class="row gxsort"><button type="button" class="chip'+(GXV.sortL?'':' on')+'" data-lact="gx" data-sub="sort" data-v="r">Volgorde van de route</button><button type="button" class="chip'+(GXV.sortL?' on':'')+'" data-lact="gx" data-sub="sort" data-v="l">Laagste eerst</button></div><div id="gxTbl">'+gxTable()+'</div><p class="note small">Hoogte is in m NAP bij een gesloten brug. Ruimte is hoogte min 0,62.</p><h3>Pas extra op bij deze bruggen</h3><ul><li><b>Maagdenbrug:</b> maar 0,23 m ruimte bij 0,62. Laat de brug openen.</li><li><b>Sint Jansbrug:</b> heel laag. Bij water op 0,55 is de ruimte maar 0,45 m (1,00 min 0,55). In de bron staat 1,00 m ruimte, maar dat past niet bij een brug van +1,00 m NAP, dus wij rekenen met de brughoogte. Controleer dit voor je gaat.</li><li><b>Vaste bruggen</b> (Kattenbrug, Steentilbrug, Kijk in ’t Jatbrug, Boteringebrug, Ebbingebrug): deze gaan niet open. Reken altijd na.</li></ul>')}
+  if(i===3){
+    h+=sec('De som','<div class="gxformula">hoogte van de brug − hoogte van het water = ruimte onder de brug</div><div class="ltip"><b>Marge:</b> tel 10 cm bij de hoogte van je boot op. Zo heb je een beetje speling. (10 cm is een voorstel. Flagship bepaalt de definitieve marge.)</div>');
+    h+=sec('Rekenvoorbeeld','<p>Je vaart onder de Poelebrug door. Je boot is 0,90 m hoog (dit getal is verzonnen, gebruik de echte hoogte van jullie boot).</p>'+gxSteps(['<b>Hoe hoog is het water?</b><br>Waterinfo zegt 55 cm. Dat is 0,55 m.','<b>Hoe hoog is de brug?</b><br>+1,60 m (uit de tabel).','<b>Reken de ruimte uit.</b><br>1,60 − 0,55 = <b>1,05 m</b>','<b>Wat heb je nodig?</b><br>Boot 0,90 + marge 0,10 = <b>1,00 m</b>','<b>Vergelijk.</b><br>1,05 is meer dan 1,00. <b>Je past.</b>'])+'<figure class="gxfig"><div class="gxgrid">'+gxBoat('gxb0',55)+gxBoat('gxb1',68)+'</div><figcaption>De oranje pijl is de ruimte onder de brug. Het gestippelde vak boven de boot is de marge van 10 cm. Links past alles eronder. Rechts staat het water 13 cm hoger (68 cm, het hoogste dat we gemeten hebben): de ruimte is dan 0,92 m, minder dan de 1,00 m die je nodig hebt. Laat de brug openen of ga niet door.</figcaption></figure>');
+    h+='<div class="lnext"><div><b>Zelf proberen</b><span>Gebruik de Brugcheck met je eigen waarden.</span></div><button type="button" class="btn" data-lact="gx" data-sub="tool">Naar de Brugcheck</button></div>';
+    h+=sec('Woordenlijst','<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Woord</th><th>Wat het betekent</th></tr></thead><tbody><tr><td><b>NAP</b></td><td>De hoogte-lat voor heel Nederland. "+1,60 m NAP" is 1,60 meter boven die lat.</td></tr><tr><td><b>Streefpeil</b></td><td>Het waterpeil waar de brughoogtes van uitgaan. In de brongegevens is dat 0,62 m NAP.</td></tr><tr><td><b>Ruimte onder de brug</b></td><td>Hoogte van de brug min hoogte van het water. Dit is wat je nodig hebt.</td></tr><tr><td><b>Basculebrug, draaibrug</b></td><td>Beweegbare bruggen. Je kunt ze laten openen.</td></tr><tr><td><b>Vaste brug</b></td><td>Gaat niet open. Je moet er onderdoor passen.</td></tr></tbody></table></div>')}
+  h+='<div class="lnext"><div><b>Klaar met lezen?</b><span>3 oefenvragen · haal er minstens 2 goed om het hoofdstuk af te ronden</span></div><button type="button" class="btn primary" data-lact="gx" data-sub="quiz" data-i="'+i+'">Start de oefenvragen</button></div>';
+  return h+gxSrc}
+function gxQuiz(){const Q=GXV.q,q=GX.QZ[Q.ch][Q.k],n=GX.QZ[Q.ch].length,a=Q.ans;
+  let h='<div class="lbar"><button type="button" class="btn soft sm" data-lact="gx" data-sub="ch" data-i="'+Q.ch+'">Stoppen</button><span class="lcrumb">Extra voor Groningen · hoofdstuk '+(Q.ch+1)+' · '+esc(GX.CH[Q.ch].t)+'</span></div>';
+  h+='<div class="qprog"><div class="qbar" role="progressbar" aria-valuemin="0" aria-valuemax="'+n+'" aria-valuenow="'+(Q.k+(a!=null?1:0))+'" aria-label="Voortgang oefenvragen"><span style="width:'+Math.round((Q.k+(a!=null?1:0))/n*100)+'%"></span></div><span>Vraag '+(Q.k+1)+' van '+n+'</span></div>';
+  h+='<section class="qcard"><h2 id="gxqText">'+esc(q.q)+'</h2><div class="qopts" role="group" aria-labelledby="gxqText">'+q.o.map((o,k)=>{let cls='qopt';if(a!=null){if(k===q.c)cls+=' good';else if(k===a)cls+=' bad';else cls+=' dim'}return'<button type="button" class="'+cls+'" data-gxo="'+k+'"'+(a!=null?' disabled':'')+'><span class="ql" aria-hidden="true">'+'ABCD'[k]+'</span><span>'+esc(o)+'</span></button>'}).join('')+'</div>';
+  if(a!=null){const good=a===q.c;h+='<div class="qfb '+(good?'good':'bad')+'" role="status"><b>'+(good?'Goed!':'Helaas, dat is niet goed.')+'</b><p>'+esc(q.e)+'</p></div><div class="qnext"><button type="button" class="btn primary" data-lact="gx" data-sub="next" id="gxNext">'+(Q.k+1<n?'Volgende vraag':'Bekijk je resultaat')+'</button></div>'}
+  return h+'</section><p class="note small">Tip: je kunt ook antwoorden met de toetsen A, B, C, D en doorgaan met Enter.</p>'}
+function gxRes(){const Q=GXV.q,n=GX.QZ[Q.ch].length,pass=Q.ok>=2;
+  return'<section class="qres '+(pass?'pass':'fail')+'"><div class="eyebrow">Extra voor Groningen · hoofdstuk '+(Q.ch+1)+' · '+esc(GX.CH[Q.ch].t)+'</div><div class="qscore">'+Q.ok+'<small>/'+n+'</small></div><h1>'+(Q.ok===n?'Alles goed!':pass?'Goed gedaan.':'Lees het hoofdstuk nog een keer.')+'</h1><p>'+(pass?'Dit hoofdstuk is afgerond.':'Haal minstens 2 van de 3 goed om dit hoofdstuk af te ronden.')+'</p><div class="row qres-a">'+(Q.ch<GX.CH.length-1?'<button type="button" class="btn primary" data-lact="gx" data-sub="ch" data-i="'+(Q.ch+1)+'">Naar hoofdstuk '+(Q.ch+2)+'</button>':'<button type="button" class="btn primary" data-lact="gx" data-sub="tool">Naar de Brugcheck</button>')+(pass?'':'<button type="button" class="btn" data-lact="gx" data-sub="ch" data-i="'+Q.ch+'">Les nog eens lezen</button>')+'<button type="button" class="btn" data-lact="gx" data-sub="quiz" data-i="'+Q.ch+'">Opnieuw proberen</button><button type="button" class="btn soft" data-lact="gx" data-sub="home">Waterstand en bruggen</button></div></section>'}
+function gxTool(){const t=GXV.tool;let h=gxBar('Brugcheck',true);
+  h+='<header class="lhead"><div class="eyebrow">Extra voor Groningen · rekenhulp</div><h1>Brugcheck</h1><p>Kies een brug, vul het water van nu in en zie of je past.</p></header>';
+  h+='<section class="lsec gxtool"><div class="field"><label for="gxB">Brug</label><select id="gxB">'+GX.BR.map((b,i)=>'<option value="'+i+'"'+(i===+t.b?' selected':'')+'>'+(i+1)+'. '+esc(b[0])+(b[6]?' (vast)':'')+'</option>').join('')+'</select></div>'+
+    '<div class="gx3"><div class="field"><label for="gxC">Water van nu (cm, zoals op Waterinfo)</label><input type="text" inputmode="decimal" id="gxC" value="'+esc(t.cm)+'"><small class="note">Voorbeeld: 55 betekent 0,55 m NAP.</small></div><div class="field"><label for="gxH">Hoogte van je boot (m)</label><input type="text" inputmode="decimal" id="gxH" value="'+esc(t.h)+'"><small class="note">Vul de echte hoogte van jullie boot in.</small></div><div class="field"><label for="gxM">Marge (cm)</label><input type="text" inputmode="decimal" id="gxM" value="'+esc(t.m)+'"><small class="note">Voorstel: 10 cm.</small></div></div><div id="gxRes">'+gxCalcHtml()+'</div></section>';
+  return h+'<p class="note small gxsrc">Brughoogtes: Vaarweginformatie.nl (Rijkswaterstaat), opgehaald 06-10-2026. Hulpmiddel, geen officieel advies.</p>'}
+function gxCalcHtml(){const t=GXV.tool,b=GX.BR[+t.b]||GX.BR[0];const num=v=>parseFloat(String(v).replace(',','.'));const cm=num(t.cm),bt=num(t.h),mg=num(t.m);
+  if(isNaN(cm)||isNaN(bt)||isNaN(mg))return'<div class="qfb"><b>Vul alle velden in</b></div>';
+  const w=cm/100,ruimte=b[4]-w,nodig=bt+mg/100,ok=ruimte>=nodig-1e-9;let warn='';
+  if(Math.abs(cm)<10&&cm!==0)warn+='<div class="ltip gxbad">Je vulde '+esc(String(t.cm))+' in. Waterinfo geeft centimeters. Bedoel je '+Math.round(cm*100)+' cm?</div>';
+  else if(cm<30||cm>75)warn+='<div class="ltip gxbad">Dit peil is ongewoon (meestal tussen 47 en 62 cm). Controleer je meting of kijk op de peilschaal.</div>';
+  if(b[0]==='Sint Jansbrug')warn+='<div class="ltip">De gegevens van de Sint Jansbrug moeten nog gecontroleerd worden. Controleer de brug voor je gaat.</div>';
+  const adv=ok?'Er is genoeg ruimte, met marge.':(b[6]?'Dit is een vaste brug. Ga niet door.':'Laat de brug openen. Past je dan nog niet, ga niet door.');
+  return warn+'<div class="qfb '+(ok?'good':'bad')+' gxverdict" role="status"><b>'+(ok?'Je past':'Je past niet')+'</b><p class="num">Ruimte: '+gxF2(b[4])+' − '+gxF2(w)+' = <b>'+gxF2(ruimte)+' m</b><br>Nodig: '+gxF2(bt)+' + '+gxF2(mg/100)+' = <b>'+gxF2(nodig)+' m</b></p><p><b>'+adv+'</b></p></div>'}
+function gxAct(b){const sub=b.dataset.sub,i=+b.dataset.i||0;
+  if(sub==='sort'){GXV.sortL=b.dataset.v==='l';renderLeer();return}
+  if(sub==='next'){gxNext();return}
+  if(sub==='quiz'){GXV.q={ch:i,k:0,ok:0,ans:null};GXV.v='quiz';GXV.i=i;renderLeer();leerScroll();setTimeout(()=>{const o=$('#leer [data-gxo]');if(o)o.focus()},30);return}
+  GXV.v=sub==='ch'||sub==='tool'?sub:'home';GXV.i=i;GXV.q=null;
+  if(sub==='ch'){const s=gxSt();if(!s.read[i]){s.read[i]=true;thSave()}}
+  renderLeer();leerScroll();gxNav()}
+function gxPick(k){const Q=GXV.q;if(!Q||Q.ans!=null)return;Q.ans=k;if(k===GX.QZ[Q.ch][Q.k].c)Q.ok++;renderLeer();setTimeout(()=>{const n=$('#gxNext');if(n)n.focus()},30)}
+function gxNext(){const Q=GXV.q;if(!Q||Q.ans==null)return;
+  if(Q.k+1<GX.QZ[Q.ch].length){Q.k++;Q.ans=null;renderLeer();setTimeout(()=>{const o=$('#leer [data-gxo]');if(o)o.focus()},30);return}
+  const s=gxSt();if(s.best[Q.ch]==null||Q.ok>s.best[Q.ch]){s.best[Q.ch]=Q.ok;thSave()}GXV.v='res';renderLeer();leerScroll()}
+$('#leer').addEventListener('input',e=>{const el=e.target;if(!el.closest||!el.closest('.gxtool'))return;const t=GXV.tool;if(el.id==='gxB')t.b=el.value;else if(el.id==='gxC')t.cm=el.value;else if(el.id==='gxH')t.h=el.value;else if(el.id==='gxM')t.m=el.value;const r=$('#gxRes');if(r)r.innerHTML=gxCalcHtml()});
+$('#leer').addEventListener('change',e=>{if(e.target&&e.target.id==='gxB'){GXV.tool.b=e.target.value;const r=$('#gxRes');if(r)r.innerHTML=gxCalcHtml()}});
+document.addEventListener('keydown',e=>{if(APP.mode!=='leer'||LV.v!=='extra'||GXV.v!=='quiz'||!GXV.q||!$('#modal').hidden||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();const i='ABCD'.indexOf(k);
+  if(i>=0&&k.length===1&&GXV.q.ans==null){e.preventDefault();gxPick(i)}else if(e.key==='Enter'&&GXV.q.ans!=null&&!(e.target&&e.target.closest&&e.target.closest('button'))){e.preventDefault();gxNext()}});
 
 /* ---------- change handling ---------- */
 function changed(o){o=o||{};if(o.route)drawRoute();CHECKS=checks();renderProgress();renderRail();if(o.items)drawItems();if(o.route)drawWps();if(o.panel)renderPanel();updateHint()}
