@@ -1,0 +1,39 @@
+# SOR Casusbouwer – Apache-instellingen (komt mee in de bouwmap)
+# Staat de site niet in de hoofdmap van het domein? Pas dan /404.html aan naar /<map>/404.html.
+
+# Nieuwe vaargebieden (/<gebied>/) bestaan niet als map: 404.html laadt dan de algemene casusbouwer.
+ErrorDocument 404 /404.html
+DirectorySlash On
+Options -Indexes
+DirectoryIndex index.html
+
+# Een nieuw vaargebied (/<gebied>/) direct met status 200 laten laden (zonder mod_rewrite werkt het ook, via ErrorDocument)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^[a-z][a-z0-9-]{1,30}/$ 404.html [L]
+</IfModule>
+
+# Configuratiebestanden niet uitleveren
+<FilesMatch "^(\.htaccess|\.nojekyll|web\.config)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  # HTML altijd vers ophalen (nieuwe versies direct zichtbaar); vaste bestanden mogen lang in de cache
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(js|css|woff2|webp|jpg|png|pdf)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
