@@ -684,6 +684,24 @@ button.pill.stad.groningen,button.pill.stad.utrecht{background:var(--accent-soft
 .meopts{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:6px 0}
 .meopt{display:flex;gap:6px;align-items:center}.meopt input[type=text]{flex:1;min-width:0}.meopt span{font-weight:700;width:14px}
 @media (max-width:720px){.mepunt{grid-template-columns:26px 1fr}.mepunt .field,.mepunt button{grid-column:2}.meopts{grid-template-columns:1fr}}
+/* startpagina leeromgeving */
+.ltiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.ltile{display:flex;gap:14px;align-items:flex-start;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;font:inherit;color:inherit;cursor:pointer;min-height:150px;position:relative;box-shadow:var(--shadow)}
+.ltile:hover{border-color:var(--accent)}
+.ltile:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ltile-i{font-size:28px;line-height:1}
+.ltile-t{display:flex;flex-direction:column;gap:4px;flex:1}
+.ltile-t b{font-size:19px}
+.ltile-t small{margin-top:auto;padding-top:8px;font-weight:700;color:var(--accent)}
+.ltile.lock{opacity:.7}.ltile.lock .ltile-t small{color:inherit;font-weight:400}
+.ltile-go{font-size:20px;color:var(--accent);align-self:center}
+.vglist{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.tj-stappen li>.cbrbox{grid-column:2;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.cbrfile{display:inline-flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.cbrup{position:relative;cursor:pointer}
+.cbrup input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.cbrup:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+@media (max-width:820px){.ltiles{grid-template-columns:1fr}.ltile{min-height:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -870,6 +888,9 @@ async function initPlatform(){
   showScreen('Casusbouwer laden','Even geduld…',null,true);
   let session=null;try{const {data}=await APP.sb.auth.getSession();session=data&&data.session}catch(e){}
   if(session&&session.user){APP.user=session.user;APP.uid=session.user.id;await afterLogin()}else showLogin()}
+/* duidelijke foutmelding; op een database zonder de nieuwste update (015/016) geen technische tekst */
+const dbOntbreekt=e=>!!e&&/schema cache|does not exist|PGRST205|PGRST204|42P01|42703/i.test(String(e.message||'')+' '+String(e.code||''));
+const foutTekst=(e,actie)=>dbOntbreekt(e)?'Dit onderdeel werkt nog niet: de database moet eerst worden bijgewerkt (zie OVERDRACHT.md, database-update 015 en 016).':(actie||'Opslaan')+' is mislukt: '+((e&&e.message)||'onbekende fout');
 /* gebieden uit de database: namen en volgorde, plus nieuwe gebieden (zonder de kaart, die is groot) */
 async function loadGebieden(){if(!APP.sb)return;try{const {data,error}=await APP.sb.from('gebieden').select('slug,naam,actief,ingebouwd,volgorde,instellingen,traject');if(error||!data)return;data.sort((a,b)=>(a.volgorde-b.volgorde)||String(a.naam).localeCompare(b.naam));APP.gebieden=data;
   data.forEach(g=>{STAD_NAAM[g.slug]=g.naam;if(!STADS.includes(g.slug)&&(g.actief||APP.isStaff))STADS.push(g.slug)})}catch(e){}}
@@ -1012,7 +1033,7 @@ window.addEventListener('popstate',async e=>{const st=e.state;if(!st||!st.k)retu
     if(st.role==='voorbeeld'&&APP.isStaff){unsubAll();APP.role='voorbeeld';APP.target=null;APP.fb=null;state=exampleState();enterEditor();setStep(st.step);return}
     if(st.id&&APP.sb){try{await flushNow()}catch(_){}await openCasus(st.id,st.role);if(APP.target===st.id)setStep(st.step)}return}
   if(st.k==='dash'&&APP.sb&&(APP.isStaff||APP.isLm)){try{await flushNow()}catch(_){}openDashboard();return}
-  if(st.k==='leer'&&APP.lid){if(APP.mode!=='leer'){if(APP.isStaff||APP.isLm)openLeerPreview();else await openLeer(false)}LQ=null;LV.v=st.v==='les'||st.v==='extra'?st.v:'home';if(st.v==='extra'){GXV.v=st.gx||'home';GXV.i=st.i||0;GXV.q=null}LV.id=st.id||null;renderLeer();leerScroll()}
+  if(st.k==='leer'&&APP.lid){if(APP.mode!=='leer'){if(APP.isStaff||APP.isLm)openLeerPreview();else await openLeer(false)}LQ=null;LV.v=['les','extra','home','start','voortgang','mod'].includes(st.v)?st.v:'start';if(st.v==='mod'){MV.v='les';MV.q=null}if(st.v==='extra'){GXV.v=st.gx||'home';GXV.i=st.i||0;GXV.q=null}LV.id=st.id||null;renderLeer();leerScroll()}
 }finally{NAV.busy=false}});
 
 /* ---------- route analysis ---------- */
@@ -1164,7 +1185,7 @@ const panel=$('#panel');
 function statusPill(st){return st==='ingeleverd'?'<span class="pill blue">Ingeleverd</span>':st==='geslaagd'?'<span class="pill ok">Geslaagd</span>':'<span class="pill unk">Bezig</span>'}
 function renderTop(){const t=$('#topActions');const r=APP.role,m=APP.mode;$('#prog').style.display=(m==='edit')?'':'none';let h='';
   if(m==='edit'&&r==='local')h='<button class="btn ghost sm" type="button" data-top="new">Nieuwe casus</button><button class="btn ghost sm" type="button" data-top="example">Voorbeeld</button><button class="btn ghost sm" type="button" data-top="backup">Back-up</button><label class="btn ghost sm" for="fileImport">Openen</label><input type="file" id="fileImport" accept=".json,application/json" hidden>';
-  else if(m==='edit'&&r==='kandidaat')h=(LEER_LIVE?'<button class="btn soft sm" type="button" data-top="leer">Theorie</button>':'')+statusPill(APP.meta.status)+whoChip()+'<button class="btn ghost sm" type="button" data-top="logout">Uitloggen</button>';
+  else if(m==='edit'&&r==='kandidaat')h=(LEER_LIVE?'<button class="btn soft sm" type="button" data-top="leer">Leeromgeving</button>':'')+statusPill(APP.meta.status)+whoChip()+'<button class="btn ghost sm" type="button" data-top="logout">Uitloggen</button>';
   else if(m==='edit'&&r==='staff'){h='<button class="btn soft sm" type="button" data-top="dash">← Kandidaten</button><span class="who"><b>'+esc(APP.targetNaam||state.kandidaat.naam||'Kandidaat')+'</b></span>'+(APP.isLm?statusPill(APP.meta.status):'<label class="sr" for="stSel">Status</label><select id="stSel" data-top-status style="width:auto;border-radius:99px;padding:6px 12px;font-size:13px;font-weight:700">'+[['bezig','Bezig'],['ingeleverd','Ingeleverd'],['geslaagd','Geslaagd']].map(o=>'<option value="'+o[0]+'"'+((APP.meta.status||'bezig')===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>')+(APP.targetEmail?'<button class="btn primary sm" type="button" data-top="mail" title="'+esc(APP.targetEmail)+'">Feedback mailen</button>':'')}
   else if(m==='edit'&&r==='voorbeeld')h='<button class="btn soft sm" type="button" data-top="dash">← Kandidaten</button><span class="pill acc">Voorbeeldcasus · niet opgeslagen</span>';
   else if(m==='leer'&&r==='leer')h=(casusOpen()?'<button class="btn soft sm" type="button" data-top="casus">Naar je casus</button>':'')+whoChip()+'<button class="btn ghost sm" type="button" data-top="logout">Uitloggen</button>';
@@ -1281,7 +1302,7 @@ let rosterT=null;const debRoster=()=>{clearTimeout(rosterT);rosterT=setTimeout(l
 function openDashboard(){unsubAll();if(APP.dashMap==null){try{APP.dashMap=localStorage.getItem('sor-dash-map')||'alle';APP.dashSort=localStorage.getItem('sor-dash-sort')||'bijgewerkt'}catch(e){APP.dashMap='alle'}}APP.role='dash';APP.mode='dash';APP.target=null;APP.fb=null;navPush({k:'dash'});if(APP.isLm&&APP.dashFilter==='team')APP.dashFilter='actief';showMode('dash');renderTop();renderDash();loadRoster();
   try{const ch=APP.sb.channel('dash-'+uid()).on('postgres_changes',{event:'*',schema:'public',table:'leden'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'casussen'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'feedback'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'theorie'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'leermeester_toegang'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'leermeester_gebied'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'groepen'},debRoster).subscribe();APP.chans.push(ch)}catch(e){}}
 const LEDEN_COLS='id,naam,rol,code,user_id,email,status,stad,aangemaakt,gekoppeld_op,ingeleverd_op,geslaagd_op,casus_vrij,groep_id,examen_op,generale_op,vrij_nodig,vrij_verstuurd_op,vrij_geupload_op,vrij_geregistreerd_op,stappen,casussen(voortgang,bijgewerkt),feedback(stappen),theorie(xp,hoofdstukken,geslaagd_op,data)';
-async function loadRoster(){if(!APP.sb)return;const [q,lt,lg,gr]=await Promise.all([APP.sb.from('leden').select(LEDEN_COLS).order('aangemaakt',{ascending:false}),APP.isStaff?APP.sb.from('leermeester_toegang').select('leermeester_id,kandidaat_id'):Promise.resolve({data:[],error:null}),APP.sb.from('leermeester_gebied').select('leermeester_id,stad'),APP.sb.from('groepen').select('*')]);
+async function loadRoster(){if(!APP.sb)return;const [q,lt,lg,gr,cb]=await Promise.all([APP.sb.from('leden').select(LEDEN_COLS).order('aangemaakt',{ascending:false}),APP.isStaff?APP.sb.from('leermeester_toegang').select('leermeester_id,kandidaat_id'):Promise.resolve({data:[],error:null}),APP.sb.from('leermeester_gebied').select('leermeester_id,stad'),APP.sb.from('groepen').select('*'),APP.isStaff||APP.isLm?APP.sb.from('cbr_bevestiging').select('kandidaat_id,naam,geupload'):Promise.resolve({data:[],error:null})]);
   let {data,error}=q;
   /* database zonder migratie 015 (kolom leden.stappen bestaat nog niet): zonder die kolom opnieuw laden */
   if(error&&/stappen/.test(error.message||'')){const r=await APP.sb.from('leden').select(LEDEN_COLS.replace(',stappen,',',')).order('aangemaakt',{ascending:false});data=r.data;error=r.error}
@@ -1289,6 +1310,7 @@ async function loadRoster(){if(!APP.sb)return;const [q,lt,lg,gr]=await Promise.a
   APP.roster=(data||[]).map(r=>Object.assign({},r,{cas:one(r.casussen),fbk:one(r.feedback),th:one(r.theorie)}));APP.staffNames={};APP.roster.forEach(r=>{if((r.rol==='medewerker'||r.rol==='leermeester')&&r.user_id)APP.staffNames[r.user_id]=r.naam});
   APP.lmOf={};APP.lmFor={};((lt&&lt.data)||[]).forEach(x=>{(APP.lmOf[x.leermeester_id]=APP.lmOf[x.leermeester_id]||[]).push(x.kandidaat_id);(APP.lmFor[x.kandidaat_id]=APP.lmFor[x.kandidaat_id]||[]).push(x.leermeester_id)});
   if(gr&&!gr.error)APP.groepen=gr.data||[];
+  APP.cbrAll={};if(cb&&!cb.error)(cb.data||[]).forEach(x=>{APP.cbrAll[x.kandidaat_id]=x});
   APP.lmGeb={};((lg&&!lg.error&&lg.data)||[]).forEach(x=>{(APP.lmGeb[x.leermeester_id]=APP.lmGeb[x.leermeester_id]||[]).push(x.stad)});
   if(APP.lid){const me=APP.roster.find(r=>r.id===APP.lid.id);if(me)APP.lid=Object.assign(APP.lid,{naam:me.naam})}
   renderDash()}
@@ -1339,7 +1361,7 @@ function renderDash(){if(APP.mode!=='dash')return;if(APP.dashView==='voortgang'&
     h+=list.length?'<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Kandidaat</th>'+(showTh?'<th>Theorie</th>':'')+'<th>Casus</th><th>Status</th>'+(trajectZichtbaar()?'<th>Traject</th>':'')+'<th></th></tr></thead><tbody>'+list.map(r=>{const v=(r.cas&&r.cas.voortgang)||0;const st=(r.fbk&&r.fbk.stappen)||{};const open=Object.values(st).filter(x=>x&&x.status==='aanpassen').length,okc=Object.values(st).filter(x=>x&&x.status==='ok').length;const lmn=lm?[]:lmNames(r.id);
       return'<tr><td class="c-person"><div class="person">'+avatar(r)+'<div><b>'+esc(r.naam)+'</b> '+stadPill(r)+codeCell(r)+(lmn.length?'<small>Leermeester: '+esc(lmn.join(', '))+'</small>':'')+'</div></div></td>'+(showTh?'<td data-l="Theorie">'+((LEER_LIVE||(r.stad||'amsterdam')!=='amsterdam')?thCell(r):'<span class="note">–</span>')+'</td>':'')+'<td data-l="Casus"><div class="row nw" style="gap:6px"><div class="pbar"><span style="width:'+v+'%"></span></div><span class="num">'+v+'%</span></div><small class="note">'+esc(r.cas?'Bijgewerkt '+ago(r.cas.bijgewerkt):'Nog niet begonnen')+'</small></td><td data-l="Status" class="c-status">'+stPill(r.status)+(open?'<span class="pill acc">'+open+(open===1?' aanpassing':' aanpassingen')+'</span>':okc?'<span class="pill ok">'+okc+' akkoord</span>':'')+'</td>'+(trajectZichtbaar()?'<td data-l="Traject" class="c-traject">'+trCell(r)+'</td>':'')+'<td class="c-act"><div class="acts"><button type="button" class="btn sm primary" data-dact="open" data-id="'+esc(r.id)+'">Openen</button>'+(lm?'':'<button type="button" class="btn sm soft amore" data-dact="menu" data-id="'+esc(r.id)+'" aria-haspopup="menu" aria-label="Meer acties voor '+esc(r.naam)+'" title="Meer acties">⋯</button>')+'</div></td></tr>'}).join('')+'</tbody></table></div>':'<p class="note">'+(q?'Geen kandidaten gevonden voor “'+esc(APP.dashQ.trim())+'”'+(map!=='alle'?' in de map '+STAD_NAAM[map]:'')+'.':map!=='alle'&&!kand.length?'De map '+STAD_NAAM[map]+' is nog leeg.':'')+(q||(map!=='alle'&&!kand.length)?'':(lm?(f==='actief'&&!kand.length?'Er zijn nog geen kandidaten aan je gekoppeld. Een medewerker van Flagship Academy kan kandidaten aan je koppelen.':'Geen kandidaten in deze lijst.'):(f==='actief'&&!kand.length?'Nog geen kandidaten. Klik op “Kandidaat toevoegen” om te beginnen.':'Geen kandidaten in deze lijst.')))+'</p>'}
   h+=lm?'<div class="info"><b>Zo werkt het</b><ol><li>'+((APP.lmGeb&&APP.lid&&(APP.lmGeb[APP.lid.id]||[]).length)?'Je ziet alle kandidaten uit '+esc(APP.lmGeb[APP.lid.id].map(s=>STAD_NAAM[s]).join(' en '))+', en de kandidaten die een medewerker los aan je heeft gekoppeld. Nieuwe kandidaten uit dat gebied verschijnen vanzelf.':'Je ziet de kandidaten die een medewerker aan je heeft gekoppeld.')+'</li><li>Klik op <b>Openen</b> om de casus te bekijken. Bij elke stap kun je feedback geven: <b>Akkoord</b> of <b>Aanpassen</b>, met een toelichting.</li><li>De kandidaat ziet je feedback direct. Met <b>Feedback mailen</b> stuur je een samenvatting.</li></ol></div></div>'
-    :'<div class="info"><b>Zo werkt het</b><ol><li>Klik op <b>Kandidaat toevoegen</b> en vul de naam in. Je krijgt een uitnodigingscode en een bericht om te versturen.</li><li>De kandidaat opent de casusbouwer, kiest <b>Account aanmaken</b> en vult de code in. Elke code werkt één keer.</li>'+(LEER_LIVE?(LEER_GATE?'<li>De kandidaat begint in de <b>leeromgeving</b>. Na de eindtoets gaat de casus open. Klik op de theorie-voortgang om details te zien of de casus eerder vrij te geven.</li>':'<li>De kandidaat begint in de <b>leeromgeving</b> en kan meteen naar de casus. Klik op de theorie-voortgang om per hoofdstuk de scores te zien.</li>'):'')+'<li>Zet kandidaten in een <b>groep</b> met een datum voor de generale en het examen (tab <b>Groepen</b>), of geef iemand via <b>⋯</b> → <b>Traject en datums</b> een eigen datum. Casus en vrijstelling moeten een week voor de generale rond zijn. Onder <b>Actie nodig</b> zie je wie achterloopt. '+(TRAJECT_KANDIDAAT?'De kandidaat ziet zijn deadlines en een waarschuwing in de leeromgeving.':'Kandidaten en leermeesters zien dit nog niet; in de voorbeeld-leeromgeving zie je hoe het voor kandidaten wordt.')+'</li><li>Een <b>leermeester</b> ziet alleen de kandidaten die je koppelt. Onder <b>Team</b> klik je op een vaargebied (bijvoorbeeld <b>Groningen</b>): de leermeester ziet dan alle kandidaten uit dat gebied, ook nieuwe. Met <b>Losse kandidaten</b> koppel je daarnaast losse kandidaten. Hij kan hun casus bekijken en feedback geven, maar niets wijzigen of beheren.</li>'+(cvoAan()?'<li>CVO van een schip nodig? Klik bovenin op <b>CVO\'s</b>. Leermeesters hebben die knop ook.</li>':'')+'<li>Wachtwoord vergeten? Klik bij de kandidaat op <b>⋯</b> → <b>Nieuwe code</b>. Het oude account vervalt, de casus blijft bewaard.</li><li>Geslaagd? Klik op <b>⋯</b> → <b>Verwijderen</b>. Dat wist de casus, de feedback, de foto’s en het account definitief.</li></ol></div></div>';
+    :'<div class="info"><b>Zo werkt het</b><ol><li>Klik op <b>Kandidaat toevoegen</b> en vul de naam in. Je krijgt een uitnodigingscode en een bericht om te versturen.</li><li>De kandidaat opent de casusbouwer, kiest <b>Account aanmaken</b> en vult de code in. Elke code werkt één keer.</li>'+(LEER_LIVE?(LEER_GATE?'<li>De kandidaat begint in de <b>leeromgeving</b>. Na de eindtoets gaat de casus open. Klik op de theorie-voortgang om details te zien of de casus eerder vrij te geven.</li>':'<li>De kandidaat begint in de <b>leeromgeving</b> en kan meteen naar de casus. Klik op de theorie-voortgang om per hoofdstuk de scores te zien.</li>'):'')+'<li>Zet kandidaten in een <b>groep</b> met een datum voor de generale en het examen (tab <b>Groepen</b>), of geef iemand via <b>⋯</b> → <b>Traject en datums</b> een eigen datum. Casus en vrijstelling moeten een week voor de generale rond zijn. Onder <b>Voortgang → Actie nodig</b> zie je wie achterloopt. '+(TRAJECT_KANDIDAAT?'De kandidaat ziet zijn deadlines en een waarschuwing in de leeromgeving.':'Kandidaten en leermeesters zien dit nog niet; in de voorbeeld-leeromgeving zie je hoe het voor kandidaten wordt.')+'</li><li>Een <b>leermeester</b> ziet alleen de kandidaten die je koppelt. Onder <b>Team</b> klik je op een vaargebied (bijvoorbeeld <b>Groningen</b>): de leermeester ziet dan alle kandidaten uit dat gebied, ook nieuwe. Met <b>Losse kandidaten</b> koppel je daarnaast losse kandidaten. Hij kan hun casus bekijken en feedback geven, maar niets wijzigen of beheren.</li>'+(cvoAan()?'<li>CVO van een schip nodig? Klik bovenin op <b>CVO\'s</b>. Leermeesters hebben die knop ook.</li>':'')+'<li>Wachtwoord vergeten? Klik bij de kandidaat op <b>⋯</b> → <b>Nieuwe code</b>. Het oude account vervalt, de casus blijft bewaard.</li><li>Geslaagd? Klik op <b>⋯</b> → <b>Verwijderen</b>. Dat wist de casus, de feedback, de foto’s en het account definitief.</li></ol></div></div>';
   $('#dash').innerHTML=h}
 function codeMessage(r,code){const url=r.rol==='kandidaat'?cityUrl(r.stad||'amsterdam'):ROOT();const from=(APP.lid&&APP.lid.naam)||'Flagship Academy';
   if(r.rol==='medewerker')return'Hoi '+r.naam+',\n\nJe bent toegevoegd als medewerker in de casusbouwer van Flagship Academy:\n'+url+'\n\nKies "Account aanmaken" en vul deze code in: '+fmtCode(code)+'\nDe code werkt één keer.\n\nGroet,\n'+from;
@@ -1644,11 +1666,11 @@ async function openLeer(auto){unsubAll();try{await flushNow()}catch(e){}APP.targ
   if(!APP.lid){showLogin();return}
   if(!LEER_LIVE){openCasus(APP.lid.id,'kandidaat');return}
   showScreen('Leeromgeving laden','Even geduld…',null,true);
-  try{APP.th=await loadTheorie(APP.lid.id);await loadMijnGroep();await loadModules()}catch(e){showScreen('Er ging iets mis','Je voortgang kon niet worden geladen. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload'],['Uitloggen','logout']]);return}
+  try{APP.th=await loadTheorie(APP.lid.id);await loadMijnGroep();await loadModules();await loadCbr()}catch(e){showScreen('Er ging iets mis','Je voortgang kon niet worden geladen. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload'],['Uitloggen','logout']]);return}
   if(auto&&LEER_GATE&&casusOpen()){openCasus(APP.lid.id,'kandidaat');return}
-  APP.role='leer';APP.mode='leer';LV.v='home';LV.id=null;LQ=null;showMode('leer');renderTop();renderLeer();subscribeLeer();navPush({k:'leer',v:'home'})}
+  APP.role='leer';APP.mode='leer';LV.v='start';LV.id=null;LQ=null;showMode('leer');renderTop();renderLeer();subscribeLeer();navPush({k:'leer',v:'start'})}
 const PV_KEY='sor-leer-voorbeeld-v1';
-function openLeerPreview(){unsubAll();APP.role='leer-voorbeeld';APP.mode='leer';APP.target=null;APP.th=thEmpty();try{const r=JSON.parse(localStorage.getItem(PV_KEY)||'null');if(r&&r.data)APP.th=Object.assign(thEmpty(),r)}catch(e){}LV.v='home';LV.id=null;LQ=null;showMode('leer');renderTop();renderLeer();navPush({k:'leer',v:'home'});APP.modules=[];return loadModules().then(()=>{if(APP.mode==='leer'&&LV.v==='home')renderLeer()})}
+function openLeerPreview(){unsubAll();APP.role='leer-voorbeeld';APP.mode='leer';APP.target=null;APP.th=thEmpty();try{const r=JSON.parse(localStorage.getItem(PV_KEY)||'null');if(r&&r.data)APP.th=Object.assign(thEmpty(),r)}catch(e){}LV.v='start';LV.id=null;LQ=null;APP.cbrNiet=false;showMode('leer');renderTop();renderLeer();navPush({k:'leer',v:'start'});APP.modules=[];return loadModules().then(()=>{if(APP.mode==='leer'&&LV.v==='home')renderLeer()})}
 function subscribeLeer(){const id=APP.lid&&APP.lid.id;if(!id)return;try{const ch=APP.sb.channel('leer-'+id+'-'+uid())
   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'leden',filter:'id=eq.'+id},()=>refreshLeerLid())
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'leden'},p=>{if(p&&p.old&&p.old.id===id)showBlocked()})
@@ -1665,14 +1687,30 @@ async function thWrite(){const t=APP.th;const row={kandidaat_id:APP.lid.id,data:
   for(let k=0;k<3;k++){const {error}=await APP.sb.from('theorie').upsert(row);if(!error)return true;if(k===2){dbError(error,'theorie');toast('Je voortgang is nog niet opgeslagen. Controleer je internetverbinding.',true);return false}await new Promise(r=>setTimeout(r,800))}}
 function leerScroll(){const el=$('#leer');if(el)el.scrollTop=0;window.scrollTo(0,0)}
 function renderLeer(){if(APP.mode!=='leer')return;const el=$('#leer');let h='';
-  if(LV.v==='mod')h=viewMod();else if(LV.v==='extra')h=viewExtra();else if(LV.v==='les')h=viewLes();else if(LV.v==='quiz')h=viewQuiz();else if(LV.v==='klaar')h=viewKlaar();else h=viewHome();
+  if(LV.v==='start')h=viewStart();else if(LV.v==='voortgang')h=viewVoortgang();else if(LV.v==='mod')h=viewMod();else if(LV.v==='extra')h=viewExtra();else if(LV.v==='les')h=viewLes();else if(LV.v==='quiz')h=viewQuiz();else if(LV.v==='klaar')h=viewKlaar();else h=viewHome();
   el.innerHTML='<div class="dash-in leer-in">'+h+'</div>'}
+/* startpagina van de leeromgeving: drie knoppen (theorie, casus, voortgang) */
+function viewStart(){const pv=isPreview(),done=LEER.filter(c=>chPassed(c.id)).length,open=casusOpen(),st=(APP.lid&&APP.lid.status)||'bezig';const r=pv?trajectVoorbeeld():APP.lid;const t=r&&(TRAJECT_KANDIDAAT||pv)?traject(r):null;
+  let h='<section class="lhero lstart"><div class="lhero-t"><div class="eyebrow">Leeromgeving · Praktijktoets 3 SOR · '+esc(CITY.naam)+'</div><h1>'+(pv?'Voorbeeld leeromgeving':'Hoi '+esc(voornaam())+', welkom aan boord')+'</h1><p>Dit is je leeromgeving. Hier leer je de theorie, werk je aan je casus en zie je wat je nog moet doen tot je examen.</p></div></section>';
+  const urg=t?t.acties.filter(a=>a.wie==='kandidaat'):[];if(urg.length)h+='<div class="tj-alert'+(urg.some(a=>a.niveau==='late')?' late':'')+'" role="status"><div><b>'+(urg.some(a=>a.niveau==='late')?'Te laat: ':'Let op: ')+esc(urg[0].tekst)+' uiterlijk '+esc(dFmt(urg[0].dl,1))+'</b> ('+dagenTxt(urg[0].n)+')'+(urg.length>1?' en nog '+(urg.length-1)+' andere':'')+'. <button type="button" class="linkbtn" data-lact="voortgang">Bekijk je voortgang</button></div></div>';
+  const tile=(act,ico,kop,sub,meta,lock)=>'<button type="button" class="ltile'+(lock?' lock':'')+'" data-lact="'+act+'"><span class="ltile-i" aria-hidden="true">'+ico+'</span><span class="ltile-t"><b>'+kop+'</b><span>'+sub+'</span><small>'+meta+'</small></span><span class="ltile-go" aria-hidden="true">→</span></button>';
+  const nx=t&&t.exam?(t.acties[0]?esc(t.acties[0].tekst)+' · uiterlijk '+esc(dFmt(t.acties[0].dl)):'Examen '+esc(dFmt(t.exam,1))):'Je opleider vult je examendatum in';
+  h+='<div class="ltiles">'+tile('theorie','📖','Theorie','Lessen en quizzen per hoofdstuk, en de eindtoets',done+' van '+LEER.length+' hoofdstukken gehaald · eindtoets '+(theoryDone()?'gehaald':'nog niet gehaald'))+
+    tile('casus','⚓','Je casus','Je uitwerking voor praktijktoets 3',st==='geslaagd'?'Geslaagd':st==='ingeleverd'?'Ingeleverd':open?'Staat open':'Gaat open na de eindtoets',!open&&!pv)+
+    tile('voortgang','🗓️','Je voortgang','Deadlines, vrijstelling vaardagen en je examen',nx)+'</div>';
+  const bz=bezigInfo();if(bz)h+='<div class="lresume"><div><b>Ga verder waar je was</b><span>'+esc(bz.naam)+' · '+bz.nr+' van '+bz.n+' vragen beantwoord</span></div><button type="button" class="btn primary" data-lact="resume">Ga verder</button></div>';
+  return h}
+function viewVoortgang(){const th=APP.th||thEmpty(),done=LEER.filter(c=>chPassed(c.id)).length,stars=LEER.reduce((s,c)=>s+starsOf(chRes(c.id)),0),er=eindRes(),open=casusOpen(),st=(APP.lid&&APP.lid.status)||'bezig';
+  let h='<div class="lbar"><button type="button" class="btn soft sm" data-lact="start">← Start</button><span class="lcrumb">Je voortgang</span></div><header class="lhead"><div class="eyebrow">Leeromgeving</div><h1>Je voortgang</h1><p>Wat je al hebt gedaan en wat je nog moet doen tot je examen.</p></header>';
+  h+='<div class="lstats"><div class="card"><div class="k">Hoofdstukken</div><div class="v">'+done+'/'+LEER.length+'</div></div><div class="card"><div class="k">Sterren</div><div class="v">'+stars+'/'+(LEER.length*3)+'</div></div><div class="card"><div class="k">Eindtoets</div><div class="v sm">'+(theoryDone()?'Gehaald':er?Math.round(pctOf(er)*100)+'%':'–')+'</div></div><div class="card"><div class="k">Casus</div><div class="v sm">'+(st==='geslaagd'?'Geslaagd':st==='ingeleverd'?'Ingeleverd':open?'Open':'Op slot')+'</div></div></div>';
+  const tr=mijnTraject();h+=tr||'<section class="lsec"><div class="lsec-h"><h2>Jouw traject</h2></div><p class="note">Je opleider vult je examendatum in. Daarna zie je hier je deadlines.</p></section>';
+  const ms=APP.modules||[];if(ms.length)h+='<section class="lsec"><div class="lsec-h"><h2>Extra voor '+esc(CITY.naam)+'</h2></div><ul class="vglist">'+ms.map(m=>{const r=modRes(m.id);return'<li><b>'+esc(m.titel)+'</b> '+(r&&r.van&&r.best/r.van>=LEER_PASS?'<span class="pill ok">Gehaald</span>':r&&r.gelezen?'<span class="pill warn">Bezig</span>':'<span class="pill unk">Nog niet begonnen</span>')+'</li>'}).join('')+'</ul></section>';
+  return h}
 function voornaam(){return((APP.lid&&APP.lid.naam)||'').trim().split(/\s+/)[0]||''}
 
 function viewHome(){const th=APP.th||thEmpty();const xp=thXP(th.data);const rk=rankOf(xp);const done=LEER.filter(c=>chPassed(c.id)).length;const stars=LEER.reduce((s,c)=>s+starsOf(chRes(c.id)),0);const er=eindRes();const open=casusOpen();
-  let h='<section class="lhero"><div class="lhero-t"><div class="eyebrow">Leeromgeving · Theorie SOR</div><h1>'+(isPreview()?'Voorbeeld leeromgeving':'Hoi '+esc(voornaam())+', ahoy!')+'</h1><p>Leer de theorie per hoofdstuk en maak de quiz. Haal je 80% of meer, dan gaat het volgende hoofdstuk open. '+(LEER_GATE?'Na de eindtoets kun je beginnen aan je casus.':'Je casus staat al open; de theorie helpt je bij de voorbereiding.')+'</p></div>'+
+  let h='<div class="lbar"><button type="button" class="btn soft sm" data-lact="start">← Start</button><span class="lcrumb">Theorie</span></div><section class="lhero"><div class="lhero-t"><div class="eyebrow">Leeromgeving · Theorie SOR</div><h1>'+(isPreview()?'Voorbeeld leeromgeving':'Hoi '+esc(voornaam())+', ahoy!')+'</h1><p>Leer de theorie per hoofdstuk en maak de quiz. Haal je 80% of meer, dan gaat het volgende hoofdstuk open. '+(LEER_GATE?'Na de eindtoets kun je beginnen aan je casus.':'Je casus staat al open; de theorie helpt je bij de voorbereiding.')+'</p></div>'+
     '<div class="rank"><div class="rank-badge" aria-hidden="true">'+(rk.i+1)+'</div><div class="rank-t"><small>Je rang</small><b>'+esc(rk.naam)+'</b><div class="xpbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+rk.pct+'" aria-label="Voortgang naar de volgende rang"><span style="width:'+rk.pct+'%"></span></div><small>'+xp+' XP'+(rk.next?' · nog '+rk.need+' XP tot '+esc(rk.next):' · hoogste rang')+'</small></div></div></section>';
-  h+=mijnTraject();
   h+='<div class="lstats"><div class="card"><div class="k">Hoofdstukken</div><div class="v">'+done+'/'+LEER.length+'</div></div><div class="card"><div class="k">Sterren</div><div class="v">'+stars+'/'+(LEER.length*3)+'</div></div><div class="card"><div class="k">Eindtoets</div><div class="v sm">'+(theoryDone()?'Gehaald':er?Math.round(pctOf(er)*100)+'%':'–')+'</div></div><div class="card"><div class="k">Casus</div><div class="v sm">'+(open?'Open':'Op slot')+'</div></div></div>';
   const bz=bezigInfo();if(bz)h+='<div class="lresume"><div><b>Ga verder waar je was</b><span>'+esc(bz.naam)+' · '+bz.nr+' van '+bz.n+' vragen beantwoord</span></div><button type="button" class="btn primary" data-lact="resume">Ga verder</button></div>';
   let cur=LEER.findIndex((c,i)=>chUnlocked(i)&&!chPassed(c.id));
@@ -1744,7 +1782,10 @@ $('#leer').addEventListener('click',async e=>{const o=e.target.closest('[data-q]
   else if(a==='resume')resumeQuiz();
   else if(a==='next')nextQ();
   else if(a==='stop'){const y=LQ&&LQ.i===0&&LQ.ans==null?true:await confirmBox('Quiz stoppen?','Je antwoorden van deze poging vervallen. Wil je later verder? Ga dan gewoon naar het overzicht; je voortgang is opgeslagen.','Stoppen');if(y){if(APP.th&&APP.th.data.bezig){delete APP.th.data.bezig;thSave()}LV.v=LQ&&LQ.id!=='eind'?'les':'home';LV.id=LQ&&LQ.id;LQ=null;renderLeer();leerScroll()}}
-  else if(a==='casus'&&APP.lid&&casusOpen())openCasus(APP.lid.id,'kandidaat')});
+  else if(a==='casus'){if(isPreview())toast('In het voorbeeld opent de casus niet. Kandidaten gaan hier naar hun eigen casus.');else if(APP.lid&&casusOpen())openCasus(APP.lid.id,'kandidaat');else toast('Je casus gaat open zodra je de eindtoets van de theorie hebt gehaald.')}
+  else if(a==='start'||a==='theorie'||a==='voortgang'){LV.v=a==='theorie'?'home':a;LV.id=null;LQ=null;renderLeer();leerScroll();navPush({k:'leer',v:LV.v})}
+  else if(a==='cbr-zien')cbrDownload(APP.lid&&APP.lid.id);
+  else if(a==='cbr-weg')cbrWeg()});
 document.addEventListener('keydown',e=>{if(APP.mode!=='leer'||LV.v!=='quiz'||!LQ||!$('#modal').hidden||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();const i='ABCD'.indexOf(k);
   if(i>=0&&k.length===1&&LQ.ans==null){e.preventDefault();answer(i)}else if(e.key==='Enter'&&LQ.ans!=null&&!(e.target&&e.target.closest&&e.target.closest('button'))){e.preventDefault();nextQ()}});
 
@@ -1910,7 +1951,7 @@ document.addEventListener('keydown',e=>{if(APP.mode!=='leer'||LV.v!=='extra'||GX
 // casus en vrijstelling moeten een week voor de generale rond zijn (zonder generale-datum: een week voor het examen);
 // Flagship mailt de formulieren uiterlijk 5 weken voor die datum. Het CBR doet tot 6 weken over een vrijstelling.
 // voorlopig alleen voor medewerkers: kandidaten en leermeesters zien het traject nog niet
-const TRAJECT_KANDIDAAT=false,TRAJECT_LM=false;
+const TRAJECT_KANDIDAAT=true,TRAJECT_LM=false;
 const trajectZichtbaar=()=>APP.isStaff||(APP.isLm&&TRAJECT_LM);
 const TJ={casusDagen:7,vrijDagen:7,verstuurDagen:35,waarschuwCasus:14,waarschuwVrij:21,waarschuwVerstuur:7};
 /* instellingen per gebied (gebieden.traject): termijnen, basis (generale of examen), vrijstelling aan/uit en eigen stappen */
@@ -1960,12 +2001,12 @@ async function editTraject(r){const t=traject(r),gs=(APP.groepen||[]).slice().so
   const g=t.g;const body='<div class="tjedit"><div class="field"><label for="tjGroep">Groep</label><select id="tjGroep"><option value="">Geen groep</option>'+gs.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===r.groep_id?' selected':'')+'>'+esc(x.naam)+' · '+STAD_NAAM[x.stad]+(x.examen_op?' · examen '+esc(dFmt(dParse(x.examen_op))):'')+'</option>').join('')+'</select><small class="note">De kandidaat krijgt de datums van de groep, tenzij je hieronder een eigen datum invult.</small></div>'+
     '<div class="grid2">'+dIn('tjEx','Eigen examendatum',r.examen_op,g&&g.examen_op?'Groep: '+esc(dFmt(dParse(g.examen_op))):'')+dIn('tjGen','Eigen datum generale',r.generale_op,g&&g.generale_op?'Groep: '+esc(dFmt(dParse(g.generale_op))):'')+'</div>'+
     (t.c.vrij?'<h3 class="tjh">Vrijstelling vaardagen</h3><label class="kopt"><input type="checkbox" id="tjNodig"'+(r.vrij_nodig!==false?' checked':'')+'> <span>Deze kandidaat heeft een vrijstelling van vaardagen nodig</span></label>'+
-    '<div id="tjStappen">'+stap('tjV','Flagship: vaartijdenformulier en werkgeversverklaring gemaild',r.vrij_verstuurd_op)+stap('tjU','Kandidaat: vrijstelling aangevraagd bij het CBR',r.vrij_geupload_op)+stap('tjR','Geregistreerd bij het CBR (bevestiging ontvangen)',r.vrij_geregistreerd_op)+'</div>':'')+
+    '<div id="tjStappen">'+stap('tjV','Flagship: vaartijdenformulier en werkgeversverklaring gemaild',r.vrij_verstuurd_op)+stap('tjU','Kandidaat: vrijstelling aangevraagd bij het CBR',r.vrij_geupload_op)+stap('tjR','Geregistreerd bij het CBR (bevestiging ontvangen)',r.vrij_geregistreerd_op)+'</div>'+((APP.cbrAll||{})[r.id]?'<p class="note cbrnote">CBR-bevestiging geüpload door de kandidaat op '+esc(dFmt(dParse(APP.cbrAll[r.id].geupload)))+': <b>'+esc(APP.cbrAll[r.id].naam)+'</b> <button type="button" class="linkbtn" id="tjCbr">Downloaden</button></p>':''):'')+
     (t.extra.length?'<h3 class="tjh">Stappen '+esc(STAD_NAAM[r.stad||'amsterdam']||'')+'</h3><div id="tjExtra">'+t.extra.map(x=>stap('tjX_'+x.id,(x.wie==='flagship'?'Flagship: ':'Kandidaat: ')+esc(x.titel)+(x.dl?' <small>(uiterlijk '+esc(dFmt(x.dl))+')</small>':''),x.op?dIso(x.op):'')).join('')+'</div>':'')+
     (t.exam?'<p class="note">Deadline casus: <b>'+esc(dFmt(t.casusDl,1))+'</b>, '+termTxt(t.c.casusDagen)+' voor '+(t.basisGen?'de generale':t.c.basis==='examen'?'het examen':'het examen (er is nog geen generale-datum)')+'.'+(t.c.vrij?' Vrijstelling geregistreerd uiterlijk '+esc(dFmt(t.vrijDl))+'. Formulieren mailen uiterlijk '+esc(dFmt(t.verstuurDl))+'.':'')+'</p>':'<p class="note">Vul een examendatum in (of kies een groep met een datum), dan rekent het systeem de deadlines uit.</p>')+'</div>';
   const y=await modalBox('Traject van '+r.naam,'',body,'Opslaan','Annuleren',()=>{
     $$('#tjStappen .tjstap, #tjExtra .tjstap').forEach(s=>{const c=s.querySelector('input[type=checkbox]'),d=s.querySelector('input[type=date]');c.addEventListener('change',()=>{if(c.checked&&!d.value)d.value=dIso(dToday());if(!c.checked)d.value=''});d.addEventListener('change',()=>{c.checked=!!d.value})});
-    const n=$('#tjNodig');if(n){const upd=()=>{$('#tjStappen').classList.toggle('dim',!n.checked)};n.addEventListener('change',upd);upd()}$('#tjGroep').focus()});
+    const cb=$('#tjCbr');if(cb)cb.addEventListener('click',()=>cbrDownload(r.id));const n=$('#tjNodig');if(n){const upd=()=>{$('#tjStappen').classList.toggle('dim',!n.checked)};n.addEventListener('change',upd);upd()}$('#tjGroep').focus()});
   if(!y)return;const v=id=>{const el=$('#'+id);return el&&el.value?el.value:null};
   const patch={groep_id:v('tjGroep'),examen_op:v('tjEx'),generale_op:v('tjGen')};if($('#tjNodig'))Object.assign(patch,{vrij_nodig:$('#tjNodig').checked,vrij_verstuurd_op:v('tjV'),vrij_geupload_op:v('tjU'),vrij_geregistreerd_op:v('tjR')});
   if(t.extra.length){const st=Object.assign({},r.stappen||{});t.extra.forEach(x=>{const d=v('tjX_'+x.id);if(d)st[x.id]=d;else delete st[x.id]});patch.stappen=st}
@@ -1993,6 +2034,26 @@ async function groepKandidaten(g){const ks=APP.roster.filter(r=>r.rol==='kandida
 async function verwijderGroep(g){const n=APP.roster.filter(r=>r.groep_id===g.id).length;const y=await confirmBox('Groep verwijderen?',(n?n+' kandida'+(n===1?'at staat':'ten staan')+' in deze groep. Zij houden hun eigen datums, maar niet meer de datums van de groep. ':'')+'De kandidaten zelf blijven bestaan.','Verwijderen');if(!y)return;
   const {error}=await APP.sb.from('groepen').delete().eq('id',g.id);if(error){toast('Verwijderen is mislukt: '+error.message,true);return}toast('Groep verwijderd');await loadGroepen();loadRoster()}
 
+/* CBR-bevestiging: de kandidaat uploadt de mail of pdf van het CBR (tabel cbr_bevestiging, migratie 016) */
+const CBR_TYPES=['application/pdf','image/jpeg','image/png','image/webp'],CBR_MAX=5*1024*1024;
+async function loadCbr(){APP.cbr=null;APP.cbrNiet=false;if(isPreview()||!APP.sb||!APP.lid)return;try{const {data,error}=await APP.sb.from('cbr_bevestiging').select('kandidaat_id,naam,type,grootte,geupload').eq('kandidaat_id',APP.lid.id).maybeSingle();if(error){APP.cbrNiet=true;return}APP.cbr=data||null}catch(e){APP.cbrNiet=true}}
+function cbrKnop(reg,up){if(APP.cbrNiet)return reg?'<button type="button" class="linkbtn" data-lact="tj" data-stap="geregistreerd" data-aan="0">Ongedaan maken</button>':'<button type="button" class="btn sm'+(up?' primary':'')+'" data-lact="tj" data-stap="geregistreerd" data-aan="1">Bevestiging ontvangen</button>';
+  const c=isPreview()?APP.cbrVb:APP.cbr;
+  if(c)return'<div class="cbrbox"><span class="cbrfile">Geüpload: <b>'+esc(c.naam)+'</b> <small>op '+esc(dFmt(dParse(c.geupload)))+'</small></span><button type="button" class="linkbtn" data-lact="cbr-zien">Downloaden</button><button type="button" class="linkbtn" data-lact="cbr-weg">Verwijderen</button></div>';
+  return'<div class="cbrbox"><label class="btn sm'+(up?' primary':'')+' cbrup">Bevestiging uploaden<input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" data-cbr></label>'+(reg?'<button type="button" class="linkbtn" data-lact="tj" data-stap="geregistreerd" data-aan="0">Ongedaan maken</button>':'')+'</div>'}
+async function cbrUpload(f){if(!f)return;if(!CBR_TYPES.includes(f.type)){toast('Kies een pdf of een foto (jpg, png of webp).',true);return}if(f.size>CBR_MAX){toast('Het bestand is groter dan 5 MB. Maak een kleinere foto of pdf.',true);return}
+  let data;try{data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(f)})}catch(e){toast('Het bestand kon niet worden gelezen.',true);return}
+  const row={kandidaat_id:APP.lid?APP.lid.id:'voorbeeld',naam:(f.name||'bevestiging').slice(0,200),type:f.type,grootte:f.size,data,geupload:nowIso()};
+  if(isPreview()){APP.cbrVb=row;return trajectMelden('geregistreerd',true)}
+  setSaveState('Uploaden…');const {error}=await APP.sb.from('cbr_bevestiging').upsert(row);if(error){toast(foutTekst(error,'Uploaden'),true);setSaveState('Niet geüpload',true);return}
+  APP.cbr={kandidaat_id:row.kandidaat_id,naam:row.naam,type:row.type,grootte:row.grootte,geupload:row.geupload};await trajectMelden('geregistreerd',true);toast('Bevestiging geüpload. Je opleider ziet hem direct.')}
+async function cbrDownload(id){let c;if(isPreview())c=APP.cbrVb;else{const {data,error}=await APP.sb.from('cbr_bevestiging').select('naam,type,data').eq('kandidaat_id',id).maybeSingle();if(error||!data){toast(error?foutTekst(error,'Downloaden'):'Er is geen bevestiging geüpload.',true);return}c=data}
+  if(!c)return;try{const blob=await (await fetch(c.data)).blob();saveBlob(blob,c.naam)}catch(e){toast('Downloaden is mislukt.',true)}}
+async function cbrWeg(){if(!(await confirmBox('Bevestiging verwijderen?','Je geüploade bevestiging van het CBR wordt verwijderd. Je kunt daarna een nieuwe uploaden.','Verwijderen')))return;
+  if(isPreview()){APP.cbrVb=null;return trajectMelden('geregistreerd',false)}
+  const {error}=await APP.sb.from('cbr_bevestiging').delete().eq('kandidaat_id',APP.lid.id);if(error){toast(foutTekst(error,'Verwijderen'),true);return}APP.cbr=null;await trajectMelden('geregistreerd',false)}
+$('#leer').addEventListener('change',e=>{const i=e.target;if(i&&i.matches&&i.matches('input[data-cbr]')){const f=i.files&&i.files[0];i.value='';cbrUpload(f)}});
+
 /* kandidaat: mijn traject */
 function mijnTraject(){const pv=isPreview();if(!pv&&(!TRAJECT_KANDIDAAT||APP.isStaff||APP.isLm))return'';const r=pv?trajectVoorbeeld():APP.lid;if(!r)return'';const t=traject(r);const today=dToday();
   const item=(st,titel,datum,sub,extra)=>'<li class="tj-i '+st+'"><span class="tj-dot" aria-hidden="true">'+(st==='done'?'✓':st==='late'?'!':'')+'</span><div class="tj-b"><div class="tj-t"><b>'+titel+'</b>'+(datum?'<span class="tj-d">'+datum+'</span>':'')+'</div>'+(sub?'<p>'+sub+'</p>':'')+(extra||'')+'</div></li>';
@@ -2007,7 +2068,7 @@ function mijnTraject(){const pv=isPreview();if(!pv&&(!TRAJECT_KANDIDAAT||APP.isS
     const stappen='<ol class="tj-stappen">'+s(!!ver,'Flagship mailt je het vaartijdenformulier en de werkgeversverklaring.',ver?'verstuurd op '+dFmt(ver):'nog niet verstuurd')+
       s(!!(up||reg),'Vraag in de webshop van het SAB je vaartijdverklaring aan: <b>Vaartijdenverklaring</b> → <b>Aanvraagverklaring vaartijd open rondvaartboot</b> → kies loondienst of zzp. Na goedkeuring krijg je hem thuis.','')+
       s(!!up,'Vul op cbr.nl het <a href="https://www.cbr.nl/nl/service/nl/formulier/aanvraagformulier-vrijstelling-praktijktoetsen-1-en-2-schipper-open-rondvaartboot-beperkt-vaargebied" target="_blank" rel="noopener">aanvraagformulier vrijstelling praktijktoetsen 1 en 2</a> in en mail het met je SAB-vaartijdverklaring naar het CBR.',up?'gemeld op '+dFmt(up):'',reg?'':up?'<button type="button" class="linkbtn" data-lact="tj" data-stap="geupload" data-aan="0">Ongedaan maken</button>':'<button type="button" class="btn sm'+(ver?' primary':'')+'" data-lact="tj" data-stap="geupload" data-aan="1">Ik heb hem aangevraagd</button>')+
-      s(!!reg,'Het CBR mailt je het besluit. Dat duurt maximaal 6 weken.',reg?'gemeld op '+dFmt(reg):'',reg?'<button type="button" class="linkbtn" data-lact="tj" data-stap="geregistreerd" data-aan="0">Ongedaan maken</button>':'<button type="button" class="btn sm'+(up?' primary':'')+'" data-lact="tj" data-stap="geregistreerd" data-aan="1">Bevestiging ontvangen</button>')+'</ol>';
+      s(!!reg,'Het CBR mailt je het besluit. Dat duurt maximaal 6 weken. '+(APP.cbrNiet?'':'Upload de bevestiging van het CBR hier: de pdf, of de mail als pdf of schermafbeelding.'),reg?'gemeld op '+dFmt(reg):'',cbrKnop(reg,up))+'</ol>';
     items.push([t.vrijDl,item(pst(t.vrijOk,t.vrijDl),'Vrijstelling vaardagen','uiterlijk '+esc(dFmt(t.vrijDl,1)),t.vrijOk?'Geregistreerd bij het CBR.':'Moet '+termTxt(t.c.vrijDagen)+' voor je '+t.basisNaam+' bij het CBR geregistreerd staan. Het CBR doet er tot 6 weken over, dus begin op tijd.',stappen)])}
   t.extra.filter(x=>x.dl).forEach(x=>items.push([x.dl,item(pst(!!x.op,x.dl),esc(x.titel),'uiterlijk '+esc(dFmt(x.dl,1)),x.op?'Afgerond op '+esc(dFmt(x.op))+'.':(x.wie==='flagship'?'Dit regelt Flagship. ':'')+cap(dagenTxt(dDiff(x.dl)))+'.')]));
   items.push([t.exam,item(t.exam<today?'done':'open','Examen praktijktoets 3',esc(dFmt(t.exam,1)),t.exam<today?'Geweest.':cap(overTxt(dDiff(t.exam)))+'.')]);
@@ -2032,7 +2093,7 @@ function vgLees(st){const d=vgDraft(st);if(!$('#vgForm'))return d;
   const b=$('#vgBasis');if(b)d.basis=b.value;const v=$('#vgVrij');if(v)d.vrij=v.checked;
   d.stappen=$$('#vgStappen .vgstap').map(row=>({id:row.dataset.id,titel:row.querySelector('[data-f="titel"]').value.trim().replace(/\s+/g,' ').slice(0,80),wie:row.querySelector('[data-f="wie"]').value,dagen:Math.max(0,Math.min(365,parseInt(row.querySelector('[data-f="dagen"]').value,10)||0))}));return d}
 function vgRij(r){const t=traject(r),g=t.g;
-  return'<tr><td class="c-person"><b>'+esc(r.naam)+'</b> <span class="pill stad '+esc(r.stad||'amsterdam')+'">'+esc(STAD_NAAM[r.stad||'amsterdam']||r.stad)+'</span>'+(g?'<small>'+esc(g.naam)+'</small>':'')+'</td><td data-l="Generale" class="c-date">'+esc(dFmt(t.gen))+'</td><td data-l="Examen" class="c-date">'+esc(dFmt(t.exam))+'</td><td data-l="Traject">'+trCell(r)+'</td></tr>'}
+  return'<tr><td class="c-person"><b>'+esc(r.naam)+'</b> <span class="pill stad '+esc(r.stad||'amsterdam')+'">'+esc(STAD_NAAM[r.stad||'amsterdam']||r.stad)+'</span>'+(g?'<small>'+esc(g.naam)+'</small>':'')+((APP.cbrAll||{})[r.id]?' <span class="pill ok">CBR-bevestiging</span>':'')+'</td><td data-l="Generale" class="c-date">'+esc(dFmt(t.gen))+'</td><td data-l="Examen" class="c-date">'+esc(dFmt(t.exam))+'</td><td data-l="Traject">'+trCell(r)+'</td></tr>'}
 function renderVoortgang(){const st=STADS.includes(APP.vgMap)?APP.vgMap:'alle';APP.vgMap=st;let f=APP.vgTab||'actie';if(f==='instellingen'&&st==='alle')f='actie';
   const kandAll=APP.roster.filter(r=>r.rol==='kandidaat'&&r.status!=='geslaagd'),kand=kandAll.filter(r=>st==='alle'||(r.stad||'amsterdam')===st),actie=kand.filter(actieNodig).sort((a,b)=>(eersteDl(a)-eersteDl(b))||a.naam.localeCompare(b.naam));
   const gs=(APP.groepen||[]).filter(g=>st==='alle'||g.stad===st);
@@ -2059,7 +2120,7 @@ function vgInstellingen(st){const g=gebiedVan(st);if(!g)return'<p class="note">D
   return h}
 async function vgOpslaan(st){const d=vgLees(st);const leeg=d.stappen.find(x=>!x.titel);if(leeg){toast('Geef elke stap een naam, of verwijder de lege stap.',true);return}
   const g=gebiedVan(st),traj=Object.assign({},(g&&g.traject)||{},{termijnen:d.termijnen,basis:d.basis,vrij:d.vrij,stappen:d.stappen});
-  const {error}=await APP.sb.from('gebieden').update({traject:traj,bijgewerkt:nowIso()}).eq('slug',st);if(error){toast('Opslaan is mislukt: '+error.message,true);return}
+  const {error}=await APP.sb.from('gebieden').update({traject:traj,bijgewerkt:nowIso()}).eq('slug',st);if(error){toast(foutTekst(error,'Opslaan'),true);return}
   if(g)g.traject=traj;delete APP.vgDraft[st];toast('Termijnen en stappen voor '+(STAD_NAAM[st]||st)+' opgeslagen');renderVoortgang()}
 $('#dash').addEventListener('click',async e=>{if(!(APP.dashView==='voortgang'&&APP.isStaff))return;
   const m=e.target.closest('[data-vgmap]');if(m){if(APP.vgMap&&APP.vgMap!=='alle'&&$('#vgForm'))vgLees(APP.vgMap);APP.vgMap=m.dataset.vgmap;renderVoortgang();return}
@@ -2070,7 +2131,8 @@ $('#dash').addEventListener('click',async e=>{if(!(APP.dashView==='voortgang'&&A
   else if(a==='herstel'){const d=vgLees(st);d.termijnen=Object.assign({},TJ);d.basis='generale';d.vrij=true;renderVoortgang();toast('Standaardtermijnen ingevuld. Klik op Opslaan om ze te bewaren.')}
   else if(a==='opslaan')vgOpslaan(st)});
 /* ---------- Extra gebied (alleen medewerkers): nieuw vaargebied uit OpenStreetMap ---------- */
-const OSM_EPS=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
+/* openbare Overpass-servers: eerst de servers zonder limiet, de hoofdserver (vaak overbelast) als laatste */
+const OSM_EPS=[['Private.coffee','https://overpass.private.coffee/api/interpreter'],['VK Maps','https://maps.mail.ru/osm/tools/overpass/api/interpreter'],['Overpass (FOSSGIS)','https://overpass-api.de/api/interpreter']];
 const GB_MATEN=[['2','2 × 2 km',1000,1000],['3','3 × 3 km',1500,1500],['4','4 × 3,4 km (maximaal)',2000,1700]];
 /* projectie rond het midden van het kader (zelfde formules als de vaste gebieden) */
 function gbProj(lat,lon){const f=lat*Math.PI/180;return[+lat.toFixed(4),+lon.toFixed(4),Math.round(111412.84*Math.cos(f)-93.5*Math.cos(3*f)),Math.round(111132.954-559.822*Math.cos(2*f)+1.175*Math.cos(4*f))]}
@@ -2118,6 +2180,7 @@ function renderGebiedBouwer(){const G=gbStaat(),gs=(APP.gebieden||[]);const kand
   if(tab==='gebieden')h+='<section class="lsec"><div class="lsec-h"><h2>Alle vaargebieden</h2></div>'+(gs.length?'<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Vaargebied</th><th>Adres</th><th>Status</th><th>Kandidaten</th><th></th></tr></thead><tbody>'+gs.map(g=>'<tr><td class="c-person"><b>'+esc(g.naam)+'</b></td><td data-l="Adres"><a href="'+esc(cityUrl(g.slug))+'" target="_blank" rel="noopener">/'+esc(g.slug)+'/</a></td><td data-l="Status">'+(g.ingebouwd?'<span class="pill unk">Vast</span>':g.actief?'<span class="pill ok">Actief</span>':'<span class="pill warn">Concept</span>')+'</td><td data-l="Kandidaten">'+kand(g.slug)+'</td><td class="c-act"><div class="acts">'+(g.ingebouwd?'':(g.actief?'<button type="button" class="btn sm" data-gb="uit" data-slug="'+esc(g.slug)+'">Deactiveren</button>':'<button type="button" class="btn sm primary" data-gb="aan" data-slug="'+esc(g.slug)+'">Activeren</button>')+'<button type="button" class="btn sm danger" data-gb="weg" data-slug="'+esc(g.slug)+'">Verwijderen</button>')+'</div></td></tr>').join('')+'</tbody></table></div>':'<p class="note">De vaargebieden konden niet worden geladen. De database moet eerst worden bijgewerkt (migratie 015).</p>')+'</section>';
   if(tab==='gebieden'){$('#dash').innerHTML=h+'</div>';return}
   h+='<section class="lsec" id="gbNieuw"><div class="lsec-h"><h2>Nieuw vaargebied</h2><span class="pill acc">Stap '+G.stap+' van 3</span></div>';
+  if(!gs.length)h+='<p class="note warn">De database is nog niet bijgewerkt (database-update 015). Je kunt een gebied al wel opzoeken en ophalen, maar opslaan lukt pas na de update.</p>';
   if(G.stap===1){h+='<p class="note">Zoek de plaats, en schuif de kaart zo dat de route binnen het oranje kader valt. De vaarwegen, bruggen en straten in het kader worden uit OpenStreetMap gehaald.</p>'+
     '<form class="row gbzoek" data-gbform="zoek" style="gap:8px;flex-wrap:wrap"><label class="sr" for="gbZoek">Plaats zoeken</label><input id="gbZoek" type="search" autocomplete="off" placeholder="Bijvoorbeeld Leiden of Delft centrum" value="'+esc(G.zoek)+'" style="flex:1;min-width:220px"><button type="submit" class="btn">Zoeken</button>'+
     '<label class="sr" for="gbMaat">Grootte van het kader</label><select id="gbMaat">'+GB_MATEN.map(m=>'<option value="'+m[0]+'"'+(G.maat===m[0]?' selected':'')+'>'+m[1]+'</option>').join('')+'</select></form>'+
@@ -2147,22 +2210,33 @@ function gbMapInit(){const G=gbStaat(),el=$('#gbMap');if(!el||typeof L==='undefi
   const kader=()=>{const mt=GB_MATEN.find(x=>x[0]===G.maat)||GB_MATEN[1],ce=m.getCenter(),pr=gbProj(ce.lat,ce.lng);return L.latLngBounds([ce.lat-mt[3]/pr[3],ce.lng-mt[2]/pr[2]],[ce.lat+mt[3]/pr[3],ce.lng+mt[2]/pr[2]])};
   const r=L.rectangle(kader(),{color:'#fa7c00',weight:3,fill:false,interactive:false}).addTo(m);
   m.on('move zoom',()=>r.setBounds(kader()));m.on('moveend',()=>{if(G.sel){const ce=m.getCenter();G.sel.lat=ce.lat;G.sel.lon=ce.lng}});setTimeout(()=>m.invalidateSize(),50)}
-async function gbOverpass(q,label){let last='';for(let ronde=0;ronde<2;ronde++)for(const ep of OSM_EPS){try{gbMsg(label+'…');const r=await fetch(ep,{method:'POST',body:'data='+encodeURIComponent(q)});if(r.ok)return await r.json();last='HTTP '+r.status}catch(e){last=String(e&&e.message||e)}await new Promise(x=>setTimeout(x,1500))}throw new Error(label+' mislukt ('+last+')')}
+/* één verzoek voor alle kaartgegevens (minder kans op 'te veel verzoeken'); per server een tijdslimiet, bij drukte even wachten */
+async function gbOverpass(q){const fouten=[];for(let ronde=0;ronde<2;ronde++){for(let n=0;n<OSM_EPS.length;n++){const [naam,ep]=OSM_EPS[n];const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),150000);
+    try{gbMsg('Kaartgegevens ophalen bij '+naam+(ronde?' (tweede poging)':'')+'… dit kan een minuut duren.');const r=await fetch(ep,{method:'POST',body:new URLSearchParams({data:q}),signal:ac.signal});
+      if(r.ok){const j=await r.json();if(j&&Array.isArray(j.elements)&&!(j.remark&&/runtime error|timed out|out of memory/i.test(j.remark)&&!j.elements.length))return j;fouten.push(naam+': '+(j&&j.remark?j.remark.slice(0,80):'leeg antwoord'))}
+      else fouten.push(naam+': '+(r.status===429||r.status===406?'te druk (HTTP '+r.status+')':r.status===504?'time-out (HTTP 504)':'HTTP '+r.status))}
+    catch(e){fouten.push(naam+': '+(e&&e.name==='AbortError'?'geen antwoord binnen 2,5 minuut':'geen verbinding'))}finally{clearTimeout(tm)}}
+  if(!ronde){for(let s=20;s>0;s--){gbMsg('Alle kaartservers zijn druk. Nieuwe poging over '+s+' seconden…');await new Promise(x=>setTimeout(x,1000))}}}
+  throw new Error(fouten.join(' · '))}
 const gbMsg=t=>{const el=$('#gbMsg');if(el)el.textContent=t};
 async function gbOphalen(){const G=gbStaat();if(!G.sel)return;const mt=GB_MATEN.find(x=>x[0]===G.maat)||GB_MATEN[1],pr=gbProj(G.sel.lat,G.sel.lon);
   const s=pr[0]-mt[3]/pr[3],w=pr[1]-mt[2]/pr[2],n=pr[0]+mt[3]/pr[3],e=pr[1]+mt[2]/pr[2],BB=[s,w,n,e].map(x=>x.toFixed(5)).join(',');
   const btn=$('[data-gb="ophalen"]');if(btn)btn.disabled=true;
-  try{const W=await gbOverpass('[out:json][timeout:120][bbox:'+BB+'];(way[waterway~"^(canal|river|fairway)$"];way[natural=water];rel[natural=water];way[waterway=riverbank];way[waterway=dock];);out geom;','Vaarwegen en water ophalen (1/4)');
-    const B=await gbOverpass('[out:json][timeout:120][bbox:'+BB+'];(way[bridge][highway];way[bridge][railway];way["man_made"="bridge"];);out geom;','Bruggen ophalen (2/4)');
-    const S=await gbOverpass('[out:json][timeout:120][bbox:'+BB+'];way[highway~"^(residential|living_street|unclassified|pedestrian|tertiary|secondary|primary|trunk|tertiary_link|secondary_link|primary_link)$"];out geom;','Straten ophalen (3/4)');
-    const Pq=await gbOverpass('[out:json][timeout:60][bbox:'+BB+'];(nwr[name][tourism~"^(attraction|museum|viewpoint|gallery)$"];nwr[name][historic~"^(monument|castle|church|city_gate|building|memorial)$"];nwr[name][amenity=place_of_worship][building];node[name][railway=station];nwr[name][amenity=townhall];);out center 80;','Bekende plaatsen ophalen (4/4)');
+  try{const PAT='residential|living_street|unclassified|pedestrian|tertiary|secondary|primary|trunk|tertiary_link|secondary_link|primary_link';
+    const Q='[out:json][timeout:180][bbox:'+BB+'];(way[waterway~"^(canal|river|fairway)$"];way[natural=water];rel[natural=water];way[waterway=riverbank];way[waterway=dock];way[bridge][highway];way[bridge][railway];way["man_made"="bridge"];way[highway~"^('+PAT+')$"];);out geom;'+
+      '(nwr[name][tourism~"^(attraction|museum|viewpoint|gallery)$"];nwr[name][historic~"^(monument|castle|church|city_gate|building|memorial)$"];nwr[name][amenity=place_of_worship][building];node[name][railway=station];nwr[name][amenity=townhall];);out center 80;';
+    const all=(await gbOverpass(Q)).elements||[],tg=e=>e.tags||{},geo=e=>!e.center&&e.type!=='node';
+    const W={elements:all.filter(e=>geo(e)&&((e.type==='way'&&(/^(canal|river|fairway|riverbank|dock)$/.test(tg(e).waterway||'')||tg(e).natural==='water'))||(e.type==='relation'&&tg(e).natural==='water')))};
+    const B={elements:all.filter(e=>geo(e)&&e.type==='way'&&((tg(e).bridge&&tg(e).bridge!=='no'&&(tg(e).highway||tg(e).railway))||tg(e).man_made==='bridge'))};
+    const S={elements:all.filter(e=>geo(e)&&e.type==='way'&&new RegExp('^('+PAT+')$').test(tg(e).highway||''))};
+    const Pq={elements:all.filter(e=>!geo(e)&&tg(e).name)};
     gbMsg('Kaart opbouwen…');const kaart=osmVerwerk(pr,mt[2]+100,mt[3]+100)(W,B,S);const d=kaart.data;
     const cnt=x=>x?x.split(';').filter(Boolean).length:0;
     G.kaart={data:d,streets:kaart.streets,op:kaart.op,proj:pr,half:[mt[2],mt[3]],bbox:[s,w,n,e],n:{vaarwegen:cnt(d.ways),bruggen:cnt(d.bridges),straten:cnt(kaart.streets.lines)}};
     const gezien=new Set();G.pois=(Pq.elements||[]).map(x=>({n:x.tags.name,lat:x.lat!=null?x.lat:x.center&&x.center.lat,lon:x.lon!=null?x.lon:x.center&&x.center.lon,w:(x.tags.wikidata||x.tags.wikipedia)?1:0,st:x.tags.railway==='station'?1:0})).filter(p=>p.n&&p.lat!=null&&!gezien.has(p.n)&&gezien.add(p.n)).sort((a,b)=>(b.st-a.st)||(b.w-a.w)||a.n.localeCompare(b.n)).slice(0,30);
     G.pois.forEach((p,i)=>p.aan=i<8);
     const nm=G.sel.naam||'';if(!G.form.naam)G.form={naam:nm,slug:gbSlug(nm),snelheid:6,bh:true,bez3:true};G.stap=2;renderGebiedBouwer()}
-  catch(e){gbMsg('Ophalen is mislukt: '+(e&&e.message||e)+'. Probeer het over een paar minuten opnieuw.');if(btn)btn.disabled=false}}
+  catch(e){gbMsg('Ophalen is niet gelukt. De openbare kaartservers van OpenStreetMap zijn op dit moment te druk of niet bereikbaar ('+(e&&e.message||e)+'). Probeer het over een paar minuten opnieuw, of kies een kleiner kader.');if(btn)btn.disabled=false}}
 function gbLeesForm(){const G=gbStaat(),f=G.form,v=id=>{const el=$('#'+id);return el?el.value:''},c=id=>{const el=$('#'+id);return!!(el&&el.checked)};if(!$('#gbForm'))return f;
   Object.assign(f,{naam:v('gbNaam').trim().replace(/\s+/g,' '),slug:v('gbSlug').trim().toLowerCase(),snelheid:Math.max(1,Math.min(20,parseFloat(String(v('gbSnel')).replace(',','.'))||6)),opstap:v('gbOpstap').trim(),vb:v('gbVb').trim(),bh:c('gbBh'),bez3:c('gbBez3'),marifoon:c('gbMarifoon'),toel:c('gbToel')});
   $$('#gbForm [data-poi]').forEach(x=>{const p=G.pois[+x.dataset.poi];if(p)p.aan=x.checked});return f}
@@ -2172,17 +2246,17 @@ async function gbOpslaan(){const G=gbStaat(),f=gbLeesForm(),k=G.kaart;if(!f.naam
   const pois=G.pois.filter(p=>p.aan).slice(0,12).map(p=>[p.n,+(+p.lat).toFixed(5),+(+p.lon).toFixed(5)]);const mt=k.half;
   const row={slug:f.slug,naam:f.naam,actief:false,volgorde:100,instellingen:{proj:k.proj,bounds:[[-mt[0]-600,-mt[1]-600],[mt[0]+600,mt[1]+600]],bbox:k.bbox,pois,snelheid:f.snelheid,marifoon:f.marifoon,toel:f.toel,bh:f.bh,bez3:f.bez3,opstapPh:f.opstap?'Bijvoorbeeld '+f.opstap:'',vb:f.vb,bron:'OpenStreetMap',opgehaald:k.op},kaart:{data:k.data,streets:k.streets,op:k.op},traject:{}};
   const b=$('[data-gb="opslaan"]');if(b)b.disabled=true;const {error}=await APP.sb.from('gebieden').insert(row);if(b)b.disabled=false;
-  if(error){toast('Opslaan is mislukt: '+error.message,true);return}
+  if(error){toast(foutTekst(error,'Opslaan'),true);return}
   await loadGebieden();G.stap=3;G.klaar=f.slug;toast(f.naam+' opgeslagen als concept');renderGebiedBouwer()}
 async function gbStatus(slug,aan){const g=(APP.gebieden||[]).find(x=>x.slug===slug);if(!g)return;
   if(!aan&&APP.roster.some(r=>r.rol==='kandidaat'&&r.stad===slug)&&!(await confirmBox(g.naam+' deactiveren?','Kandidaten in '+g.naam+' kunnen hun casusbouwer dan niet meer openen, totdat je het gebied weer activeert.','Deactiveren')))return;
-  const {error}=await APP.sb.from('gebieden').update({actief:aan,bijgewerkt:nowIso()}).eq('slug',slug);if(error){toast('Opslaan is mislukt: '+error.message,true);return}
+  const {error}=await APP.sb.from('gebieden').update({actief:aan,bijgewerkt:nowIso()}).eq('slug',slug);if(error){toast(foutTekst(error,'Opslaan'),true);return}
   g.actief=aan;toast(g.naam+(aan?' is actief':' is gedeactiveerd'));renderGebiedBouwer()}
 async function gbWeg(slug){const g=(APP.gebieden||[]).find(x=>x.slug===slug);if(!g||g.ingebouwd)return;const n=APP.roster.filter(r=>r.stad===slug).length;
   if(n){toast('In '+g.naam+' staan nog '+n+' mensen. Zet hen eerst in een ander vaargebied.',true);return}
   if((APP.groepen||[]).some(x=>x.stad===slug)){toast('Er zijn nog groepen in '+g.naam+'. Verwijder die eerst bij Voortgang.',true);return}
   if(!(await confirmBox(g.naam+' verwijderen?','De kaart, de instellingen en de leermodules van '+g.naam+' worden verwijderd. Dit kan niet ongedaan worden gemaakt.','Verwijderen')))return;
-  const {error}=await APP.sb.from('gebieden').delete().eq('slug',slug);if(error){toast('Verwijderen is mislukt: '+error.message,true);return}
+  const {error}=await APP.sb.from('gebieden').delete().eq('slug',slug);if(error){toast(foutTekst(error,'Verwijderen'),true);return}
   APP.gebieden=(APP.gebieden||[]).filter(x=>x.slug!==slug);const i=STADS.indexOf(slug);if(i>=0)STADS.splice(i,1);toast(g.naam+' verwijderd');renderGebiedBouwer()}
 $('#dash').addEventListener('submit',async e=>{if(APP.dashView!=='gebied'||!e.target.matches('[data-gbform="zoek"]'))return;e.preventDefault();const G=gbStaat();G.zoek=$('#gbZoek').value.trim();if(!G.zoek)return;
   try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=nl&accept-language=nl&q='+encodeURIComponent(G.zoek));if(!r.ok)throw new Error('HTTP '+r.status);G.res=await r.json()}catch(err){G.res=[];toast('Zoeken is mislukt. Probeer het opnieuw.',true)}
@@ -2246,10 +2320,11 @@ $('#leer').addEventListener('keydown',e=>{if(LV.v!=='mod')return;const g=e.targe
 
 /* medewerker: leermodules maken en beheren (pagina Vaargebieden, tab Leermodules) */
 const ME={st:null,edit:null};
-async function meLoad(st){const {data,error}=await APP.sb.from('leermodules').select('*').eq('gebied',st);if(error){toast('Leermodules laden is mislukt: '+error.message,true);return}APP.meMods=APP.meMods||{};APP.meMods[st]=(data||[]).sort((a,b)=>(a.volgorde-b.volgorde)||String(a.titel).localeCompare(b.titel))}
+async function meLoad(st){const {data,error}=await APP.sb.from('leermodules').select('*').eq('gebied',st);APP.meMods=APP.meMods||{};if(error){APP.meFout=foutTekst(error,'Leermodules laden');APP.meMods[st]=[];return}APP.meFout=null;APP.meMods[st]=(data||[]).sort((a,b)=>(a.volgorde-b.volgorde)||String(a.titel).localeCompare(b.titel))}
 const meHier=st=>st===CITY.id;
 const meNieuw=soort=>({id:null,soort,titel:'',actief:false,inhoud:soort==='hoofdstuk'?{intro:'',secties:[{kop:'',tekst:''}],vragen:[{v:'',o:['','','',''],g:0,u:''}]}:{intro:'',punten:[],vragen:[]}});
 function meView(){const st=ME.st&&STADS.includes(ME.st)?ME.st:CITY.id;ME.st=st;const mods=(APP.meMods||{})[st];
+  if(APP.meFout)return'<p class="note warn">'+esc(APP.meFout)+'</p>';
   if(!mods){meLoad(st).then(()=>{if(APP.dashView==='gebied')renderGebiedBouwer()});return'<p class="note">Leermodules laden…</p>'}
   let h='<div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap"><div class="field" style="margin:0"><label for="meSt">Vaargebied</label><select id="meSt">'+stadOpts(st)+'</select></div>'+(ME.edit?'':'<button type="button" class="btn primary" data-me="nieuw" data-soort="hoofdstuk">+ Hoofdstuk met quiz</button><button type="button" class="btn" data-me="nieuw" data-soort="vaargebied">+ Vaargebied leren kennen</button>')+'</div>';
   if(ME.edit)return h+meEditor(st);
@@ -2280,7 +2355,7 @@ function meCheck(m){if(!m.titel)return'Geef de module een titel.';const vs=m.inh
 async function meOpslaan(){const m=meLees(),st=ME.st;const fout=meCheck(m);if(fout){toast(fout,true);return}
   const inh=Object.assign({},m.inhoud,{vragen:(m.inhoud.vragen||[]).filter(q=>q.v)});const mods=(APP.meMods||{})[st]||[];
   const row={titel:m.titel,inhoud:inh,bijgewerkt:nowIso()};const res=m.id?await APP.sb.from('leermodules').update(row).eq('id',m.id):await APP.sb.from('leermodules').insert(Object.assign(row,{gebied:st,soort:m.soort,actief:false,volgorde:(mods.length?Math.max(...mods.map(x=>x.volgorde||0)):0)+10}));
-  if(res.error){toast('Opslaan is mislukt: '+res.error.message,true);return}ME.edit=null;await meLoad(st);toast('Module '+m.titel+' opgeslagen'+(m.id?'':' als concept'));renderGebiedBouwer()}
+  if(res.error){toast(foutTekst(res.error,'Opslaan'),true);return}ME.edit=null;await meLoad(st);toast('Module '+m.titel+' opgeslagen'+(m.id?'':' als concept'));renderGebiedBouwer()}
 async function meWissel(k,d){const st=ME.st,mods=APP.meMods[st],a=mods[k],b=mods[k+d];if(!a||!b)return;const va=a.volgorde,vb=b.volgorde===va?va+d:b.volgorde;
   const r1=await APP.sb.from('leermodules').update({volgorde:vb}).eq('id',a.id),r2=await APP.sb.from('leermodules').update({volgorde:va}).eq('id',b.id);if(r1.error||r2.error){toast('Verplaatsen is mislukt',true)}await meLoad(st);renderGebiedBouwer()}
 function meKaartKlik(e){const svg=e.target.closest('svg[data-medit]');if(!svg||!ME.edit)return;const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const c=pt.matrixTransform(svg.getScreenCTM().inverse());meLees();
@@ -2297,8 +2372,8 @@ $('#dash').addEventListener('click',async e=>{if(APP.dashView!=='gebied'||APP.gb
   else if(a==='vraag-weg'){meLees().inhoud.vragen.splice(k,1);renderGebiedBouwer()}
   else if(a==='punt-weg'){meLees().inhoud.punten.splice(k,1);renderGebiedBouwer()}
   else if(a==='op'||a==='neer')meWissel(k,a==='op'?-1:1);
-  else if(a==='actief'&&m){const {error}=await APP.sb.from('leermodules').update({actief:!m.actief,bijgewerkt:nowIso()}).eq('id',m.id);if(error){toast('Opslaan is mislukt: '+error.message,true);return}toast(m.titel+(m.actief?' is weer een concept':' is actief voor kandidaten in '+(STAD_NAAM[st]||st)));await meLoad(st);renderGebiedBouwer()}
-  else if(a==='weg'&&m){if(!(await confirmBox('Module verwijderen?','“'+m.titel+'” verdwijnt uit de leeromgeving van '+(STAD_NAAM[st]||st)+'. Dit kan niet ongedaan worden gemaakt.','Verwijderen')))return;const {error}=await APP.sb.from('leermodules').delete().eq('id',m.id);if(error){toast('Verwijderen is mislukt: '+error.message,true);return}await meLoad(st);renderGebiedBouwer()}
+  else if(a==='actief'&&m){const {error}=await APP.sb.from('leermodules').update({actief:!m.actief,bijgewerkt:nowIso()}).eq('id',m.id);if(error){toast(foutTekst(error,'Opslaan'),true);return}toast(m.titel+(m.actief?' is weer een concept':' is actief voor kandidaten in '+(STAD_NAAM[st]||st)));await meLoad(st);renderGebiedBouwer()}
+  else if(a==='weg'&&m){if(!(await confirmBox('Module verwijderen?','“'+m.titel+'” verdwijnt uit de leeromgeving van '+(STAD_NAAM[st]||st)+'. Dit kan niet ongedaan worden gemaakt.','Verwijderen')))return;const {error}=await APP.sb.from('leermodules').delete().eq('id',m.id);if(error){toast(foutTekst(error,'Verwijderen'),true);return}await meLoad(st);renderGebiedBouwer()}
   else if(a==='bekijk'&&ME.edit&&ME.edit.id){const id=ME.edit.id;openLeerPreview();await loadModules();modOpen(id)}});
 $('#dash').addEventListener('change',e=>{if(APP.dashView!=='gebied'||APP.gbTab!=='modules')return;
   if(e.target.id==='meSt'){ME.st=e.target.value;ME.edit=null;renderGebiedBouwer()}
