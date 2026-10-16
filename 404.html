@@ -2237,7 +2237,7 @@ async function gbOphalen(){const G=gbStaat();if(!G.sel)return;const mt=GB_MATEN.
     const B={elements:all.filter(e=>geo(e)&&e.type==='way'&&((tg(e).bridge&&tg(e).bridge!=='no'&&(tg(e).highway||tg(e).railway))||tg(e).man_made==='bridge'))};
     const S={elements:all.filter(e=>geo(e)&&e.type==='way'&&new RegExp('^('+PAT+')$').test(tg(e).highway||''))};
     const Pq={elements:all.filter(e=>!geo(e)&&tg(e).name)};
-    gbMsg('Kaart opbouwen…');const kaart=osmVerwerk(pr,mt[2]+100,mt[3]+100)(W,B,S);const d=kaart.data;
+    gbMsg('Kaart opbouwen…');let kaart;try{kaart=osmVerwerk(pr,mt[2]+100,mt[3]+100)(W,B,S)}catch(ve){gbMsg('De kaartgegevens zijn opgehaald, maar konden niet worden verwerkt ('+(ve&&ve.message||ve)+'). Kies een iets ander kader en probeer het opnieuw.');if(btn)btn.disabled=false;return}const d=kaart.data;
     const cnt=x=>x?x.split(';').filter(Boolean).length:0;
     G.kaart={data:d,streets:kaart.streets,op:kaart.op,proj:pr,half:[mt[2],mt[3]],bbox:[s,w,n,e],n:{vaarwegen:cnt(d.ways),bruggen:cnt(d.bridges),straten:cnt(kaart.streets.lines)},zonderStraten};
     const gezien=new Set();G.pois=(Pq.elements||[]).map(x=>({n:x.tags.name,lat:x.lat!=null?x.lat:x.center&&x.center.lat,lon:x.lon!=null?x.lon:x.center&&x.center.lon,w:(x.tags.wikidata||x.tags.wikipedia)?1:0,st:x.tags.railway==='station'?1:0})).filter(p=>p.n&&p.lat!=null&&!gezien.has(p.n)&&gezien.add(p.n)).sort((a,b)=>(b.st-a.st)||(b.w-a.w)||a.n.localeCompare(b.n)).slice(0,30);
