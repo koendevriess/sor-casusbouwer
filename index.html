@@ -829,11 +829,13 @@ const one=x=>Array.isArray(x)?(x[0]||null):(x||null);
 const normCode=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const fmtCode=c=>{const n=normCode(c);return n.length===8?n.slice(0,4)+'-'+n.slice(4):n};
 const siteUrl=()=>location.origin+location.pathname.replace(/index\.html$/,'');
-const ROOT=()=>siteUrl().replace(/(groningen|utrecht)\/$/,'');
+/* PORTAL=true op het hoofdadres (inloggen + doorsturen); elk gebied heeft een eigen adres /<gebied>/ */
+const PORTAL=true;
+const ROOT=()=>PORTAL?siteUrl():siteUrl().replace(/[a-z0-9-]+\/$/,'');
 const STADS=['amsterdam','groningen','utrecht'];
 const STAD_NAAM={amsterdam:'Amsterdam',groningen:'Groningen',utrecht:'Utrecht'};
-const cityUrl=st=>ROOT()+(st&&st!=='amsterdam'?st+'/':'');
-const cityRel=st=>(CITY.id==='amsterdam'?'':'../')+(st&&st!=='amsterdam'?st+'/':'');
+const cityUrl=st=>ROOT()+(st||'amsterdam')+'/';
+const cityRel=st=>(PORTAL?'':'../')+(st||'amsterdam')+'/';
 const stadOpts=sel=>STADS.map(c=>'<option value="'+c+'"'+(c===sel?' selected':'')+'>'+STAD_NAAM[c]+'</option>').join('');
 function setSaveState(t,bad){const el=$('#saveState');el.textContent=t||'';el.style.color=bad?'var(--err)':''}
 function markDirty(key){if(APP.role==='local'){saveLocal();return}if(APP.role==='voorbeeld'||!APP.target)return;if(key)APP.dirty.add(key);clearTimeout(APP.t);APP.t=setTimeout(flush,900);setSaveState('Wijzigingen opslaan…')}
@@ -864,12 +866,17 @@ async function initPlatform(){
   showScreen('Casusbouwer laden','Even geduld…',null,true);
   let session=null;try{const {data}=await APP.sb.auth.getSession();session=data&&data.session}catch(e){}
   if(session&&session.user){APP.user=session.user;APP.uid=session.user.id;await afterLogin()}else showLogin()}
+/* gebieden uit de database: namen en volgorde, plus nieuwe gebieden (zonder de kaart, die is groot) */
+async function loadGebieden(){if(!APP.sb)return;try{const {data,error}=await APP.sb.from('gebieden').select('slug,naam,actief,ingebouwd,volgorde,instellingen,traject');if(error||!data)return;data.sort((a,b)=>(a.volgorde-b.volgorde)||String(a.naam).localeCompare(b.naam));APP.gebieden=data;
+  data.forEach(g=>{STAD_NAAM[g.slug]=g.naam;if(!STADS.includes(g.slug)&&(g.actief||APP.isStaff))STADS.push(g.slug)})}catch(e){}}
+const gebiedVan=st=>(APP.gebieden||[]).find(g=>g.slug===st)||null;
 async function afterLogin(){APP.loginTab='in';showScreen('Casusbouwer laden','Even geduld…',null,true);
   const {data,error}=await APP.sb.from('leden').select('*').eq('user_id',APP.user.id).maybeSingle();
   if(error){if(/jwt|token/i.test(error.message||'')){await APP.sb.auth.signOut();return}showScreen('Er ging iets mis','Je gegevens konden niet worden geladen. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload'],['Uitloggen','logout']]);return}
   if(!data){showClaim();return}
   APP.lid=data;APP.isStaff=data.rol==='medewerker';APP.isLm=data.rol==='leermeester';const st=data.stad||'amsterdam';
-  if(!APP.isStaff&&!APP.isLm&&st!==CITY.id){showScreen('Even geduld','Je gaat naar de casusbouwer voor '+(STAD_NAAM[st]||st)+'…',null,true);location.replace(cityUrl(st));return}
+  await loadGebieden();
+  if(!APP.isStaff&&!APP.isLm&&(PORTAL||st!==CITY.id)){showScreen('Even geduld','Je gaat naar de casusbouwer voor '+(STAD_NAAM[st]||st)+'…',null,true);location.replace(cityUrl(st));return}
   if(APP.isStaff||APP.isLm){openDashboard();const op=new URLSearchParams(location.search).get('open');if(op){history.replaceState(history.state,'',location.pathname);openCasus(op,'staff')}}else if(LEER_LIVE)openLeer(true);else openCasus(data.id,'kandidaat')}
 function loginCard(inner){return'<div class="screen-card login"><img src="'+LOGO.b+'" alt="Flagship Academy"><h2>Casusbouwer</h2><p>Praktijktoets 3 SOR · Flagship Academy</p>'+inner+'</div>'}
 function showLogin(msg){unsubAll();APP.role='login';APP.target=null;APP.mode='screen';showMode('screen');renderTop();const t=APP.loginTab;
@@ -927,7 +934,7 @@ async function openCasus(id,role){unsubAll();await flushNow();APP.role=role;APP.
   if(APP.target!==id)return;
   if(c.error||l.error||f.error){showScreen('Casus niet geladen','De casus kon niet worden geladen. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload']]);return}
   if(!l.data){showBlocked();return}
-  if(role==='staff'&&(l.data.stad||'amsterdam')!==CITY.id){showScreen('Even geduld','Deze casus hoort bij '+(STAD_NAAM[l.data.stad]||l.data.stad)+'. Je wordt doorgestuurd…',null,true);location.href=cityUrl(l.data.stad)+'?open='+encodeURIComponent(id);return}
+  if(role==='staff'&&(PORTAL||(l.data.stad||'amsterdam')!==CITY.id)){showScreen('Even geduld','Deze casus hoort bij '+(STAD_NAAM[l.data.stad]||l.data.stad)+'. Je wordt doorgestuurd…',null,true);location.href=cityUrl(l.data.stad)+'?open='+encodeURIComponent(id);return}
   applyLid(l.data);
   if(c.data){state=loadCasus(c.data.casus);APP.exists=true;APP.lastRev=c.data.rev;Object.assign(APP.meta,{voortgang:c.data.voortgang,bijgewerkt:c.data.bijgewerkt,rev:c.data.rev})}
   else{state=emptyState();if(role==='kandidaat'&&l.data.naam)state.kandidaat.naam=l.data.naam}
@@ -1677,7 +1684,7 @@ function viewExtra(){const x=leerExtras().find(e=>e.id===LV.id);if(!x)return vie
 function viewLes(){const i=LEER.findIndex(c=>c.id===LV.id),c=LEER[i];if(!c)return viewHome();
   let h='<div class="lbar"><button type="button" class="btn soft sm" data-lact="home">← Overzicht</button><span class="lcrumb">Hoofdstuk '+(i+1)+' van '+LEER.length+'</span></div>';
   h+='<header class="lhead"><div class="eyebrow">Hoofdstuk '+(i+1)+' · theorieboek p. '+c.p+'</div><h1>'+esc(c.t)+'</h1><p>'+esc(c.intro)+'</p></header>';
-  h+=c.les.map(s=>'<section class="lsec"><div class="lsec-h"><h2>'+esc(s.t)+'</h2><span class="lp">p. '+s.p+'</span></div>'+s.b.map(x=>typeof x==='string'?'<p>'+fmtT(x)+'</p>':Array.isArray(x)?'<ul>'+x.map(y=>'<li>'+fmtT(y)+'</li>').join('')+'</ul>':x.img?'<figure><a href="assets/theorie/'+x.img+'.webp" target="_blank" rel="noopener"><img src="assets/theorie/'+x.img+'.webp" alt="'+esc(x.alt)+'" loading="lazy"></a><figcaption>'+esc(x.alt)+'</figcaption></figure>':x.tip?'<div class="ltip">'+fmtT(x.tip)+'</div>':'').join('')+'</section>').join('');
+  h+=c.les.map(s=>'<section class="lsec"><div class="lsec-h"><h2>'+esc(s.t)+'</h2><span class="lp">p. '+s.p+'</span></div>'+s.b.map(x=>typeof x==='string'?'<p>'+fmtT(x)+'</p>':Array.isArray(x)?'<ul>'+x.map(y=>'<li>'+fmtT(y)+'</li>').join('')+'</ul>':x.img?'<figure><a href="'+CITY.assets+'assets/theorie/'+x.img+'.webp" target="_blank" rel="noopener"><img src="'+CITY.assets+'assets/theorie/'+x.img+'.webp" alt="'+esc(x.alt)+'" loading="lazy"></a><figcaption>'+esc(x.alt)+'</figcaption></figure>':x.tip?'<div class="ltip">'+fmtT(x.tip)+'</div>':'').join('')+'</section>').join('');
   h+='<section class="lsec cbr"><div class="lsec-h"><h2>Oefen hardop: CBR-vragen</h2></div><p>Deze vragen kan de examinator stellen. Beantwoord ze hardop, in je eigen woorden.</p><ol>'+c.cbr.map(q=>'<li>'+esc(q)+'</li>').join('')+'</ol></section>';
   h+='<div class="lnext"><div><b>Klaar met lezen?</b><span>'+LEER_N+' vragen · 80% goed om het hoofdstuk te halen</span></div><button type="button" class="btn primary" data-lact="quiz" data-id="'+c.id+'">Start de quiz</button></div>';
   return h}
