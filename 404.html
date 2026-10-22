@@ -710,6 +710,16 @@ button.pill.stad.groningen,button.pill.stad.utrecht{background:var(--accent-soft
 .cbrimg{display:block;max-width:100%;max-height:72vh;margin:0 auto;border:1px solid var(--line);border-radius:10px}
 .pillbtn{border:0;cursor:pointer;font:inherit}
 .pillbtn:hover{text-decoration:underline}
+/* AI-conceptfeedback (alleen medewerkers en leermeesters) */
+.ai-box{border-radius:14px;padding:12px 14px;background:#f4f1ff;border:1px solid #d9d0ff;display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.ai-box p{margin:0;white-space:pre-wrap}.ai-box .row{gap:8px}
+.ai-tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;background:#5b4bd6;color:#fff;border-radius:6px;padding:1px 6px}
+.ai-done{font-size:13px;color:var(--muted);margin-top:8px}.ai-done a{cursor:pointer;text-decoration:underline}
+.ai-alg{background:#fff;border:1px solid #e6e0ff;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.ai-lijst{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}.ai-lijst a{cursor:pointer;font-weight:600}
+.pill.ai{background:#efeaff;color:#4b3bc4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ai-box{background:#221d3d;border-color:#3b3270}:root:not([data-theme="light"]) .ai-alg{background:#1a1630;border-color:#3b3270}:root:not([data-theme="light"]) .pill.ai{background:#2c2550;color:#c9c0ff}}
+:root[data-theme="dark"] .ai-box{background:#221d3d;border-color:#3b3270}:root[data-theme="dark"] .ai-alg{background:#1a1630;border-color:#3b3270}:root[data-theme="dark"] .pill.ai{background:#2c2550;color:#c9c0ff}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -898,7 +908,7 @@ async function initPlatform(){
   if(session&&session.user){APP.user=session.user;APP.uid=session.user.id;await afterLogin()}else showLogin()}
 /* duidelijke foutmelding; op een database zonder de nieuwste update (015/016) geen technische tekst */
 const dbOntbreekt=e=>!!e&&/schema cache|does not exist|PGRST205|PGRST204|42P01|42703/i.test(String(e.message||'')+' '+String(e.code||''));
-const foutTekst=(e,actie)=>dbOntbreekt(e)?'Dit onderdeel werkt nog niet: de database moet eerst worden bijgewerkt (zie OVERDRACHT.md, database-update 015 en 016).':(actie||'Opslaan')+' is mislukt: '+((e&&e.message)||'onbekende fout');
+const foutTekst=(e,actie)=>dbOntbreekt(e)?'Dit onderdeel werkt nog niet: de database moet eerst worden bijgewerkt (zie OVERDRACHT.md, database-update 015 t/m 017).':(actie||'Opslaan')+' is mislukt: '+((e&&e.message)||'onbekende fout');
 /* gebieden uit de database: namen en volgorde, plus nieuwe gebieden (zonder de kaart, die is groot) */
 async function loadGebieden(){if(!APP.sb)return;try{const {data,error}=await APP.sb.from('gebieden').select('slug,naam,actief,ingebouwd,volgorde,instellingen,traject');APP.verouderd=!!(error&&dbOntbreekt(error));if(error||!data)return;data.sort((a,b)=>(a.volgorde-b.volgorde)||String(a.naam).localeCompare(b.naam));APP.gebieden=data;
   data.forEach(g=>{STAD_NAAM[g.slug]=g.naam;if(!STADS.includes(g.slug)&&(g.actief||APP.isStaff))STADS.push(g.slug)})}catch(e){}}
@@ -928,7 +938,7 @@ function privacyHtml(){const sec=(h,b)=>'<h3>'+h+'</h3>'+b;
   return'<div class="pvtext"><p class="note">Versie '+PV('datum')+'. In deze verklaring lees je welke gegevens Flagship Academy verwerkt als je de leeromgeving en de casusbouwer gebruikt, waarom, en welke rechten je hebt.</p>'+
   sec('Wie is verantwoordelijk?','<p>Flagship Academy B.V., '+PV('adres')+', KvK '+PV('KvK-nummer')+'. Vragen over je gegevens stel je via '+PV('e-mailadres')+'.</p>')+
   sec('Welke gegevens?','<ul><li><b>Account:</b> je naam, e-mailadres, wachtwoord (versleuteld opgeslagen) en je vaargebied.</li><li><b>Casus:</b> wat je in de casusbouwer invult, zoals geboortedatum, CBR-relatienummer, opstaplocatie, gegevens van het schip, je route, teksten en foto’s die je toevoegt.</li><li><b>Theorie:</b> je antwoorden, scores en voortgang in de leeromgeving.</li><li><b>Feedback:</b> de feedback die je opleider of leermeester op je casus geeft.</li></ul><p>We gebruiken geen advertentie- of volgcookies. Alleen je inlogsessie wordt in je browser bewaard, zodat je ingelogd blijft.</p>')+
-  sec('Waarvoor?','<p>Om je op te leiden voor het kwalificatiecertificaat Schipper open rondvaartboot (SOR): je theorie en casus voor praktijktoets 3 voorbereiden, je voortgang volgen en je feedback geven. Je geboortedatum en CBR-relatienummer staan op de casus die je bij het CBR-examen gebruikt.</p><p>We verwerken je gegevens omdat dat nodig is voor de opleiding die je bij ons volgt (uitvoering van de overeenkomst).</p>')+
+  sec('Waarvoor?','<p>Om je op te leiden voor het kwalificatiecertificaat Schipper open rondvaartboot (SOR): je theorie en casus voor praktijktoets 3 voorbereiden, je voortgang volgen en je feedback geven. Je geboortedatum en CBR-relatienummer staan op de casus die je bij het CBR-examen gebruikt.</p><p>We verwerken je gegevens omdat dat nodig is voor de opleiding die je bij ons volgt (uitvoering van de overeenkomst).</p><p>Na het inleveren laten we je casus met hulp van AI (Claude van Anthropic) analyseren, zodat je opleider sneller feedback kan geven. Je naam, geboortedatum, CBR-relatienummer en foto’s gaan daarbij niet mee. Je opleider beoordeelt alle feedback zelf voordat je die te zien krijgt.</p>')+
   sec('Wie kan je gegevens zien?','<ul><li>Medewerkers van Flagship Academy.</li><li>Leermeesters die aan jou of aan jouw vaargebied zijn gekoppeld.</li></ul><p>We verkopen je gegevens niet en delen ze niet met anderen. Je casus geef je zelf af bij het CBR.</p>')+
   sec('Waar staan je gegevens?','<p>De gegevens staan in een beveiligde database van Supabase op servers in de Europese Unie (Ierland). De website wordt gehost door '+PV('hostingpartij')+'. Met deze partijen '+PV('is / wordt')+' een verwerkersovereenkomst gesloten. Feedback-e-mails worden verstuurd via '+PV('maildienst')+'.</p>')+
   sec('Hoe lang?','<p>We bewaren je gegevens zolang je de opleiding volgt en daarna nog '+PV('termijn, bijvoorbeeld 12 maanden')+'. Daarna verwijderen we je account, je casus, je foto’s en je feedback.</p>')+
@@ -961,7 +971,7 @@ function unsubAll(){if(APP.sb)APP.chans.forEach(c=>{try{APP.sb.removeChannel(c)}
 
 /* casus */
 function applyLid(r){APP.meta.status=r.status==='uitgenodigd'?'bezig':r.status;APP.meta.ingeleverdOp=r.ingeleverd_op;APP.meta.geslaagdOp=r.geslaagd_op;APP.targetNaam=r.naam;APP.targetEmail=r.email||'';APP.targetStad=r.stad||'amsterdam'}
-async function openCasus(id,role){unsubAll();await flushNow();APP.role=role;APP.target=id;APP.exists=false;APP.dirty.clear();APP.fb=null;APP.meta={};APP.fbDirty=false;APP.lastRev=null;
+async function openCasus(id,role){unsubAll();await flushNow();APP.role=role;APP.target=id;APP.exists=false;APP.dirty.clear();APP.fb=null;APP.meta={};APP.fbDirty=false;APP.lastRev=null;APP.ai=null;clearTimeout(APP.aiT);
   showScreen('Casus laden','Even geduld…',null,true);
   const [c,f,l]=await Promise.all([APP.sb.from('casussen').select('*').eq('kandidaat_id',id).maybeSingle(),APP.sb.from('feedback').select('*').eq('kandidaat_id',id).maybeSingle(),APP.sb.from('leden').select('*').eq('id',id).maybeSingle()]);
   if(APP.target!==id)return;
@@ -972,10 +982,12 @@ async function openCasus(id,role){unsubAll();await flushNow();APP.role=role;APP.
   if(c.data){state=loadCasus(c.data.casus);APP.exists=true;APP.lastRev=c.data.rev;Object.assign(APP.meta,{voortgang:c.data.voortgang,bijgewerkt:c.data.bijgewerkt,rev:c.data.rev})}
   else{state=emptyState();if(role==='kandidaat'&&l.data.naam)state.kandidaat.naam=l.data.naam}
   APP.fb=f.data?{stappen:f.data.stappen||{}}:null;APP.fbMailOp=(f.data&&f.data.gemaild_op)||null;
-  state.ui={step:'kandidaat'};enterEditor();subscribeCasus(id);navPush({k:'step',step:'kandidaat',id,role})}
+  state.ui={step:'kandidaat'};enterEditor();subscribeCasus(id);navPush({k:'step',step:'kandidaat',id,role});
+  if(role==='staff')aiLoad(id).then(()=>{if(APP.target!==id)return;if(APP.mode==='edit'&&!panel.contains(document.activeElement))renderPanel();aiAuto(id)})}
 function subscribeCasus(id){try{const ch=APP.sb.channel('casus-'+id+'-'+uid())
   .on('postgres_changes',{event:'*',schema:'public',table:'casussen',filter:'kandidaat_id=eq.'+id},p=>{const n=p&&p.new;if(n&&n.rev&&n.rev===APP.lastRev)return;refreshCasus()})
   .on('postgres_changes',{event:'*',schema:'public',table:'feedback',filter:'kandidaat_id=eq.'+id},()=>refreshFb())
+  .on('postgres_changes',{event:'*',schema:'public',table:'ai_concept',filter:'kandidaat_id=eq.'+id},()=>{if(APP.role==='staff')aiLoad(id).then(()=>{if(APP.mode==='edit'&&!panel.contains(document.activeElement))renderPanel()})})
   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'leden',filter:'id=eq.'+id},p=>{if(p&&p.new&&APP.target===id){applyLid(p.new);renderTop();if(state.ui.step==='controle')renderPanel()}})
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'leden'},p=>{if(p&&p.old&&p.old.id===id&&APP.target===id){if(APP.role==='kandidaat')showBlocked();else{toast('Deze kandidaat is verwijderd');openDashboard()}}})
   .subscribe();APP.chans.push(ch)}catch(e){}}
@@ -1004,6 +1016,7 @@ async function setStatus(id,status){try{let error;
   if(!APP.isStaff&&status==='ingeleverd'){await flushNow();({error}=await APP.sb.rpc('lever_in'))}
   else{const patch={status};if(status==='ingeleverd')patch.ingeleverd_op=nowIso();if(status==='geslaagd')patch.geslaagd_op=nowIso();({error}=await APP.sb.from('leden').update(patch).eq('id',id))}
   if(error)throw error;
+  if(status==='ingeleverd')aiStart(APP.isStaff?id:(APP.target||(APP.lid&&APP.lid.id)),APP.isStaff?'handmatig':'inleveren',true);
   if(id===APP.target){APP.meta.status=status;if(APP.lid&&APP.lid.id===id)APP.lid.status=status;if(status==='ingeleverd')APP.meta.ingeleverdOp=nowIso();if(status==='geslaagd')APP.meta.geslaagdOp=nowIso();renderTop();renderBanner();if(state.ui.step==='controle')renderPanel()}
   if(APP.mode==='dash')loadRoster();
   toast(status==='ingeleverd'?'Casus ingeleverd bij Flagship Academy':status==='geslaagd'?'Gemarkeerd als geslaagd':'Status bijgewerkt')}catch(e){dbError(e,'status')}}
@@ -1220,7 +1233,8 @@ const fText=(path,label,val,ph,o)=>{o=o||{};return'<div class="field"><label for
 const fNum=(path,label,val,ph)=>'<div class="field"><label for="f-'+path+'">'+label+'</label><input type="text" inputmode="decimal" id="f-'+path+'" data-path="'+path+'" data-num="1" value="'+(val==null?'':esc(String(val).replace('.',',')))+'" placeholder="'+esc(ph||'')+'"'+RO()+'></div>';
 const fArea=(path,label,val,ph,rows)=>'<div class="field"><label for="f-'+path+'">'+label+'</label><textarea id="f-'+path+'" data-path="'+path+'" rows="'+(rows||4)+'" placeholder="'+esc(ph||'')+'"'+RO()+'>'+esc(val||'')+'</textarea></div>';
 function head(id,intro){const s=STEPS.find(x=>x.id===id);return'<div class="ph"><div class="eyebrow">'+esc(s.o)+'</div><h1>'+esc(s.t)+'</h1>'+(intro?'<p class="lead">'+intro+'</p>':'')+'</div>'+fbCard(id)}
-function fbCard(id){if(id==='controle'||!['kandidaat','staff'].includes(APP.role))return'';const f=fbStep(id);const who=f&&f.door?(APP.staffNames[f.door]||(f.door===APP.uid?'jij':'Flagship Academy')):'';
+function fbCard(id){return fbCard0(id)+aiBox(id)}
+function fbCard0(id){if(id==='controle'||!['kandidaat','staff'].includes(APP.role))return'';const f=fbStep(id);const who=f&&f.door?(APP.staffNames[f.door]||(f.door===APP.uid?'jij':'Flagship Academy')):'';
   if(APP.role==='staff')return'<section class="fb staff"><div class="fb-h"><b>Feedback voor de kandidaat</b><span class="fb-st"><button type="button" class="chip'+(f&&f.status==='ok'?' ok':'')+'" data-fbst="ok" data-step="-" data-fbstep="'+id+'">Akkoord</button><button type="button" class="chip'+(f&&f.status==='aanpassen'?' on':'')+'" data-fbst="aanpassen" data-fbstep="'+id+'">Aanpassen</button></span></div><textarea data-fb="'+id+'" rows="3" placeholder="Wat moet de kandidaat bij deze stap verbeteren?">'+esc(f&&f.tekst||'')+'</textarea><div class="row" style="margin-top:6px">'+fbMailRow()+'</div>'+(f&&f.op?'<div class="fb-meta">Laatst bijgewerkt '+esc(fmtDate(f.op))+(who?' door '+esc(who):'')+'</div>':'')+'</section>';
   if(!f||(!f.tekst&&!f.status))return'';return'<section class="fb'+(f.status==='ok'?' ok':'')+'"><div class="fb-h"><b>Feedback van je opleider</b>'+(f.status==='aanpassen'?'<span class="pill acc">Aanpassen</span>':f.status==='ok'?'<span class="pill ok">Akkoord</span>':'')+'</div>'+(f.tekst?'<p>'+esc(f.tekst)+'</p>':'')+'<div class="fb-meta">'+esc(fmtDate(f.op))+(who?' · '+esc(who):'')+'</div></section>'}
 function foot(id){const i=STEPS.findIndex(s=>s.id===id);const p=STEPS[i-1],n=STEPS[i+1];return'<div class="nav-foot">'+(p?'<button class="btn" type="button" data-step="'+p.id+'">← '+esc(p.t)+'</button>':'<span></span>')+(n?'<button class="btn primary" type="button" data-step="'+n.id+'">'+esc(n.t)+' →</button>':'')+'</div>'}
@@ -1297,7 +1311,7 @@ VIEWS.milieu=()=>{const m=state.milieu;const ed=editable();let h=head('milieu','
  h+='<section class="sec"><h2>14. Wat wordt bedoeld met 0% uitstoot?</h2>'+fArea('milieu.nul','Antwoord',m.nul,'',3)+'</section>';
  h+='<section class="sec"><h2>15. Welke ontwikkelingen zijn er op het gebied van milieuvriendelijke aandrijvingen?</h2>'+fArea('milieu.ontw','Antwoord',m.ontw,'',4)+'</section>';return h};
 VIEWS.controle=()=>{const all=CHECKS.length,ok=CHECKS.filter(c=>c.ok).length,errs=CHECKS.filter(c=>c.level==='err').length;const r=APP.role;let h=head('controle','Controleer je casus en download de PDF. Print hem twee keer voor de toets.'+(r==='kandidaat'?' Lever hem uiterlijk een week voor je generale in bij Flagship Academy.':''));
- if(r==='staff'){const f=fbStep('algemeen');h+='<section class="fb staff"><div class="fb-h"><b>Algemene feedback</b></div><textarea data-fb="algemeen" rows="4" placeholder="Samenvatting voor de kandidaat">'+esc(f&&f.tekst||'')+'</textarea><div class="row" style="margin-top:6px">'+fbMailRow()+'</div></section>'}
+ if(r==='staff'){const f=fbStep('algemeen');h+='<section class="fb staff"><div class="fb-h"><b>Algemene feedback</b></div><textarea data-fb="algemeen" rows="4" placeholder="Samenvatting voor de kandidaat">'+esc(f&&f.tekst||'')+'</textarea><div class="row" style="margin-top:6px">'+fbMailRow()+'</div></section>'+aiOverzicht()}
  else if(r==='kandidaat'){const f=fbStep('algemeen');if(f&&f.tekst)h+='<section class="fb"><div class="fb-h"><b>Algemene feedback van je opleider</b></div><p>'+esc(f.tekst)+'</p><div class="fb-meta">'+esc(fmtDate(f.op))+'</div></section>'}
  h+='<div class="big-score"><span class="v">'+Math.round(ok/all*100)+'%</span><div><b>'+ok+' van '+all+' controles in orde</b><div class="note">'+(errs?errs+' punt(en) moeten nog worden ingevuld of verbeterd. Je kunt de PDF ook nu al downloaden.':'De casus is compleet.')+'</div></div></div>';
  h+='<div class="row"><button type="button" class="btn primary" data-act="pdf" id="btnPdf">PDF downloaden</button>'+(r==='local'?'<button type="button" class="btn" data-act="backup">Back-up (.json)</button>':'')+(r==='kandidaat'?(APP.meta.status==='ingeleverd'||APP.meta.status==='geslaagd'?'<span class="pill blue">Ingeleverd op '+esc(fmtDate(APP.meta.ingeleverdOp))+'</span>':'<button type="button" class="btn soft" data-act="inleveren">Inleveren bij Flagship Academy</button>'):'')+'</div><p class="note" id="pdfNote">De PDF bevat een voorblad, de routekaart met genummerde bruggen en meldpunten, en alle opdrachten.</p>';
@@ -1333,6 +1347,7 @@ async function loadRoster(){if(!APP.sb)return;const [q,lt,lg,gr,cb]=await Promis
   APP.cbrAll={};if(cb&&!cb.error)(cb.data||[]).forEach(x=>{APP.cbrAll[x.kandidaat_id]=x});
   APP.lmGeb={};((lg&&!lg.error&&lg.data)||[]).forEach(x=>{(APP.lmGeb[x.leermeester_id]=APP.lmGeb[x.leermeester_id]||[]).push(x.stad)});
   if(APP.lid){const me=APP.roster.find(r=>r.id===APP.lid.id);if(me)APP.lid=Object.assign(APP.lid,{naam:me.naam})}
+  try{await aiLoadAll()}catch(e){}
   renderDash()}
 const ST_LABEL={uitgenodigd:'Nog niet gestart',bezig:'Bezig',ingeleverd:'Ingeleverd',geslaagd:'Geslaagd'};
 const ROL_LABEL={medewerker:'Medewerker',leermeester:'Leermeester',kandidaat:'Kandidaat'};
@@ -1380,7 +1395,7 @@ function renderDash(){if(APP.mode!=='dash')return;if(APP.dashView==='voortgang'&
   else if(f==='groepen'&&!lm){h+=groepenView(q)}
   else{const list=f==='actie'?kand.filter(actieNodig).sort((a,b)=>(eersteDl(a)-eersteDl(b))||a.naam.localeCompare(b.naam)):kand.filter(r=>f==='actief'?r.status!=='geslaagd':r.status===f).sort(dashSorter());
     h+=list.length?'<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Kandidaat</th>'+(showTh?'<th>Theorie</th>':'')+'<th>Casus</th><th>Status</th>'+(trajectZichtbaar()?'<th>Traject</th>':'')+'<th></th></tr></thead><tbody>'+list.map(r=>{const v=(r.cas&&r.cas.voortgang)||0;const st=(r.fbk&&r.fbk.stappen)||{};const open=Object.values(st).filter(x=>x&&x.status==='aanpassen').length,okc=Object.values(st).filter(x=>x&&x.status==='ok').length;const lmn=lm?[]:lmNames(r.id);
-      return'<tr><td class="c-person"><div class="person">'+avatar(r)+'<div><b>'+esc(r.naam)+'</b> '+stadPill(r)+codeCell(r)+(lmn.length?'<small>Leermeester: '+esc(lmn.join(', '))+'</small>':'')+'</div></div></td>'+(showTh?'<td data-l="Theorie">'+((LEER_LIVE||(r.stad||'amsterdam')!=='amsterdam')?thCell(r):'<span class="note">–</span>')+'</td>':'')+'<td data-l="Casus"><div class="row nw" style="gap:6px"><div class="pbar"><span style="width:'+v+'%"></span></div><span class="num">'+v+'%</span></div><small class="note">'+esc(r.cas?'Bijgewerkt '+ago(r.cas.bijgewerkt):'Nog niet begonnen')+'</small></td><td data-l="Status" class="c-status">'+stPill(r.status)+(open?'<span class="pill acc">'+open+(open===1?' aanpassing':' aanpassingen')+'</span>':okc?'<span class="pill ok">'+okc+' akkoord</span>':'')+'</td>'+(trajectZichtbaar()?'<td data-l="Traject" class="c-traject">'+trCell(r)+'</td>':'')+'<td class="c-act"><div class="acts"><button type="button" class="btn sm primary" data-dact="open" data-id="'+esc(r.id)+'">Openen</button>'+(lm?'':'<button type="button" class="btn sm soft amore" data-dact="menu" data-id="'+esc(r.id)+'" aria-haspopup="menu" aria-label="Meer acties voor '+esc(r.naam)+'" title="Meer acties">⋯</button>')+'</div></td></tr>'}).join('')+'</tbody></table></div>':'<p class="note">'+(q?'Geen kandidaten gevonden voor “'+esc(APP.dashQ.trim())+'”'+(map!=='alle'?' in de map '+STAD_NAAM[map]:'')+'.':map!=='alle'&&!kand.length?'De map '+STAD_NAAM[map]+' is nog leeg.':'')+(q||(map!=='alle'&&!kand.length)?'':(lm?(f==='actief'&&!kand.length?'Er zijn nog geen kandidaten aan je gekoppeld. Een medewerker van Flagship Academy kan kandidaten aan je koppelen.':'Geen kandidaten in deze lijst.'):(f==='actief'&&!kand.length?'Nog geen kandidaten. Klik op “Kandidaat toevoegen” om te beginnen.':'Geen kandidaten in deze lijst.')))+'</p>'}
+      return'<tr><td class="c-person"><div class="person">'+avatar(r)+'<div><b>'+esc(r.naam)+'</b> '+stadPill(r)+aiPill(r)+codeCell(r)+(lmn.length?'<small>Leermeester: '+esc(lmn.join(', '))+'</small>':'')+'</div></div></td>'+(showTh?'<td data-l="Theorie">'+((LEER_LIVE||(r.stad||'amsterdam')!=='amsterdam')?thCell(r):'<span class="note">–</span>')+'</td>':'')+'<td data-l="Casus"><div class="row nw" style="gap:6px"><div class="pbar"><span style="width:'+v+'%"></span></div><span class="num">'+v+'%</span></div><small class="note">'+esc(r.cas?'Bijgewerkt '+ago(r.cas.bijgewerkt):'Nog niet begonnen')+'</small></td><td data-l="Status" class="c-status">'+stPill(r.status)+(open?'<span class="pill acc">'+open+(open===1?' aanpassing':' aanpassingen')+'</span>':okc?'<span class="pill ok">'+okc+' akkoord</span>':'')+'</td>'+(trajectZichtbaar()?'<td data-l="Traject" class="c-traject">'+trCell(r)+'</td>':'')+'<td class="c-act"><div class="acts"><button type="button" class="btn sm primary" data-dact="open" data-id="'+esc(r.id)+'">Openen</button>'+(lm?'':'<button type="button" class="btn sm soft amore" data-dact="menu" data-id="'+esc(r.id)+'" aria-haspopup="menu" aria-label="Meer acties voor '+esc(r.naam)+'" title="Meer acties">⋯</button>')+'</div></td></tr>'}).join('')+'</tbody></table></div>':'<p class="note">'+(q?'Geen kandidaten gevonden voor “'+esc(APP.dashQ.trim())+'”'+(map!=='alle'?' in de map '+STAD_NAAM[map]:'')+'.':map!=='alle'&&!kand.length?'De map '+STAD_NAAM[map]+' is nog leeg.':'')+(q||(map!=='alle'&&!kand.length)?'':(lm?(f==='actief'&&!kand.length?'Er zijn nog geen kandidaten aan je gekoppeld. Een medewerker van Flagship Academy kan kandidaten aan je koppelen.':'Geen kandidaten in deze lijst.'):(f==='actief'&&!kand.length?'Nog geen kandidaten. Klik op “Kandidaat toevoegen” om te beginnen.':'Geen kandidaten in deze lijst.')))+'</p>'}
   h+=lm?'<div class="info"><b>Zo werkt het</b><ol><li>'+((APP.lmGeb&&APP.lid&&(APP.lmGeb[APP.lid.id]||[]).length)?'Je ziet alle kandidaten uit '+esc(APP.lmGeb[APP.lid.id].map(s=>STAD_NAAM[s]).join(' en '))+', en de kandidaten die een medewerker los aan je heeft gekoppeld. Nieuwe kandidaten uit dat gebied verschijnen vanzelf.':'Je ziet de kandidaten die een medewerker aan je heeft gekoppeld.')+'</li><li>Klik op <b>Openen</b> om de casus te bekijken. Bij elke stap kun je feedback geven: <b>Akkoord</b> of <b>Aanpassen</b>, met een toelichting.</li><li>De kandidaat ziet je feedback direct. Met <b>Feedback mailen</b> stuur je een samenvatting.</li></ol></div></div>'
     :'<div class="info"><b>Zo werkt het</b><ol><li>Klik op <b>Kandidaat toevoegen</b> en vul de naam in. Je krijgt een uitnodigingscode en een bericht om te versturen.</li><li>De kandidaat opent de casusbouwer, kiest <b>Account aanmaken</b> en vult de code in. Elke code werkt één keer.</li>'+(LEER_LIVE?(LEER_GATE?'<li>De kandidaat begint in de <b>leeromgeving</b>. Na de eindtoets gaat de casus open. Klik op de theorie-voortgang om details te zien of de casus eerder vrij te geven.</li>':'<li>De kandidaat begint in de <b>leeromgeving</b> en kan meteen naar de casus. Klik op de theorie-voortgang om per hoofdstuk de scores te zien.</li>'):'')+'<li>Zet kandidaten in een <b>groep</b> met een datum voor de generale en het examen (tab <b>Groepen</b>), of geef iemand via <b>⋯</b> → <b>Traject en datums</b> een eigen datum. Casus en vrijstelling moeten een week voor de generale rond zijn. Onder <b>Voortgang → Actie nodig</b> zie je wie achterloopt. '+(TRAJECT_KANDIDAAT?'De kandidaat ziet zijn deadlines en een waarschuwing in de leeromgeving.':'Kandidaten en leermeesters zien dit nog niet; in de voorbeeld-leeromgeving zie je hoe het voor kandidaten wordt.')+'</li><li>Een <b>leermeester</b> ziet alleen de kandidaten die je koppelt. Onder <b>Team</b> klik je op een vaargebied (bijvoorbeeld <b>Groningen</b>): de leermeester ziet dan alle kandidaten uit dat gebied, ook nieuwe. Met <b>Losse kandidaten</b> koppel je daarnaast losse kandidaten. Hij kan hun casus bekijken en feedback geven, maar niets wijzigen of beheren.</li>'+(cvoAan()?'<li>CVO van een schip nodig? Klik bovenin op <b>CVO\'s</b>. Leermeesters hebben die knop ook.</li>':'')+'<li>Wachtwoord vergeten? Klik bij de kandidaat op <b>⋯</b> → <b>Nieuwe code</b>. Het oude account vervalt, de casus blijft bewaard.</li><li>Geslaagd? Klik op <b>⋯</b> → <b>Verwijderen</b>. Dat wist de casus, de feedback, de foto’s en het account definitief.</li></ol></div></div>';
   $('#dash').innerHTML=h}
@@ -1412,7 +1427,7 @@ async function renameLid(r){const y=await modalBox('Naam wijzigen','Pas de naam 
   toast('Naam gewijzigd in '+naam);if(APP.lid&&r.id===APP.lid.id){APP.lid.naam=naam;renderTop()}loadRoster()}
 /* actiemenu (⋯) in het overzicht */
 function closeAmenu(){const m=$('#amenu');if(m)m.remove()}
-function openAmenu(btn,r){closeAmenu();const me=APP.lid&&r.id===APP.lid.id;const items=[['naam','Naam wijzigen']];if(r.rol==='kandidaat'){items.push(['traject','Traject en datums']);items.push(['pdf','PDF van de casus downloaden']);if((APP.cbrAll||{})[r.id])items.push(['cbr','CBR-bevestiging bekijken'])}
+function openAmenu(btn,r){closeAmenu();const me=APP.lid&&r.id===APP.lid.id;const items=[['naam','Naam wijzigen']];if(r.rol==='kandidaat'){items.push(['traject','Traject en datums']);items.push(['pdf','PDF van de casus downloaden']);if((APP.cbrAll||{})[r.id])items.push(['cbr','CBR-bevestiging bekijken']);if(APP.isStaff&&r.cas)items.push(['aivb',(APP.aiVoorbeeld||{})[r.id]?'Niet meer als voorbeeldcasus gebruiken':'Als voorbeeldcasus voor de AI gebruiken'])}
   if(r.rol==='kandidaat'){if(r.status!=='geslaagd')items.push(['geslaagd','Markeren als geslaagd']);else items.push(['terug','Geslaagd ongedaan maken']);items.push(['stad','Vaargebied wijzigen']);if(r.user_id)items.push(['newcode','Nieuwe code (wachtwoord vergeten)']);else if(r.code)items.push(['code','Code en bericht tonen'])}
   else if(!me){if(r.user_id)items.push(['newcode','Nieuwe code (wachtwoord vergeten)']);else if(r.code)items.push(['code','Code en bericht tonen'])}
   if(!me)items.push(['remove','Verwijderen','danger']);
@@ -1436,6 +1451,7 @@ $('#dash').addEventListener('click',async e=>{if(!e.target.closest('[data-dact="
   else if(a==='traject'&&r)editTraject(r);
   else if(a==='pdf'&&r)casusPdf(r);
   else if(a==='cbr'&&r)cbrBekijk(r.id,r.naam);
+  else if(a==='aivb'&&r)aiVoorbeeldZetten(r);
   else if(a==='terug'&&r){const nw=r.ingeleverd_op?'ingeleverd':'bezig';const y=await confirmBox('Geslaagd ongedaan maken?',r.naam+' gaat terug naar '+(nw==='ingeleverd'?'Ingeleverd':'Actief (bezig)')+'. De casus, feedback en theorie blijven gewoon bewaard.','Terugzetten');if(!y)return;
     const {error}=await APP.sb.from('leden').update({status:nw,geslaagd_op:null}).eq('id',r.id);if(error){toast('Opslaan is mislukt: '+error.message,true);return}r.status=nw;r.geslaagd_op=null;toast(r.naam+' staat weer op '+(nw==='ingeleverd'?'Ingeleverd':'Actief'));APP.dashFilter=nw==='ingeleverd'?'ingeleverd':'actief';renderDash();loadRoster()}
   else if(a==='gebied'&&r){const st=b.dataset.stad,aan=!(APP.lmGeb[r.id]||[]).includes(st);b.disabled=true;const {error}=await APP.sb.rpc('leermeester_gebied_zetten',{p_lm:r.id,p_stad:st,p_aan:aan});if(error){b.disabled=false;toast('Opslaan is mislukt: '+error.message,true);return}
@@ -2417,6 +2433,84 @@ $('#dash').addEventListener('click',async e=>{if(APP.dashView!=='gebied'||APP.gb
 $('#dash').addEventListener('change',e=>{if(APP.dashView!=='gebied'||APP.gbTab!=='modules')return;
   if(e.target.id==='meSt'){ME.st=e.target.value;ME.edit=null;renderGebiedBouwer()}
   else if(e.target.id==='meBrug'&&e.target.value!==''&&ME.edit){const br=BRIDGES[+e.target.value];if(br){meLees();ME.edit.inhoud.punten.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,4),naam:br.nm,soort:'brug',x:br.x,y:br.y,tekst:''});renderGebiedBouwer()}}});
+/* ---------- AI-conceptfeedback (migratie 017, Edge Function ai-feedback) ----------
+   Bij het inleveren laat de casusbouwer de casus analyseren. Het concept is alleen zichtbaar voor
+   medewerkers en leermeesters (APP.role==='staff'); de kandidaat ziet het nooit. Pas als een medewerker
+   op Overnemen klikt, komt de tekst in de gewone feedback die de kandidaat wel ziet. */
+const AI_ZEKER={hoog:'zeker',middel:'redelijk zeker',laag:'twijfel'};
+APP.ai=null;APP.aiAll={};APP.aiVoorbeeld={};
+function aiExtras(){const out={controles:[],route:null};
+  try{const cs=(CHECKS&&CHECKS.length)?CHECKS:checks();out.controles=cs.slice(0,200).map(c=>({stap:c.step,ok:!!c.ok,niveau:c.level,label:c.label}))}catch(e){}
+  try{if(R&&R.ok&&R.pts&&R.pts.length>1){const d=duration();out.route={minuten:Math.round(d.total),tegen_eenrichting:R.against||[],te_groot_voor:(R.viol||[]).map(v=>v.nm),
+    bruggen:(R.bridges||[]).map((f,i)=>{const s=bridgeStatus(f.br);return{nr:i+1,naam:f.br.nm||f.br.name||f.br.n||'',status:s.t}})}}}catch(e){}
+  return out}
+async function aiLoad(id){if(!APP.sb||APP.role!=='staff')return;
+  const {data,error}=await APP.sb.from('ai_concept').select('*').eq('kandidaat_id',id).maybeSingle();
+  if(APP.target!==id)return;APP.aiDb=!(error&&dbOntbreekt(error));APP.ai=error?null:(data||null);aiPoll(id)}
+function aiPoll(id){clearTimeout(APP.aiT);if(!APP.ai||APP.ai.status!=='bezig')return;let n=0;
+  const tik=async()=>{if(APP.target!==id||APP.role!=='staff'||n++>75)return;const was=APP.ai&&APP.ai.status;await aiLoad(id);
+    if(APP.ai&&APP.ai.status!=='bezig'){if(was==='bezig'&&APP.ai.status==='klaar')toast('AI-conceptfeedback is klaar');if(APP.mode==='edit')renderPanel();return}APP.aiT=setTimeout(tik,4000)};
+  APP.aiT=setTimeout(tik,4000)}
+/* reden: 'inleveren' (kandidaat), 'openen' (automatisch bij openen door medewerker), 'handmatig' */
+async function aiStart(id,reden,stil){if(!APP.sb||!id)return false;
+  try{const {data,error}=await APP.sb.functions.invoke('ai-feedback',{body:Object.assign({kandidaat_id:id,reden},aiExtras())});
+    if(error){let j={};try{j=await error.context.json()}catch(e){}
+      if(APP.role==='staff'&&APP.target===id){await aiLoad(id);if(APP.mode==='edit')renderPanel()}
+      if(!stil)toast(j.error==='niet_ingesteld'?'AI-feedback staat nog niet aan: de API-sleutel ontbreekt (zie OVERDRACHT.md).':'Conceptfeedback maken is mislukt.',true);return false}
+    if(APP.role==='staff'&&APP.target===id){await aiLoad(id);if(APP.mode==='edit')renderPanel()}
+    return true}catch(e){if(!stil)toast('Conceptfeedback maken is mislukt.',true);return false}}
+/* medewerker opent een ingeleverde casus zonder concept: alsnog laten maken (bijv. als het bij inleveren mislukte) */
+function aiAuto(id){if(APP.role!=='staff'||!APP.aiDb||APP.ai)return;if(APP.meta.status!=='ingeleverd')return;aiStart(id,'openen',true)}
+function aiVerouderd(){const a=APP.ai;return!!(a&&a.status==='klaar'&&a.casus_bijgewerkt&&APP.meta.bijgewerkt&&new Date(APP.meta.bijgewerkt)-new Date(a.casus_bijgewerkt)>60000)}
+async function aiMark(step,val){const a=APP.ai;if(!a)return;a.afgehandeld=Object.assign({},a.afgehandeld||{});if(val)a.afgehandeld[step]=val;else delete a.afgehandeld[step];
+  const {error}=await APP.sb.from('ai_concept').update({afgehandeld:a.afgehandeld}).eq('kandidaat_id',APP.target);if(error)toast(foutTekst(error,'Bijwerken'),true)}
+function aiOvernemen(step,mode){const a=APP.ai;const s=a&&(step==='algemeen'?{tekst:a.algemeen}:(a.stappen||{})[step]);if(!s)return;const cur=fbStep(step);
+  const tekst=mode==='erbij'&&cur&&(cur.tekst||'').trim()?cur.tekst.trim()+'\n\n'+s.tekst:s.tekst;
+  setFb(step,step==='algemeen'?{tekst}:{status:s.status||'',tekst});aiMark(step,'over');renderPanel();renderRail()}
+/* concept bij een stap, direct onder het feedbackvak van de medewerker */
+function aiBox(id){const a=APP.ai;if(APP.role!=='staff'||!a||id==='controle')return'';
+  if(a.status==='bezig')return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>Concept wordt gemaakt…</b></div><p class="note">De casus wordt geanalyseerd. Dit duurt meestal een minuut.</p></section>';
+  if(a.status!=='klaar')return'';const s=(a.stappen||{})[id];if(!s)return'';const af=(a.afgehandeld||{})[id];
+  if(af)return'<div class="ai-done"><span class="ai-tag">AI</span> Concept '+(af==='over'?'overgenomen':'genegeerd')+' · <a role="button" tabindex="0" data-ai="terug" data-step-ai="'+id+'">Concept weer tonen</a></div>';
+  const cur=fbStep(id);const heeft=cur&&(cur.tekst||'').trim();
+  return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>Conceptfeedback</b>'+(s.status==='ok'?'<span class="pill ok">Akkoord</span>':'<span class="pill acc">Aanpassen</span>')+(s.zekerheid?'<span class="note">'+esc(AI_ZEKER[s.zekerheid]||s.zekerheid)+'</span>':'')+'</div><p>'+esc(s.tekst)+'</p>'+
+    '<div class="row"><button type="button" class="btn sm primary" data-ai="over" data-step-ai="'+id+'">'+(heeft?'Vervangen':'Overnemen')+'</button>'+(heeft?'<button type="button" class="btn sm" data-ai="erbij" data-step-ai="'+id+'">Toevoegen</button>':'')+'<button type="button" class="btn sm soft" data-ai="neg" data-step-ai="'+id+'">Negeren</button></div>'+
+    '<div class="fb-meta">Alleen zichtbaar voor medewerkers en leermeesters. De kandidaat ziet dit pas als je het overneemt.</div></section>'}
+/* overzicht op de stap Controle */
+function aiOverzicht(){const a=APP.ai;if(APP.role!=='staff')return'';
+  if(!APP.aiDb)return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>AI-conceptfeedback</b></div><p class="note">Werkt nog niet: de database moet eerst worden bijgewerkt (database-update 017, zie OVERDRACHT.md).</p></section>';
+  const knop=(t,cls)=>'<button type="button" class="btn sm '+(cls||'')+'" data-ai="nieuw">'+t+'</button>';
+  let h='<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>AI-conceptfeedback</b></div>';
+  if(!a)h+='<p class="note">'+(APP.meta.status==='ingeleverd'?'Er is nog geen concept.':'Het concept wordt automatisch gemaakt zodra de kandidaat inlevert.')+'</p><div class="row">'+knop('Concept maken','primary')+'</div>';
+  else if(a.status==='bezig')h+='<p class="note">Concept wordt gemaakt…</p>';
+  else if(a.status==='uit')h+='<p class="note">AI-feedback staat nog niet aan: de API-sleutel ontbreekt in Supabase (zie OVERDRACHT.md).</p><div class="row">'+knop('Opnieuw proberen')+'</div>';
+  else if(a.status==='fout')h+='<p class="note">Het concept kon niet worden gemaakt: '+esc(a.fout||'onbekende fout')+'</p><div class="row">'+knop('Opnieuw proberen','primary')+'</div>';
+  else{const st=a.stappen||{},af=a.afgehandeld||{};const ids=STEPS.filter(s=>st[s.id]).map(s=>s.id);const open=ids.filter(i=>!af[i]);const aanp=ids.filter(i=>st[i].status==='aanpassen');
+    h+='<p class="note">Gemaakt '+esc(fmtDate(a.gemaakt))+(a.voorbeelden?' · vergeleken met '+a.voorbeelden+' goede casus'+(a.voorbeelden>1?'sen':''):' · nog geen voorbeeldcasus beschikbaar')+' · '+aanp.length+' van '+ids.length+' stappen aanpassen · '+open.length+' nog te beoordelen</p>'+
+      (aiVerouderd()?'<p class="note"><b>Let op:</b> de kandidaat heeft de casus na dit concept nog gewijzigd.</p>':'')+
+      (a.algemeen&&!af.algemeen?'<div class="ai-alg"><b>Algemeen</b><p>'+esc(a.algemeen)+'</p><div class="row"><button type="button" class="btn sm" data-ai="over" data-step-ai="algemeen">In algemene feedback zetten</button><button type="button" class="btn sm soft" data-ai="neg" data-step-ai="algemeen">Negeren</button></div></div>':'')+
+      '<div class="row">'+(open.length?'<button type="button" class="btn sm primary" data-ai="alles">Alle open concepten overnemen</button>':'')+knop('Concept vernieuwen')+'</div>'+
+      '<ul class="ai-lijst">'+ids.map(i=>{const s=STEPS.find(x=>x.id===i);return'<li><a data-step="'+i+'" role="button" tabindex="0">'+esc(s.t)+'</a> '+(st[i].status==='ok'?'<span class="pill ok">Akkoord</span>':'<span class="pill acc">Aanpassen</span>')+(af[i]?' <span class="note">'+(af[i]==='over'?'overgenomen':'genegeerd')+'</span>':'')+'</li>'}).join('')+'</ul>'}
+  return h+'<div class="fb-meta">Alleen zichtbaar voor medewerkers en leermeesters.</div></section>'}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-ai]');if(!b||APP.role!=='staff'||!APP.target)return;e.preventDefault();const act=b.dataset.ai,step=b.dataset.stepAi;
+  if(act==='over'||act==='erbij'){aiOvernemen(step,act);return}
+  if(act==='neg'){await aiMark(step,'neg');renderPanel();return}
+  if(act==='terug'){await aiMark(step,'');renderPanel();return}
+  if(act==='alles'){const a=APP.ai;if(!a)return;const st=a.stappen||{},af=a.afgehandeld||{};let n=0,over=0;
+    STEPS.forEach(s=>{const c=st[s.id];if(!c||af[s.id])return;const cur=fbStep(s.id);if(cur&&(cur.tekst||'').trim()){over++;return}setFb(s.id,{status:c.status||'',tekst:c.tekst});a.afgehandeld=Object.assign({},a.afgehandeld||{},{[s.id]:'over'});n++});
+    if(n)await aiMark('_',null);renderPanel();renderRail();toast(n+' concept'+(n===1?'':'en')+' overgenomen'+(over?'; '+over+' stap'+(over===1?'':'pen')+' met eigen feedback overgeslagen':'')+'. Controleer de feedback en mail hem daarna naar de kandidaat.');return}
+  if(act==='nieuw'){b.disabled=true;const ok=await aiStart(APP.target,'handmatig',false);if(ok)toast('Concept wordt gemaakt…');return}});
+/* overzicht: labels per kandidaat */
+async function aiLoadAll(){APP.aiAll={};APP.aiVoorbeeld={};if(!APP.sb||!(APP.isStaff||APP.isLm))return;
+  const [c,v]=await Promise.all([APP.sb.from('ai_concept').select('kandidaat_id,status,gemaakt'),APP.isStaff?APP.sb.from('ai_voorbeeld').select('kandidaat_id'):Promise.resolve({data:[]})]);
+  if(c&&!c.error)(c.data||[]).forEach(x=>{APP.aiAll[x.kandidaat_id]=x});if(v&&!v.error)(v.data||[]).forEach(x=>{APP.aiVoorbeeld[x.kandidaat_id]=true})}
+function aiPill(r){if(r.rol!=='kandidaat')return'';const a=APP.aiAll[r.id];let h='';
+  if(a&&a.status==='klaar')h+=' <span class="pill ai" title="Conceptfeedback van de AI staat klaar om te beoordelen">AI-concept</span>';else if(a&&a.status==='bezig')h+=' <span class="pill unk">AI bezig</span>';
+  if(APP.aiVoorbeeld[r.id])h+=' <span class="pill ok" title="Deze casus dient als voorbeeld voor de AI">Voorbeeldcasus</span>';return h}
+async function aiVoorbeeldZetten(r){const aan=!APP.aiVoorbeeld[r.id];
+  const y=await confirmBox(aan?'Als voorbeeldcasus gebruiken?':'Niet meer als voorbeeld gebruiken?',aan?'De AI vergelijkt nieuwe casussen met deze casus van '+r.naam+'. Kies alleen een goede, goedgekeurde casus. Naam, geboortedatum, CBR-nummer en foto’s gaan niet mee.':'De casus van '+r.naam+' wordt niet meer als voorbeeld gebruikt.',aan?'Gebruiken':'Stoppen');if(!y)return;
+  const {error}=aan?await APP.sb.from('ai_voorbeeld').insert({kandidaat_id:r.id}):await APP.sb.from('ai_voorbeeld').delete().eq('kandidaat_id',r.id);
+  if(error){toast(foutTekst(error,'Opslaan'),true);return}toast(aan?'Casus van '+r.naam+' is nu een voorbeeldcasus':'Voorbeeldcasus uitgezet');loadRoster()}
 
 /* ---------- change handling ---------- */
 function changed(o){o=o||{};if(o.route)drawRoute();CHECKS=checks();renderProgress();renderRail();if(o.items)drawItems();if(o.route)drawWps();if(o.panel)renderPanel();updateHint()}
