@@ -701,6 +701,14 @@ button.pill.stad.groningen,button.pill.stad.utrecht{background:var(--accent-soft
 .cbrup input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .cbrup:focus-within{outline:3px solid var(--accent);outline-offset:2px}
 @media (max-width:820px){.ltiles{grid-template-columns:1fr}.ltile{min-height:0}}
+
+/* CBR-bevestiging bekijken */
+.modal-card.wide{max-width:min(1000px,100%)}
+.cbrview{margin:4px 0 14px}
+.cbrframe{display:block;width:100%;height:min(72vh,900px);border:1px solid var(--line);border-radius:10px;background:#fff}
+.cbrimg{display:block;max-width:100%;max-height:72vh;margin:0 auto;border:1px solid var(--line);border-radius:10px}
+.pillbtn{border:0;cursor:pointer;font:inherit}
+.pillbtn:hover{text-decoration:underline}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -907,7 +915,7 @@ async function afterLogin(){APP.loginTab='in';showScreen('Casusbouwer laden','Ev
   APP.lid=data;APP.isStaff=data.rol==='medewerker';APP.isLm=data.rol==='leermeester';const st=data.stad||'amsterdam';
   await loadGebieden();
   if(!APP.isStaff&&!APP.isLm&&(PORTAL||st!==CITY.id)){showScreen('Even geduld','Je gaat naar de casusbouwer voor '+(STAD_NAAM[st]||st)+'…',null,true);location.replace(cityUrl(st));return}
-  if(APP.isStaff||APP.isLm){const sp=new URLSearchParams(location.search);if(APP.isStaff&&sp.get('leermodules')){APP.dashView='gebied';APP.gbTab='modules';ME.st=CITY.id;history.replaceState(history.state,'',location.pathname)}openDashboard();const op=sp.get('open');if(op){history.replaceState(history.state,'',location.pathname);openCasus(op,'staff')}}else if(LEER_LIVE)openLeer(true);else openCasus(data.id,'kandidaat')}
+  if(APP.isStaff||APP.isLm){const sp=new URLSearchParams(location.search);if(APP.isStaff&&sp.get('leermodules')){APP.dashView='gebied';APP.gbTab='modules';ME.st=CITY.id;history.replaceState(history.state,'',location.pathname)}openDashboard();const pdfId=sp.get('pdf');if(pdfId&&APP.isStaff||pdfId&&APP.isLm){history.replaceState(history.state,'',location.pathname);setTimeout(()=>casusPdfId(pdfId),300)}const op=sp.get('open');if(op){history.replaceState(history.state,'',location.pathname);openCasus(op,'staff')}}else if(LEER_LIVE)openLeer(true);else openCasus(data.id,'kandidaat')}
 function loginCard(inner){return'<div class="screen-card login"><img src="'+LOGO.b+'" alt="Flagship Academy"><h2>Casusbouwer</h2><p>Praktijktoets 3 SOR · Flagship Academy</p>'+inner+'</div>'}
 function showLogin(msg){unsubAll();APP.role='login';APP.target=null;APP.mode='screen';showMode('screen');renderTop();const t=APP.loginTab;
   const tabs='<div class="seg" role="tablist"><button type="button" role="tab" data-ltab="in" aria-selected="'+(t==='in')+'">Inloggen</button><button type="button" role="tab" data-ltab="up" aria-selected="'+(t==='up')+'">Account aanmaken</button></div>';
@@ -1307,6 +1315,18 @@ let rosterT=null;const debRoster=()=>{clearTimeout(rosterT);rosterT=setTimeout(l
 function openDashboard(){unsubAll();if(APP.dashMap==null){try{APP.dashMap=localStorage.getItem('sor-dash-map')||'alle';APP.dashSort=localStorage.getItem('sor-dash-sort')||'bijgewerkt'}catch(e){APP.dashMap='alle'}}APP.role='dash';APP.mode='dash';APP.target=null;APP.fb=null;navPush({k:'dash'});if(APP.isLm&&APP.dashFilter==='team')APP.dashFilter='actief';showMode('dash');renderTop();renderDash();loadRoster();
   try{const ch=APP.sb.channel('dash-'+uid()).on('postgres_changes',{event:'*',schema:'public',table:'leden'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'casussen'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'feedback'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'theorie'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'leermeester_toegang'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'leermeester_gebied'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'groepen'},debRoster).subscribe();APP.chans.push(ch)}catch(e){}}
 const LEDEN_COLS='id,naam,rol,code,user_id,email,status,stad,aangemaakt,gekoppeld_op,ingeleverd_op,geslaagd_op,casus_vrij,groep_id,examen_op,generale_op,vrij_nodig,vrij_verstuurd_op,vrij_geupload_op,vrij_geregistreerd_op,stappen,casussen(voortgang,bijgewerkt),feedback(stappen),theorie(xp,hoofdstukken,geslaagd_op,data)';
+/* PDF van een casus downloaden zonder de casus te openen. Hoort de kandidaat bij een ander vaargebied,
+   dan gaat het via de casusbouwer van dat gebied (andere kaart): ?pdf=<id>. */
+async function casusPdf(r){const st=r.stad||'amsterdam';
+  if(PORTAL||st!==CITY.id){toast('De PDF wordt gemaakt in de casusbouwer van '+(STAD_NAAM[st]||st)+'…');location.href=cityUrl(st)+'?pdf='+encodeURIComponent(r.id);return}
+  if(window.__pdfBusy)return;window.__pdfBusy=true;toast('PDF van '+r.naam+' wordt gemaakt…');
+  const {data,error}=await APP.sb.from('casussen').select('casus').eq('kandidaat_id',r.id).maybeSingle();
+  if(error||!data){window.__pdfBusy=false;toast(error?foutTekst(error,'Laden'):r.naam+' heeft nog geen casus.',true);return}
+  const s0=state,r0=R;
+  try{state=loadCasus(data.casus);if(!state.kandidaat.naam)state.kandidaat.naam=r.naam;computeRoute();const blob=await buildPdf();await saveFile('Casus SOR praktijktoets 3 '+safeName(state.kandidaat.naam)+'.pdf',blob)}
+  catch(e){console.error(e);toast('Het maken van de PDF is mislukt.',true)}
+  finally{state=s0;R=r0;window.__pdfBusy=false}}
+async function casusPdfId(id){const {data}=await APP.sb.from('leden').select('id,naam,stad').eq('id',id).maybeSingle();if(data)await casusPdf(data);else toast('Deze kandidaat bestaat niet (meer).',true)}
 async function loadRoster(){if(!APP.sb)return;const [q,lt,lg,gr,cb]=await Promise.all([APP.sb.from('leden').select(LEDEN_COLS).order('aangemaakt',{ascending:false}),APP.isStaff?APP.sb.from('leermeester_toegang').select('leermeester_id,kandidaat_id'):Promise.resolve({data:[],error:null}),APP.sb.from('leermeester_gebied').select('leermeester_id,stad'),APP.sb.from('groepen').select('*'),APP.isStaff||APP.isLm?APP.sb.from('cbr_bevestiging').select('kandidaat_id,naam,geupload'):Promise.resolve({data:[],error:null})]);
   let {data,error}=q;
   /* database zonder migratie 015 (kolom leden.stappen bestaat nog niet): zonder die kolom opnieuw laden */
@@ -1396,7 +1416,7 @@ async function renameLid(r){const y=await modalBox('Naam wijzigen','Pas de naam 
   toast('Naam gewijzigd in '+naam);if(APP.lid&&r.id===APP.lid.id){APP.lid.naam=naam;renderTop()}loadRoster()}
 /* actiemenu (⋯) in het overzicht */
 function closeAmenu(){const m=$('#amenu');if(m)m.remove()}
-function openAmenu(btn,r){closeAmenu();const me=APP.lid&&r.id===APP.lid.id;const items=[['naam','Naam wijzigen']];if(r.rol==='kandidaat')items.push(['traject','Traject en datums']);
+function openAmenu(btn,r){closeAmenu();const me=APP.lid&&r.id===APP.lid.id;const items=[['naam','Naam wijzigen']];if(r.rol==='kandidaat'){items.push(['traject','Traject en datums']);items.push(['pdf','PDF van de casus downloaden']);if((APP.cbrAll||{})[r.id])items.push(['cbr','CBR-bevestiging bekijken'])}
   if(r.rol==='kandidaat'){if(r.status!=='geslaagd')items.push(['geslaagd','Markeren als geslaagd']);else items.push(['terug','Geslaagd ongedaan maken']);items.push(['stad','Vaargebied wijzigen']);if(r.user_id)items.push(['newcode','Nieuwe code (wachtwoord vergeten)']);else if(r.code)items.push(['code','Code en bericht tonen'])}
   else if(!me){if(r.user_id)items.push(['newcode','Nieuwe code (wachtwoord vergeten)']);else if(r.code)items.push(['code','Code en bericht tonen'])}
   if(!me)items.push(['remove','Verwijderen','danger']);
@@ -1418,6 +1438,8 @@ $('#dash').addEventListener('click',async e=>{if(!e.target.closest('[data-dact="
   else if(a==='koppel'&&r)koppelLm(r);
   else if(a==='naam'&&r)renameLid(r);
   else if(a==='traject'&&r)editTraject(r);
+  else if(a==='pdf'&&r)casusPdf(r);
+  else if(a==='cbr'&&r)cbrBekijk(r.id,r.naam);
   else if(a==='terug'&&r){const nw=r.ingeleverd_op?'ingeleverd':'bezig';const y=await confirmBox('Geslaagd ongedaan maken?',r.naam+' gaat terug naar '+(nw==='ingeleverd'?'Ingeleverd':'Actief (bezig)')+'. De casus, feedback en theorie blijven gewoon bewaard.','Terugzetten');if(!y)return;
     const {error}=await APP.sb.from('leden').update({status:nw,geslaagd_op:null}).eq('id',r.id);if(error){toast('Opslaan is mislukt: '+error.message,true);return}r.status=nw;r.geslaagd_op=null;toast(r.naam+' staat weer op '+(nw==='ingeleverd'?'Ingeleverd':'Actief'));APP.dashFilter=nw==='ingeleverd'?'ingeleverd':'actief';renderDash();loadRoster()}
   else if(a==='gebied'&&r){const st=b.dataset.stad,aan=!(APP.lmGeb[r.id]||[]).includes(st);b.disabled=true;const {error}=await APP.sb.rpc('leermeester_gebied_zetten',{p_lm:r.id,p_stad:st,p_aan:aan});if(error){b.disabled=false;toast('Opslaan is mislukt: '+error.message,true);return}
@@ -2006,12 +2028,12 @@ async function editTraject(r){const t=traject(r),gs=(APP.groepen||[]).slice().so
   const g=t.g;const body='<div class="tjedit"><div class="field"><label for="tjGroep">Groep</label><select id="tjGroep"><option value="">Geen groep</option>'+gs.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===r.groep_id?' selected':'')+'>'+esc(x.naam)+' · '+STAD_NAAM[x.stad]+(x.examen_op?' · examen '+esc(dFmt(dParse(x.examen_op))):'')+'</option>').join('')+'</select><small class="note">De kandidaat krijgt de datums van de groep, tenzij je hieronder een eigen datum invult.</small></div>'+
     '<div class="grid2">'+dIn('tjEx','Eigen examendatum',r.examen_op,g&&g.examen_op?'Groep: '+esc(dFmt(dParse(g.examen_op))):'')+dIn('tjGen','Eigen datum generale',r.generale_op,g&&g.generale_op?'Groep: '+esc(dFmt(dParse(g.generale_op))):'')+'</div>'+
     (t.c.vrij?'<h3 class="tjh">Vrijstelling vaardagen</h3><label class="kopt"><input type="checkbox" id="tjNodig"'+(r.vrij_nodig!==false?' checked':'')+'> <span>Deze kandidaat heeft een vrijstelling van vaardagen nodig</span></label>'+
-    '<div id="tjStappen">'+stap('tjV','Flagship: vaartijdenformulier en werkgeversverklaring gemaild',r.vrij_verstuurd_op)+stap('tjU','Kandidaat: vrijstelling aangevraagd bij het CBR',r.vrij_geupload_op)+stap('tjR','Geregistreerd bij het CBR (bevestiging ontvangen)',r.vrij_geregistreerd_op)+'</div>'+((APP.cbrAll||{})[r.id]?'<p class="note cbrnote">CBR-bevestiging geüpload door de kandidaat op '+esc(dFmt(dParse(APP.cbrAll[r.id].geupload)))+': <b>'+esc(APP.cbrAll[r.id].naam)+'</b> <button type="button" class="linkbtn" id="tjCbr">Downloaden</button></p>':''):'')+
+    '<div id="tjStappen">'+stap('tjV','Flagship: vaartijdenformulier en werkgeversverklaring gemaild',r.vrij_verstuurd_op)+stap('tjU','Kandidaat: vrijstelling aangevraagd bij het CBR',r.vrij_geupload_op)+stap('tjR','Geregistreerd bij het CBR (bevestiging ontvangen)',r.vrij_geregistreerd_op)+'</div>'+((APP.cbrAll||{})[r.id]?'<p class="note cbrnote">CBR-bevestiging geüpload door de kandidaat op '+esc(dFmt(dParse(APP.cbrAll[r.id].geupload)))+': <b>'+esc(APP.cbrAll[r.id].naam)+'</b> <button type="button" class="linkbtn" id="tjCbr">Bekijken</button></p>':''):'')+
     (t.extra.length?'<h3 class="tjh">Stappen '+esc(STAD_NAAM[r.stad||'amsterdam']||'')+'</h3><div id="tjExtra">'+t.extra.map(x=>stap('tjX_'+x.id,(x.wie==='flagship'?'Flagship: ':'Kandidaat: ')+esc(x.titel)+(x.dl?' <small>(uiterlijk '+esc(dFmt(x.dl))+')</small>':''),x.op?dIso(x.op):'')).join('')+'</div>':'')+
     (t.exam?'<p class="note">Deadline casus: <b>'+esc(dFmt(t.casusDl,1))+'</b>, '+termTxt(t.c.casusDagen)+' voor '+(t.basisGen?'de generale':t.c.basis==='examen'?'het examen':'het examen (er is nog geen generale-datum)')+'.'+(t.c.vrij?' Vrijstelling geregistreerd uiterlijk '+esc(dFmt(t.vrijDl))+'. Formulieren mailen uiterlijk '+esc(dFmt(t.verstuurDl))+'.':'')+'</p>':'<p class="note">Vul een examendatum in (of kies een groep met een datum), dan rekent het systeem de deadlines uit.</p>')+'</div>';
   const y=await modalBox('Traject van '+r.naam,'',body,'Opslaan','Annuleren',()=>{
     $$('#tjStappen .tjstap, #tjExtra .tjstap').forEach(s=>{const c=s.querySelector('input[type=checkbox]'),d=s.querySelector('input[type=date]');c.addEventListener('change',()=>{if(c.checked&&!d.value)d.value=dIso(dToday());if(!c.checked)d.value=''});d.addEventListener('change',()=>{c.checked=!!d.value})});
-    const cb=$('#tjCbr');if(cb)cb.addEventListener('click',()=>cbrDownload(r.id));const n=$('#tjNodig');if(n){const upd=()=>{$('#tjStappen').classList.toggle('dim',!n.checked)};n.addEventListener('change',upd);upd()}$('#tjGroep').focus()});
+    const cb=$('#tjCbr');if(cb)cb.addEventListener('click',()=>{$('#modalNo').click();setTimeout(()=>cbrBekijk(r.id,r.naam),60)});const n=$('#tjNodig');if(n){const upd=()=>{$('#tjStappen').classList.toggle('dim',!n.checked)};n.addEventListener('change',upd);upd()}$('#tjGroep').focus()});
   if(!y)return;const v=id=>{const el=$('#'+id);return el&&el.value?el.value:null};
   const patch={groep_id:v('tjGroep'),examen_op:v('tjEx'),generale_op:v('tjGen')};if($('#tjNodig'))Object.assign(patch,{vrij_nodig:$('#tjNodig').checked,vrij_verstuurd_op:v('tjV'),vrij_geupload_op:v('tjU'),vrij_geregistreerd_op:v('tjR')});
   if(t.extra.length){const st=Object.assign({},r.stappen||{});t.extra.forEach(x=>{const d=v('tjX_'+x.id);if(d)st[x.id]=d;else delete st[x.id]});patch.stappen=st}
@@ -2054,6 +2076,15 @@ async function cbrUpload(f){if(!f)return;if(!CBR_TYPES.includes(f.type)){toast('
   APP.cbr={kandidaat_id:row.kandidaat_id,naam:row.naam,type:row.type,grootte:row.grootte,geupload:row.geupload};await trajectMelden('geregistreerd',true);toast('Bevestiging geüpload. Je opleider ziet hem direct.')}
 async function cbrDownload(id){let c;if(isPreview())c=APP.cbrVb;else{const {data,error}=await APP.sb.from('cbr_bevestiging').select('naam,type,data').eq('kandidaat_id',id).maybeSingle();if(error||!data){toast(error?foutTekst(error,'Downloaden'):'Er is geen bevestiging geüpload.',true);return}c=data}
   if(!c)return;try{const blob=await (await fetch(c.data)).blob();saveBlob(blob,c.naam)}catch(e){toast('Downloaden is mislukt.',true)}}
+/* medewerker/leermeester: bevestiging bekijken in een venster (pdf of foto), met downloadknop */
+async function cbrBekijk(id,naam){const {data,error}=await APP.sb.from('cbr_bevestiging').select('naam,type,data,geupload').eq('kandidaat_id',id).maybeSingle();
+  if(error){toast(foutTekst(error,'Openen'),true);return}if(!data){toast('Er is nog geen CBR-bevestiging geüpload.',true);return}
+  let blob;try{blob=await (await fetch(data.data)).blob()}catch(e){toast('Het bestand kon niet worden geopend.',true);return}
+  const url=URL.createObjectURL(blob),pdf=data.type==='application/pdf';
+  const body='<div class="cbrview">'+(pdf?'<iframe class="cbrframe" src="'+url+'#view=FitH" title="CBR-bevestiging van '+esc(naam)+'"></iframe>':'<img class="cbrimg" src="'+url+'" alt="CBR-bevestiging van '+esc(naam)+'">')+(pdf?'<p class="note small">Zie je de pdf niet? Klik op Downloaden en open hem op je computer.</p>':'')+'</div>';
+  const card=$('#modal .modal-card');card.classList.add('wide');
+  const y=await modalBox('CBR-bevestiging van '+naam,data.naam+' · geüpload op '+dFmt(dParse(data.geupload)),body,'Downloaden','Sluiten');
+  card.classList.remove('wide');$('#modalBody').innerHTML='';if(y)saveBlob(blob,data.naam);setTimeout(()=>URL.revokeObjectURL(url),60000)}
 async function cbrWeg(){if(!(await confirmBox('Bevestiging verwijderen?','Je geüploade bevestiging van het CBR wordt verwijderd. Je kunt daarna een nieuwe uploaden.','Verwijderen')))return;
   if(isPreview()){APP.cbrVb=null;return trajectMelden('geregistreerd',false)}
   const {error}=await APP.sb.from('cbr_bevestiging').delete().eq('kandidaat_id',APP.lid.id);if(error){toast(foutTekst(error,'Verwijderen'),true);return}APP.cbr=null;await trajectMelden('geregistreerd',false)}
@@ -2098,7 +2129,7 @@ function vgLees(st){const d=vgDraft(st);if(!$('#vgForm'))return d;
   const b=$('#vgBasis');if(b)d.basis=b.value;const v=$('#vgVrij');if(v)d.vrij=v.checked;
   d.stappen=$$('#vgStappen .vgstap').map(row=>({id:row.dataset.id,titel:row.querySelector('[data-f="titel"]').value.trim().replace(/\s+/g,' ').slice(0,80),wie:row.querySelector('[data-f="wie"]').value,dagen:Math.max(0,Math.min(365,parseInt(row.querySelector('[data-f="dagen"]').value,10)||0))}));return d}
 function vgRij(r){const t=traject(r),g=t.g;
-  return'<tr><td class="c-person"><b>'+esc(r.naam)+'</b> <span class="pill stad '+esc(r.stad||'amsterdam')+'">'+esc(STAD_NAAM[r.stad||'amsterdam']||r.stad)+'</span>'+(g?'<small>'+esc(g.naam)+'</small>':'')+((APP.cbrAll||{})[r.id]?' <span class="pill ok">CBR-bevestiging</span>':'')+'</td><td data-l="Generale" class="c-date">'+esc(dFmt(t.gen))+'</td><td data-l="Examen" class="c-date">'+esc(dFmt(t.exam))+'</td><td data-l="Traject">'+trCell(r)+'</td></tr>'}
+  return'<tr><td class="c-person"><b>'+esc(r.naam)+'</b> <span class="pill stad '+esc(r.stad||'amsterdam')+'">'+esc(STAD_NAAM[r.stad||'amsterdam']||r.stad)+'</span>'+(g?'<small>'+esc(g.naam)+'</small>':'')+((APP.cbrAll||{})[r.id]?' <button type="button" class="pill ok pillbtn" data-dact="cbr" data-id="'+esc(r.id)+'" title="CBR-bevestiging bekijken">CBR-bevestiging</button>':'')+'</td><td data-l="Generale" class="c-date">'+esc(dFmt(t.gen))+'</td><td data-l="Examen" class="c-date">'+esc(dFmt(t.exam))+'</td><td data-l="Traject">'+trCell(r)+'</td></tr>'}
 function renderVoortgang(){const st=STADS.includes(APP.vgMap)?APP.vgMap:'alle';APP.vgMap=st;let f=APP.vgTab||'actie';if(f==='instellingen'&&st==='alle')f='actie';
   const kandAll=APP.roster.filter(r=>r.rol==='kandidaat'&&r.status!=='geslaagd'),kand=kandAll.filter(r=>st==='alle'||(r.stad||'amsterdam')===st),actie=kand.filter(actieNodig).sort((a,b)=>(eersteDl(a)-eersteDl(b))||a.naam.localeCompare(b.naam));
   const gs=(APP.groepen||[]).filter(g=>st==='alle'||g.stad===st);
