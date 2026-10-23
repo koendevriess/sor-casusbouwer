@@ -765,6 +765,11 @@ button.pill.stad.groningen,button.pill.stad.utrecht{background:var(--accent-soft
 .trres{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:12px;margin-bottom:12px}
 .trres.ok{background:var(--ok-soft)}.trres.nok{background:var(--warn-soft)}
 @media (max-width:760px){.trles{grid-template-columns:1fr}.trles img{min-height:180px;max-height:240px}}
+.tropt{position:relative}.trmark{margin-left:auto;font-style:normal;font-weight:800}
+.tropt.juist .trmark{color:var(--ok)}.tropt.mis .trmark{color:var(--err)}
+.tropts.img .trmark{margin:0}
+.trq.goed .trq-u b{color:var(--ok)}.trq.fout .trq-u b{color:var(--err)}
+.trteller{margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:700;box-shadow:var(--shadow)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -2687,29 +2692,35 @@ function trUnitView(tr,i){const us=trUnits(tr),u=us[i];if(!u)return trOverzicht(
   else if(u.soort==='toets')h+=trToets(tr,u,st);
   h+='</div><div class="trnav">'+(i>0?'<button type="button" class="btn" data-tract="unit" data-i="'+(i-1)+'">← Vorige</button>':'<span></span>')+(i<us.length-1?'<button type="button" class="btn primary" data-tract="unit" data-i="'+(i+1)+'">Volgende →</button>':'<button type="button" class="btn primary" data-tract="open" data-tr="'+tr.id+'">Naar het overzicht</button>')+'</div>';
   return h}
-/* toets: alle vragen op één pagina; enkel- en meerkeuze, ook met afbeeldingen als antwoord */
-function trToets(tr,u,st){const Q=APP.trQ&&APP.trQ.id===u.id?APP.trQ:(APP.trQ={id:u.id,ans:{},nagekeken:false});const r=st.toets[u.id];
-  let h='<header class="lhead"><div class="eyebrow">'+(u.eind?'Afsluiting':esc(u.sectie)+' · tussentijdse toets')+'</div><h1>'+esc(u.titel)+'</h1><p>'+u.vragen.length+' vragen.'+(u.eind?' Je hebt '+Math.round(tr.pass*100)+'% goed nodig om de training af te ronden.':' Een oefentoets: je ziet direct wat goed en fout is.')+(r?' Je beste score tot nu toe: '+Math.round(r.best/r.van*100)+'%.':'')+'</p></header>';
-  if(Q.nagekeken){const ok=Q.score/u.vragen.length>=tr.pass;h+='<div class="trres '+(ok?'ok':'nok')+'"><b>'+Q.score+' van '+u.vragen.length+' goed ('+Math.round(Q.score/u.vragen.length*100)+'%)</b><span>'+(u.eind?(ok?'Gefeliciteerd, je hebt de training afgerond!':'Nog niet gehaald. Bekijk de uitleg en probeer het opnieuw.'):(ok?'Goed gedaan.':'Bekijk de uitleg hieronder.'))+'</span><button type="button" class="btn sm" data-tract="opnieuw">Opnieuw maken</button></div>'}
-  h+='<ol class="trqs">'+u.vragen.map((q,k)=>{const multi=q.t==='mcma';const sel=Q.ans[k]||[];const goed=Q.nagekeken&&trVraagGoed(q,sel);
-    return'<li class="trq'+(Q.nagekeken?(goed?' goed':' fout'):'')+'"><p class="trqq">'+fmtT(q.q).replace(/\n/g,'<br>')+'</p>'+(q.img?'<img class="trqimg" src="'+trMedia(tr,q.img)+'" alt="Afbeelding bij vraag '+(k+1)+'" loading="lazy">':'')+(multi?'<small class="note">Meerdere antwoorden mogelijk.</small>':'')+
-      '<div class="tropts'+(q.oi?' img':'')+'">'+q.o.map((o,j)=>{const on=sel.includes(j),juist=q.g.includes(j);return'<label class="tropt'+(on?' on':'')+(Q.nagekeken&&juist?' juist':'')+(Q.nagekeken&&on&&!juist?' mis':'')+'"><input type="'+(multi?'checkbox':'radio')+'" name="trq'+k+'" data-trq="'+k+'" data-tro="'+j+'"'+(on?' checked':'')+(Q.nagekeken?' disabled':'')+'>'+(q.oi?'<img src="'+trMedia(tr,q.oi[j])+'" alt="'+esc(o)+'" loading="lazy">':'')+'<span>'+esc(o)+'</span></label>'}).join('')+'</div>'+
-      (Q.nagekeken?'<div class="trq-u"><b>'+(goed?'Goed.':'Niet goed.')+'</b> '+(q.u?fmtT(q.u):'Het juiste antwoord is gemarkeerd.')+'</div>':'')+'</li>'}).join('')+'</ol>';
-  if(!Q.nagekeken)h+='<div class="row"><button type="button" class="btn primary" data-tract="nakijken">Nakijken</button><span class="note" id="trTeller">'+Object.keys(Q.ans).filter(k=>(Q.ans[k]||[]).length).length+' van '+u.vragen.length+' beantwoord</span></div>';
-  return h}
+/* toets: alle vragen op één pagina; je ziet direct na het kiezen of je antwoord goed is (meerkeuze met meerdere antwoorden: na "Controleer").
+   Als alle vragen beantwoord zijn, wordt de score bewaard. */
 const trVraagGoed=(q,sel)=>{const a=[...sel].sort().join(','),b=[...q.g].sort().join(',');return a===b};
-document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||t.dataset.trq==null||!APP.trQ||APP.trQ.nagekeken)return;const k=+t.dataset.trq,j=+t.dataset.tro;
-  if(t.type==='radio')APP.trQ.ans[k]=[j];else{const s=new Set(APP.trQ.ans[k]||[]);t.checked?s.add(j):s.delete(j);APP.trQ.ans[k]=[...s]}
-  document.querySelectorAll('[data-trq="'+k+'"]').forEach(x=>x.closest('.tropt').classList.toggle('on',x.checked));const c=$('#trTeller');if(c){const tr=TRAININGEN[LV.id],u=trUnits(tr)[LV.u];c.textContent=Object.keys(APP.trQ.ans).filter(x=>(APP.trQ.ans[x]||[]).length).length+' van '+u.vragen.length+' beantwoord'}});
+const trQNieuw=u=>({id:u.id,ans:{},klaar:{}});
+function trVraag(tr,q,k,Q){const multi=q.t==='mcma',sel=Q.ans[k]||[],af=!!Q.klaar[k],goed=af&&trVraagGoed(q,sel);
+  return'<li class="trq'+(af?(goed?' goed':' fout'):'')+'" data-trk-li="'+k+'"><p class="trqq">'+fmtT(q.q).replace(/\n/g,'<br>')+'</p>'+(q.img?'<img class="trqimg" src="'+trMedia(tr,q.img)+'" alt="Afbeelding bij vraag '+(k+1)+'" loading="lazy">':'')+(multi&&!af?'<small class="note">Meerdere antwoorden mogelijk. Kies alles wat klopt en klik op Controleer.</small>':'')+
+    '<div class="tropts'+(q.oi?' img':'')+'">'+q.o.map((o,j)=>{const on=sel.includes(j),juist=q.g.includes(j);return'<label class="tropt'+(on?' on':'')+(af&&juist?' juist':'')+(af&&on&&!juist?' mis':'')+'"><input type="'+(multi?'checkbox':'radio')+'" name="trq'+k+'" data-trq="'+k+'" data-tro="'+j+'"'+(on?' checked':'')+(af?' disabled':'')+'>'+(q.oi?'<img src="'+trMedia(tr,q.oi[j])+'" alt="'+esc(o)+'" loading="lazy">':'')+'<span>'+esc(o)+'</span>'+(af&&juist?'<i class="trmark" aria-label="juist antwoord">✓</i>':af&&on?'<i class="trmark" aria-label="fout">✕</i>':'')+'</label>'}).join('')+'</div>'+
+    (multi&&!af?'<div class="row" style="margin-top:8px"><button type="button" class="btn sm primary" data-tract="controleer" data-k="'+k+'"'+(sel.length?'':' disabled')+'>Controleer</button></div>':'')+
+    (af?'<div class="trq-u" role="status"><b>'+(goed?'Goed!':'Helaas, niet goed.')+'</b> '+(q.u?fmtT(q.u):(goed?'':'Het juiste antwoord is groen gemarkeerd.'))+'</div>':'')+'</li>'}
+function trStandToets(u,Q){const n=u.vragen.length,af=Object.keys(Q.klaar).length,goed=u.vragen.filter((q,k)=>Q.klaar[k]&&trVraagGoed(q,Q.ans[k]||[])).length;return{n,af,goed}}
+function trResHtml(tr,u,Q){const s=trStandToets(u,Q);if(s.af<s.n)return'<div class="trteller" id="trTeller">'+s.af+' van '+s.n+' beantwoord · '+s.goed+' goed</div>';
+  const ok=s.goed/s.n>=tr.pass;return'<div class="trres '+(ok?'ok':'nok')+'" id="trTeller" role="status"><b>Klaar: '+s.goed+' van '+s.n+' goed ('+Math.round(s.goed/s.n*100)+'%)</b><span>'+(u.eind?(ok?'Gefeliciteerd, je hebt de training afgerond!':'Nog niet gehaald; je hebt '+Math.round(tr.pass*100)+'% nodig. Bekijk de uitleg en probeer het opnieuw.'):(ok?'Goed gedaan.':'Bekijk de uitleg bij de vragen die fout waren.'))+'</span><button type="button" class="btn sm" data-tract="opnieuw">Opnieuw maken</button></div>'}
+function trToets(tr,u,st){const Q=APP.trQ&&APP.trQ.id===u.id?APP.trQ:(APP.trQ=trQNieuw(u));const r=st.toets[u.id];
+  let h='<header class="lhead"><div class="eyebrow">'+(u.eind?'Afsluiting':esc(u.sectie)+' · tussentijdse toets')+'</div><h1>'+esc(u.titel)+'</h1><p>'+u.vragen.length+' vragen. Na elk antwoord zie je meteen of het goed is.'+(u.eind?' Je hebt '+Math.round(tr.pass*100)+'% goed nodig om de training af te ronden.':'')+(r?' Je beste score tot nu toe: '+Math.round(r.best/r.van*100)+'%.':'')+'</p></header>';
+  return h+'<ol class="trqs">'+u.vragen.map((q,k)=>trVraag(tr,q,k,Q)).join('')+'</ol><div id="trResPlek">'+trResHtml(tr,u,Q)+'</div>'}
+function trHuidig(){const tr=TRAININGEN[LV.id];const u=tr&&trUnits(tr)[LV.u];return u&&u.soort==='toets'&&APP.trQ&&APP.trQ.id===u.id?{tr,u,Q:APP.trQ}:null}
+function trVraagKlaar(k){const c=trHuidig();if(!c)return;const {tr,u,Q}=c;Q.klaar[k]=true;
+  const li=document.querySelector('[data-trk-li="'+k+'"]');if(li){li.outerHTML=trVraag(tr,u.vragen[k],k,Q)}
+  const plek=$('#trResPlek');if(plek)plek.innerHTML=trResHtml(tr,u,Q);const s=trStandToets(u,Q);
+  if(s.af===s.n&&!Q.bewaard){Q.bewaard=true;const st=trSt(tr.id),prev=st.toets[u.id];st.toets[u.id]={best:Math.max(s.goed,prev?prev.best:0),van:s.n,n:(prev?prev.n:0)+1,op:nowIso(),laatste:s.goed};
+    if(u.eind&&s.goed/s.n>=tr.pass&&!st.klaar)st.klaar=nowIso();thSave();const res=$('#trTeller');if(res)setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'center'}),200)}}
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||t.dataset.trq==null)return;const c=trHuidig();if(!c)return;const k=+t.dataset.trq,j=+t.dataset.tro,Q=c.Q;if(Q.klaar[k])return;
+  if(t.type==='radio'){Q.ans[k]=[j];trVraagKlaar(k);return}
+  const s=new Set(Q.ans[k]||[]);t.checked?s.add(j):s.delete(j);Q.ans[k]=[...s];t.closest('.tropt').classList.toggle('on',t.checked);const btn=document.querySelector('[data-tract="controleer"][data-k="'+k+'"]');if(btn)btn.disabled=!s.size});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-tract]');if(!b||APP.mode!=='leer')return;const a=b.dataset.tract;
   if(a==='open'){trOpen(b.dataset.tr,null);return}
   if(a==='unit'){trOpen(LV.id,+b.dataset.i);return}
   if(a==='opnieuw'){APP.trQ=null;renderLeer();leerScroll();return}
-  if(a==='nakijken'){const tr=TRAININGEN[LV.id],u=trUnits(tr)[LV.u],Q=APP.trQ;if(!u||!Q)return;const open=u.vragen.filter((q,k)=>!(Q.ans[k]||[]).length).length;
-    if(open&&!(await confirmBox('Toets nakijken?','Je hebt nog '+open+' vra'+(open===1?'ag':'gen')+' niet beantwoord. Die tellen als fout.','Nakijken')))return;
-    Q.score=u.vragen.filter((q,k)=>trVraagGoed(q,Q.ans[k]||[])).length;Q.nagekeken=true;const st=trSt(tr.id),prev=st.toets[u.id];
-    st.toets[u.id]={best:Math.max(Q.score,prev?prev.best:0),van:u.vragen.length,n:(prev?prev.n:0)+1,op:nowIso(),laatste:Q.score};
-    if(u.eind&&Q.score/u.vragen.length>=tr.pass&&!st.klaar)st.klaar=nowIso();await thSave();renderLeer();leerScroll();return}});
+  if(a==='controleer'){trVraagKlaar(+b.dataset.k);return}});
 /* medewerkers: voortgang per kandidaat */
 function trPill(r){if(r.rol!=='kandidaat')return'';return trVan(r).map(id=>{const tr=TRAININGEN[id],s=trStand(tr,trStVan(r.th,id));return' <span class="pill '+(s.klaar?'ok':'blue')+'" title="'+esc(tr.titel)+'">'+(id==='kvb'?'KVB':esc(tr.titel))+' '+(s.klaar?'afgerond':s.pct+'%')+'</span>'}).join('')+(heeftSor(r)?'':' <span class="pill unk" title="Geen SOR-traject">Geen SOR</span>')}
 /* startpagina voor iemand zonder SOR-traject: alleen de toegewezen trainingen */
