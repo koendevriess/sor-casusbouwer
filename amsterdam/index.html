@@ -719,6 +719,16 @@ button.pill.stad.groningen,button.pill.stad.utrecht{background:var(--accent-soft
 .pill.ai{background:#efeaff;color:#4b3bc4}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ai-box{background:#221d3d;border-color:#3b3270}:root:not([data-theme="light"]) .ai-alg{background:#1a1630;border-color:#3b3270}:root:not([data-theme="light"]) .pill.ai{background:#2c2550;color:#c9c0ff}}
 :root[data-theme="dark"] .ai-box{background:#221d3d;border-color:#3b3270}:root[data-theme="dark"] .ai-alg{background:#1a1630;border-color:#3b3270}:root[data-theme="dark"] .pill.ai{background:#2c2550;color:#c9c0ff}
+/* sjablonen leeromgeving */
+.sjedit h3{margin:16px 0 6px;font-size:15px}
+.sjitems{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:sj}
+.sjitems li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);counter-increment:sj}
+.sjitems li>span:first-child::before{content:counter(sj) ". ";font-weight:700;color:var(--ink-3)}
+.sjitems li.sj-m{border-style:dashed}
+.sjitems .acts{display:flex;gap:4px;flex-shrink:0}
+.sjchk{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 14px}
+.sjedit .chk,.sjchk .chk{display:flex;align-items:center;gap:8px;font-size:14px;padding:3px 0}
+.lnode.sjextra .dot{font-weight:800}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -939,7 +949,7 @@ async function initPlatform(){
   if(session&&session.user){APP.user=session.user;APP.uid=session.user.id;await afterLogin()}else showLogin()}
 /* duidelijke foutmelding; op een database zonder de nieuwste update (015/016) geen technische tekst */
 const dbOntbreekt=e=>!!e&&/schema cache|does not exist|PGRST205|PGRST204|42P01|42703/i.test(String(e.message||'')+' '+String(e.code||''));
-const foutTekst=(e,actie)=>dbOntbreekt(e)?'Dit onderdeel werkt nog niet: de database moet eerst worden bijgewerkt (zie OVERDRACHT.md, database-update 015 t/m 017).':(actie||'Opslaan')+' is mislukt: '+((e&&e.message)||'onbekende fout');
+const foutTekst=(e,actie)=>dbOntbreekt(e)?'Dit onderdeel werkt nog niet: de database moet eerst worden bijgewerkt (zie OVERDRACHT.md, database-update 015 t/m 018).':(actie||'Opslaan')+' is mislukt: '+((e&&e.message)||'onbekende fout');
 /* gebieden uit de database: namen en volgorde, plus nieuwe gebieden (zonder de kaart, die is groot) */
 async function loadGebieden(){if(!APP.sb)return;try{const {data,error}=await APP.sb.from('gebieden').select('slug,naam,actief,ingebouwd,volgorde,instellingen,traject');APP.verouderd=!!(error&&dbOntbreekt(error));if(error||!data)return;data.sort((a,b)=>(a.volgorde-b.volgorde)||String(a.naam).localeCompare(b.naam));APP.gebieden=data;
   data.forEach(g=>{STAD_NAAM[g.slug]=g.naam;if(!STADS.includes(g.slug)&&(g.actief||APP.isStaff))STADS.push(g.slug)})}catch(e){}}
@@ -1352,9 +1362,9 @@ VIEWS.controle=()=>{const all=CHECKS.length,ok=CHECKS.filter(c=>c.ok).length,err
 
 /* ---------- dashboard ---------- */
 let rosterT=null;const debRoster=()=>{clearTimeout(rosterT);rosterT=setTimeout(loadRoster,400)};
-function openDashboard(){unsubAll();if(APP.dashMap==null){try{APP.dashMap=localStorage.getItem('sor-dash-map')||'alle';APP.dashSort=localStorage.getItem('sor-dash-sort')||'bijgewerkt'}catch(e){APP.dashMap='alle'}}APP.role='dash';APP.mode='dash';APP.target=null;APP.fb=null;navPush({k:'dash'});if(APP.isLm&&APP.dashFilter==='team')APP.dashFilter='actief';showMode('dash');renderTop();renderDash();loadRoster();
+function openDashboard(){unsubAll();sjToepassen(null);if(APP.dashMap==null){try{APP.dashMap=localStorage.getItem('sor-dash-map')||'alle';APP.dashSort=localStorage.getItem('sor-dash-sort')||'bijgewerkt'}catch(e){APP.dashMap='alle'}}APP.role='dash';APP.mode='dash';APP.target=null;APP.fb=null;navPush({k:'dash'});if(APP.isLm&&APP.dashFilter==='team')APP.dashFilter='actief';showMode('dash');renderTop();renderDash();loadRoster();
   try{const ch=APP.sb.channel('dash-'+uid()).on('postgres_changes',{event:'*',schema:'public',table:'leden'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'casussen'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'feedback'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'theorie'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'leermeester_toegang'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'leermeester_gebied'},debRoster).on('postgres_changes',{event:'*',schema:'public',table:'groepen'},debRoster).subscribe();APP.chans.push(ch)}catch(e){}}
-const LEDEN_COLS='id,naam,rol,code,user_id,email,status,stad,aangemaakt,gekoppeld_op,ingeleverd_op,geslaagd_op,casus_vrij,groep_id,examen_op,generale_op,vrij_nodig,vrij_verstuurd_op,vrij_geupload_op,vrij_geregistreerd_op,stappen,casussen(voortgang,bijgewerkt),feedback(stappen),theorie(xp,hoofdstukken,geslaagd_op,data)';
+const LEDEN_COLS='id,naam,rol,code,user_id,email,status,stad,aangemaakt,gekoppeld_op,ingeleverd_op,geslaagd_op,casus_vrij,groep_id,examen_op,generale_op,vrij_nodig,vrij_verstuurd_op,vrij_geupload_op,vrij_geregistreerd_op,stappen,casussen(voortgang,bijgewerkt),feedback(stappen),theorie(xp,hoofdstukken,geslaagd_op,data),sjabloon_id';
 /* PDF van een casus downloaden zonder de casus te openen. Hoort de kandidaat bij een ander vaargebied,
    dan gaat het via de casusbouwer van dat gebied (andere kaart): ?pdf=<id>. */
 async function casusPdf(r){const st=r.stad||'amsterdam';
@@ -1370,7 +1380,8 @@ async function casusPdfId(id){const {data}=await APP.sb.from('leden').select('id
 async function loadRoster(){if(!APP.sb)return;const [q,lt,lg,gr,cb]=await Promise.all([APP.sb.from('leden').select(LEDEN_COLS).order('aangemaakt',{ascending:false}),APP.isStaff?APP.sb.from('leermeester_toegang').select('leermeester_id,kandidaat_id'):Promise.resolve({data:[],error:null}),APP.sb.from('leermeester_gebied').select('leermeester_id,stad'),APP.sb.from('groepen').select('*'),APP.isStaff||APP.isLm?APP.sb.from('cbr_bevestiging').select('kandidaat_id,naam,geupload'):Promise.resolve({data:[],error:null})]);
   let {data,error}=q;
   /* database zonder migratie 015 (kolom leden.stappen bestaat nog niet): zonder die kolom opnieuw laden */
-  if(error&&/stappen/.test(error.message||'')){const r=await APP.sb.from('leden').select(LEDEN_COLS.replace(',stappen,',',')).order('aangemaakt',{ascending:false});data=r.data;error=r.error}
+  if(error&&/sjabloon_id/.test(error.message||'')){const r=await APP.sb.from('leden').select(LEDEN_COLS.replace(',sjabloon_id','')).order('aangemaakt',{ascending:false});data=r.data;error=r.error}
+  if(error&&/stappen/.test(error.message||'')){const r=await APP.sb.from('leden').select(LEDEN_COLS.replace(',stappen,',',').replace(',sjabloon_id','')).order('aangemaakt',{ascending:false});data=r.data;error=r.error}
   if(error){dbError(error,'laden');return}
   APP.roster=(data||[]).map(r=>Object.assign({},r,{cas:one(r.casussen),fbk:one(r.feedback),th:one(r.theorie)}));APP.staffNames={};APP.roster.forEach(r=>{if((r.rol==='medewerker'||r.rol==='leermeester')&&r.user_id)APP.staffNames[r.user_id]=r.naam});
   APP.lmOf={};APP.lmFor={};((lt&&lt.data)||[]).forEach(x=>{(APP.lmOf[x.leermeester_id]=APP.lmOf[x.leermeester_id]||[]).push(x.kandidaat_id);(APP.lmFor[x.kandidaat_id]=APP.lmFor[x.kandidaat_id]||[]).push(x.leermeester_id)});
@@ -1379,6 +1390,7 @@ async function loadRoster(){if(!APP.sb)return;const [q,lt,lg,gr,cb]=await Promis
   APP.lmGeb={};((lg&&!lg.error&&lg.data)||[]).forEach(x=>{(APP.lmGeb[x.leermeester_id]=APP.lmGeb[x.leermeester_id]||[]).push(x.stad)});
   if(APP.lid){const me=APP.roster.find(r=>r.id===APP.lid.id);if(me)APP.lid=Object.assign(APP.lid,{naam:me.naam})}
   try{await aiLoadAll()}catch(e){}
+  try{await sjLaadAlles()}catch(e){}
   renderDash()}
 const ST_LABEL={uitgenodigd:'Nog niet gestart',bezig:'Bezig',ingeleverd:'Ingeleverd',geslaagd:'Geslaagd'};
 const ROL_LABEL={medewerker:'Medewerker',leermeester:'Leermeester',kandidaat:'Kandidaat'};
@@ -1458,7 +1470,7 @@ async function renameLid(r){const y=await modalBox('Naam wijzigen','Pas de naam 
   toast('Naam gewijzigd in '+naam);if(APP.lid&&r.id===APP.lid.id){APP.lid.naam=naam;renderTop()}loadRoster()}
 /* actiemenu (⋯) in het overzicht */
 function closeAmenu(){const m=$('#amenu');if(m)m.remove()}
-function openAmenu(btn,r){closeAmenu();const me=APP.lid&&r.id===APP.lid.id;const items=[['naam','Naam wijzigen']];if(r.rol==='kandidaat'){items.push(['traject','Traject en datums']);items.push(['pdf','PDF van de casus downloaden']);if((APP.cbrAll||{})[r.id])items.push(['cbr','CBR-bevestiging bekijken']);if(APP.isStaff&&r.cas)items.push(['aivb',(APP.aiVoorbeeld||{})[r.id]?'Niet meer als voorbeeldcasus gebruiken':'Als voorbeeldcasus voor de AI gebruiken'])}
+function openAmenu(btn,r){closeAmenu();const me=APP.lid&&r.id===APP.lid.id;const items=[['naam','Naam wijzigen']];if(r.rol==='kandidaat'){items.push(['traject','Traject en datums']);if(APP.isStaff)items.push(['sjabloon','Leeromgeving-sjabloon']);items.push(['pdf','PDF van de casus downloaden']);if((APP.cbrAll||{})[r.id])items.push(['cbr','CBR-bevestiging bekijken']);if(APP.isStaff&&r.cas)items.push(['aivb',(APP.aiVoorbeeld||{})[r.id]?'Niet meer als voorbeeldcasus gebruiken':'Als voorbeeldcasus voor de AI gebruiken'])}
   if(r.rol==='kandidaat'){if(r.status!=='geslaagd')items.push(['geslaagd','Markeren als geslaagd']);else items.push(['terug','Geslaagd ongedaan maken']);items.push(['stad','Vaargebied wijzigen']);if(r.user_id)items.push(['newcode','Nieuwe code (wachtwoord vergeten)']);else if(r.code)items.push(['code','Code en bericht tonen'])}
   else if(!me){if(r.user_id)items.push(['newcode','Nieuwe code (wachtwoord vergeten)']);else if(r.code)items.push(['code','Code en bericht tonen'])}
   if(!me)items.push(['remove','Verwijderen','danger']);
@@ -1483,6 +1495,7 @@ $('#dash').addEventListener('click',async e=>{if(!e.target.closest('[data-dact="
   else if(a==='pdf'&&r)casusPdf(r);
   else if(a==='cbr'&&r)cbrBekijk(r.id,r.naam);
   else if(a==='aivb'&&r)aiVoorbeeldZetten(r);
+  else if(a==='sjabloon'&&r)sjKiesVoor(r);
   else if(a==='terug'&&r){const nw=r.ingeleverd_op?'ingeleverd':'bezig';const y=await confirmBox('Geslaagd ongedaan maken?',r.naam+' gaat terug naar '+(nw==='ingeleverd'?'Ingeleverd':'Actief (bezig)')+'. De casus, feedback en theorie blijven gewoon bewaard.','Terugzetten');if(!y)return;
     const {error}=await APP.sb.from('leden').update({status:nw,geslaagd_op:null}).eq('id',r.id);if(error){toast('Opslaan is mislukt: '+error.message,true);return}r.status=nw;r.geslaagd_op=null;toast(r.naam+' staat weer op '+(nw==='ingeleverd'?'Ingeleverd':'Actief'));APP.dashFilter=nw==='ingeleverd'?'ingeleverd':'actief';renderDash();loadRoster()}
   else if(a==='gebied'&&r){const st=b.dataset.stad,aan=!(APP.lmGeb[r.id]||[]).includes(st);b.disabled=true;const {error}=await APP.sb.rpc('leermeester_gebied_zetten',{p_lm:r.id,p_stad:st,p_aan:aan});if(error){b.disabled=false;toast('Opslaan is mislukt: '+error.message,true);return}
@@ -1492,7 +1505,7 @@ $('#dash').addEventListener('click',async e=>{if(!e.target.closest('[data-dact="
   else if(a==='remove'&&r){const y=await confirmBox(ROL_LABEL[r.rol]+' verwijderen?',r.rol==='kandidaat'?'De casus, feedback en foto’s van '+r.naam+' en het account worden definitief gewist. Dit kun je niet ongedaan maken.':r.naam+' heeft daarna geen toegang meer tot de casusbouwer.','Verwijderen');if(!y)return;const {error}=await APP.sb.rpc('lid_verwijderen',{p_id:id});if(error){toast('Verwijderen is mislukt: '+error.message,true);return}toast(r.naam+' is verwijderd');loadRoster()}});
 /* ---------- theorie: lesstof en vragen (bron: Flagship Academy SOR Theorie, 19 mei 2026) ---------- */
 /* Vraag: q = vraag, a = [goed antwoord, fout, fout, fout], u = uitleg, p = pagina in het theorieboek */
-const LEER=[
+const LEER_ALL=[
 {id:'wet',t:'Wet- en regelgeving',kort:'BPR, CVO en documenten aan boord',p:8,
  intro:'Het kennen van de regels voor varen op de grachten: inzicht in vergunningen, snelheidslimieten, veiligheidsvoorschriften, milieuregels en de verantwoordelijkheden van handhavende instanties.',
  les:[
@@ -1704,6 +1717,8 @@ const LEER=[
 ];
 /* LEER_LIVE=false: leeromgeving alleen zichtbaar voor medewerkers (voorbeeldweergave); kandidaten gaan direct naar hun casus */
 const LEER_LIVE=true;
+/* LEER: hoofdstukken van het sjabloon van de kandidaat (sjabloon.js); standaard alle hoofdstukken */
+let LEER=LEER_ALL;
 /* LEER_GATE=true: casus gaat pas open na de eindtoets (of vrijgave door een medewerker) */
 const LEER_GATE=false;
 const EIND={t:'Eindtoets',n:20,pass:0.8};
@@ -1736,16 +1751,16 @@ async function openLeer(auto){unsubAll();try{await flushNow()}catch(e){}APP.targ
   if(!APP.lid){showLogin();return}
   if(!LEER_LIVE){openCasus(APP.lid.id,'kandidaat');return}
   showScreen('Leeromgeving laden','Even geduld…',null,true);
-  try{APP.th=await loadTheorie(APP.lid.id);await loadMijnGroep();await loadModules();await loadCbr()}catch(e){showScreen('Er ging iets mis','Je voortgang kon niet worden geladen. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload'],['Uitloggen','logout']]);return}
+  try{APP.th=await loadTheorie(APP.lid.id);await loadMijnGroep();await loadModules();await loadCbr();await sjLaadKandidaat()}catch(e){showScreen('Er ging iets mis','Je voortgang kon niet worden geladen. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload'],['Uitloggen','logout']]);return}
   if(auto&&LEER_GATE&&casusOpen()){openCasus(APP.lid.id,'kandidaat');return}
   APP.role='leer';APP.mode='leer';LV.v='start';LV.id=null;LQ=null;showMode('leer');renderTop();renderLeer();subscribeLeer();navPush({k:'leer',v:'start'})}
 const PV_KEY='sor-leer-voorbeeld-v1';
-function openLeerPreview(){unsubAll();APP.role='leer-voorbeeld';APP.mode='leer';APP.target=null;APP.th=thEmpty();try{const r=JSON.parse(localStorage.getItem(PV_KEY)||'null');if(r&&r.data)APP.th=Object.assign(thEmpty(),r)}catch(e){}LV.v='start';LV.id=null;LQ=null;APP.cbrNiet=false;showMode('leer');renderTop();renderLeer();navPush({k:'leer',v:'start'});APP.modules=[];return loadModules().then(()=>{if(APP.mode==='leer'&&LV.v==='home')renderLeer()})}
+function openLeerPreview(tpl){unsubAll();sjToepassen(tpl||null);APP.role='leer-voorbeeld';APP.mode='leer';APP.target=null;APP.th=thEmpty();try{const r=JSON.parse(localStorage.getItem(PV_KEY)||'null');if(r&&r.data)APP.th=Object.assign(thEmpty(),r)}catch(e){}LV.v='start';LV.id=null;LQ=null;APP.cbrNiet=false;showMode('leer');renderTop();renderLeer();navPush({k:'leer',v:'start'});APP.modules=[];return loadModules().then(()=>{sjModulesFilter();if(APP.mode==='leer'&&isPreview())renderLeer()})}
 function subscribeLeer(){const id=APP.lid&&APP.lid.id;if(!id)return;try{const ch=APP.sb.channel('leer-'+id+'-'+uid())
   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'leden',filter:'id=eq.'+id},()=>refreshLeerLid())
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'leden'},p=>{if(p&&p.old&&p.old.id===id)showBlocked()})
   .subscribe();APP.chans.push(ch)}catch(e){}}
-async function refreshLeerLid(){if(APP.role!=='leer'||!APP.lid)return;const was=casusOpen();const {data,error}=await APP.sb.from('leden').select('*').eq('id',APP.lid.id).maybeSingle();if(error)return;if(!data){showBlocked();return}APP.lid=Object.assign(APP.lid,data);await loadMijnGroep();
+async function refreshLeerLid(){if(APP.role!=='leer'||!APP.lid)return;const was=casusOpen();const {data,error}=await APP.sb.from('leden').select('*').eq('id',APP.lid.id).maybeSingle();if(error)return;if(!data){showBlocked();return}const sjWas=APP.lid.sjabloon_id,gWas=APP.lid.groep_id;APP.lid=Object.assign(APP.lid,data);await loadMijnGroep();if(sjWas!==APP.lid.sjabloon_id||gWas!==APP.lid.groep_id){await loadModules();await sjLaadKandidaat()}
   if(!was&&casusOpen())toast('Je opleider heeft je casus vrijgegeven');renderTop();if(LV.v==='home'||LV.v==='klaar')renderLeer()}
 async function refreshLeer(){if(APP.role!=='leer'||!APP.lid||LV.v==='quiz')return;try{const t=await loadTheorie(APP.lid.id);APP.th=t}catch(e){return}refreshLeerLid()}
 let thBusy=false,thAgain=false;
@@ -1761,7 +1776,7 @@ function renderLeer(){if(APP.mode!=='leer')return;const el=$('#leer');let h='';
   el.innerHTML='<div class="dash-in leer-in">'+h+'</div>'}
 /* startpagina van de leeromgeving: drie knoppen (theorie, casus, voortgang) */
 function viewStart(){const pv=isPreview(),done=LEER.filter(c=>chPassed(c.id)).length,open=casusOpen(),st=(APP.lid&&APP.lid.status)||'bezig';const r=pv?trajectVoorbeeld():APP.lid;const t=r&&(TRAJECT_KANDIDAAT||pv)?traject(r):null;
-  let h='<section class="lhero lstart"><div class="lhero-t"><div class="eyebrow">Leeromgeving · Praktijktoets 3 SOR · '+esc(CITY.naam)+'</div><h1>'+(pv?'Voorbeeld leeromgeving':'Hoi '+esc(voornaam())+', welkom aan boord')+'</h1><p>Dit is je leeromgeving. Hier leer je de theorie, werk je aan je casus en zie je wat je nog moet doen tot je examen.</p></div></section>';
+  let h='<section class="lhero lstart"><div class="lhero-t"><div class="eyebrow">Leeromgeving · Praktijktoets 3 SOR · '+esc(CITY.naam)+'</div><h1>'+(pv?'Voorbeeld leeromgeving'+(APP.sj?' · '+esc(APP.sj.naam):''):'Hoi '+esc(voornaam())+', welkom aan boord')+'</h1><p>Dit is je leeromgeving. Hier leer je de theorie, werk je aan je casus en zie je wat je nog moet doen tot je examen.</p></div></section>';
   const urg=t?t.acties.filter(a=>a.wie==='kandidaat'):[];if(urg.length)h+='<div class="tj-alert'+(urg.some(a=>a.niveau==='late')?' late':'')+'" role="status"><div><b>'+(urg.some(a=>a.niveau==='late')?'Te laat: ':'Let op: ')+esc(urg[0].tekst)+' uiterlijk '+esc(dFmt(urg[0].dl,1))+'</b> ('+dagenTxt(urg[0].n)+')'+(urg.length>1?' en nog '+(urg.length-1)+' andere':'')+'. <button type="button" class="linkbtn" data-lact="voortgang">Bekijk je voortgang</button></div></div>';
   const tile=(act,ico,kop,sub,meta,lock)=>'<button type="button" class="ltile'+(lock?' lock':'')+'" data-lact="'+act+'"><span class="ltile-i" aria-hidden="true">'+ico+'</span><span class="ltile-t"><b>'+kop+'</b><span>'+sub+'</span><small>'+meta+'</small></span><span class="ltile-go" aria-hidden="true">→</span></button>';
   const nx=t&&t.exam?(t.acties[0]?esc(t.acties[0].tekst)+' · uiterlijk '+esc(dFmt(t.acties[0].dl)):'Examen '+esc(dFmt(t.exam,1))):'Je opleider vult je examendatum in';
@@ -1784,10 +1799,10 @@ function viewHome(){const th=APP.th||thEmpty();const xp=thXP(th.data);const rk=r
   h+='<div class="lstats"><div class="card"><div class="k">Hoofdstukken</div><div class="v">'+done+'/'+LEER.length+'</div></div><div class="card"><div class="k">Sterren</div><div class="v">'+stars+'/'+(LEER.length*3)+'</div></div><div class="card"><div class="k">Eindtoets</div><div class="v sm">'+(theoryDone()?'Gehaald':er?Math.round(pctOf(er)*100)+'%':'–')+'</div></div><div class="card"><div class="k">Casus</div><div class="v sm">'+(open?'Open':'Op slot')+'</div></div></div>';
   const bz=bezigInfo();if(bz)h+='<div class="lresume"><div><b>Ga verder waar je was</b><span>'+esc(bz.naam)+' · '+bz.nr+' van '+bz.n+' vragen beantwoord</span></div><button type="button" class="btn primary" data-lact="resume">Ga verder</button></div>';
   let cur=LEER.findIndex((c,i)=>chUnlocked(i)&&!chPassed(c.id));
-  h+='<ol class="lpath" aria-label="Hoofdstukken">'+LEER.map((c,i)=>{const r=chRes(c.id),pass=chPassed(c.id),un=chUnlocked(i),isCur=i===cur;const st=pass?'done':un?'open':'lock';
+  h+='<ol class="lpath" aria-label="Hoofdstukken">'+sjPad().map(it=>it.t==='m'?sjModNode(it.m):((c,i)=>{const r=chRes(c.id),pass=chPassed(c.id),un=chUnlocked(i),isCur=i===cur;const st=pass?'done':un?'open':'lock';
     const meta=pass?starRow(starsOf(r))+'<span class="lmeta">Beste score '+Math.round(pctOf(r)*100)+'%</span>':r?'<span class="lmeta">Beste score '+Math.round(pctOf(r)*100)+'% · nog niet gehaald</span>':un?'<span class="lmeta">'+(r&&r.gelezen?'Les gelezen':'Nog niet begonnen')+'</span>':'<span class="lmeta">Haal eerst hoofdstuk '+i+'</span>';
     return'<li class="lnode '+st+(isCur?' cur':'')+'"><span class="dot" aria-hidden="true">'+(pass?'✓':un?(i+1):'<svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0110 0v3h1v11H6V10h1zm2 0h6V7a3 3 0 00-6 0v3z"/></svg>')+'</span><div class="lcard"><div class="lcard-t"><small>Hoofdstuk '+(i+1)+'</small><b>'+esc(c.t)+'</b><span>'+esc(c.kort)+'</span>'+meta+'</div>'+
-      (un?'<div class="lcard-a"><button type="button" class="btn sm'+(isCur?' primary':'')+'" data-lact="les" data-id="'+c.id+'">'+(pass?'Les':'Les lezen')+'</button>'+(bz&&bz.b.id===c.id?'<button type="button" class="btn sm primary" data-lact="resume">Ga verder</button>':'<button type="button" class="btn sm'+(pass||isCur?'':' soft')+'" data-lact="quiz" data-id="'+c.id+'">'+(pass?'Opnieuw':r?'Quiz opnieuw':'Quiz')+'</button>')+'</div>':'')+'</div></li>'}).join('')+
+      (un?'<div class="lcard-a"><button type="button" class="btn sm'+(isCur?' primary':'')+'" data-lact="les" data-id="'+c.id+'">'+(pass?'Les':'Les lezen')+'</button>'+(bz&&bz.b.id===c.id?'<button type="button" class="btn sm primary" data-lact="resume">Ga verder</button>':'<button type="button" class="btn sm'+(pass||isCur?'':' soft')+'" data-lact="quiz" data-id="'+c.id+'">'+(pass?'Opnieuw':r?'Quiz opnieuw':'Quiz')+'</button>')+'</div>':'')+'</div></li>'})(it.c,it.i)).join('')+
     (()=>{const un=isPreview()||allPassed(),ok=theoryDone();return'<li class="lnode eind '+(ok?'done':un?'open':'lock')+(un&&!ok?' cur':'')+'"><span class="dot" aria-hidden="true">'+(ok?'✓':'★')+'</span><div class="lcard"><div class="lcard-t"><small>Afsluiting</small><b>Eindtoets</b><span>'+EIND.n+' vragen uit alle hoofdstukken · 80% om te slagen</span>'+(er?'<span class="lmeta">Beste score '+Math.round(pctOf(er)*100)+'%'+(ok?'':' · nog niet gehaald')+'</span>':un?'':'<span class="lmeta">Haal eerst alle hoofdstukken</span>')+'</div>'+(un?'<div class="lcard-a"><button type="button" class="btn sm'+(ok?'':' primary')+'" data-lact="quiz" data-id="eind">'+(ok?'Opnieuw':er?'Nog een keer':'Start eindtoets')+'</button></div>':'')+'</div></li>'})()+
     '<li class="lnode casus '+(open?'done':'lock')+'"><span class="dot" aria-hidden="true">⚓</span><div class="lcard"><div class="lcard-t"><small>Praktijktoets 3</small><b>Je casus</b><span>'+(open?(theoryDone()?'Theorie gehaald. Je kunt aan je casus beginnen.':LEER_GATE?'Je opleider heeft je casus vrijgegeven.':'Je casus staat open. Werk eraan wanneer je wilt.'):'Gaat open zodra je de eindtoets hebt gehaald.')+'</span></div>'+(open&&!isPreview()?'<div class="lcard-a"><button type="button" class="btn sm primary" data-lact="casus">Naar je casus</button></div>':'')+'</div></li></ol>';
   const ex=leerExtras();if(ex.length)h+='<section class="lsec lextra"><div class="lsec-h"><h2>'+(isPreview()?'Extra per vaargebied':'Extra voor '+esc(CITY.naam))+'</h2></div>'+(isPreview()?'<p class="note">Kandidaten zien alleen de extra’s van hun eigen vaargebied.</p>':'')+ex.map(x=>'<div class="lxcard"><div><b>'+(isPreview()?esc(x.stad)+' · ':'')+esc(x.t)+'</b><span>'+esc(x.s)+'</span>'+(x.mod?modMeta(x.mod):'<span class="lmeta">'+gxCount(gxSt())+' van '+GX.CH.length+' hoofdstukken afgerond</span>')+'</div><button type="button" class="btn sm primary" data-lact="'+(x.mod?'mod':'extra')+'" data-id="'+esc(x.id)+'">Openen</button></div>').join('')+'</section>';
@@ -1797,7 +1812,7 @@ function viewHome(){const th=APP.th||thEmpty();const xp=thXP(th.data);const rk=r
 /* extra informatie per vaargebied: kandidaten zien die van hun eigen stad, medewerkers en leermeesters (voorbeeld) alles */
 const LEER_EXTRA={groningen:[{id:'gro-waterstand',t:'Waterstand en bruggen',s:'Waterinfo, tabelpeil, de 17 bruggen op de route en uitrekenen of je eronder past'}]};
 function leerExtras(){const all=[];Object.keys(LEER_EXTRA).forEach(st=>LEER_EXTRA[st].forEach(x=>all.push(Object.assign({stad:STAD_NAAM[st]||st,st},x))));const vast=isPreview()?all:all.filter(x=>x.st===CITY.id);
-  return vast.concat((APP.modules||[]).map(m=>({id:m.id,mod:m,t:m.titel+(m.actief?'':' (concept)'),s:MOD_SOORT[m.soort]||'',st:CITY.id,stad:CITY.naam})))}
+  return vast.concat((APP.sj?[]:(APP.modules||[])).map(m=>({id:m.id,mod:m,t:m.titel+(m.actief?'':' (concept)'),s:MOD_SOORT[m.soort]||'',st:CITY.id,stad:CITY.naam})))}
 function viewExtra(){const x=leerExtras().find(e=>e.id===LV.id);if(!x)return viewHome();return gxView()}
 function viewLes(){const i=LEER.findIndex(c=>c.id===LV.id),c=LEER[i];if(!c)return viewHome();
   let h='<div class="lbar"><button type="button" class="btn soft sm" data-lact="home">← Overzicht</button><span class="lcrumb">Hoofdstuk '+(i+1)+' van '+LEER.length+'</span></div>';
@@ -1860,12 +1875,12 @@ document.addEventListener('keydown',e=>{if(APP.mode!=='leer'||LV.v!=='quiz'||!LQ
   if(i>=0&&k.length===1&&LQ.ans==null){e.preventDefault();answer(i)}else if(e.key==='Enter'&&LQ.ans!=null&&!(e.target&&e.target.closest&&e.target.closest('button'))){e.preventDefault();nextQ()}});
 
 /* medewerkers: voortgang theorie bekijken en casus vrijgeven */
-function thCell(r){const t=r.th,ok=t&&t.geslaagd_op,n=(t&&t.hoofdstukken)||0;
-  return'<button type="button" class="thcell" data-dact="theorie" data-id="'+esc(r.id)+'" title="Theorie-voortgang bekijken">'+(ok?'<span class="pill ok">Theorie gehaald</span>':'<span class="row" style="gap:6px"><span class="pbar sm"><span style="width:'+Math.round(n/LEER.length*100)+'%"></span></span><span class="num">'+n+'/'+LEER.length+'</span></span>')+(!ok&&r.casus_vrij?'<small>Casus vrijgegeven</small>':'')+'</button>'}
-async function showTheorie(r){const t=r.th||{},d=t.data||{h:{}},ok=!!t.geslaagd_op;const xp=t.xp||0,rk=rankOf(xp);const e=d.eind;
+function thCell(r){const t=r.th,ok=t&&t.geslaagd_op,n=(t&&t.hoofdstukken)||0;const HS=sjHoofdstukken(sjVan(r));
+  return'<button type="button" class="thcell" data-dact="theorie" data-id="'+esc(r.id)+'" title="Theorie-voortgang bekijken">'+(ok?'<span class="pill ok">Theorie gehaald</span>':'<span class="row" style="gap:6px"><span class="pbar sm"><span style="width:'+Math.round(Math.min(1,n/HS.length)*100)+'%"></span></span><span class="num">'+n+'/'+HS.length+'</span></span>')+(!ok&&r.casus_vrij?'<small>Casus vrijgegeven</small>':'')+'</button>'}
+async function showTheorie(r){const t=r.th||{},d=t.data||{h:{}},ok=!!t.geslaagd_op;const SJT=sjVan(r),HS=sjHoofdstukken(SJT);const xp=t.xp||0,rk=rankOf(xp);const e=d.eind;
   const row=(nm,res,extra)=>'<tr><td>'+nm+'</td><td class="num">'+(res&&res.van?Math.round(pctOf(res)*100)+'%':'–')+'</td><td>'+(extra||'')+'</td><td class="num">'+((res&&res.n)||0)+'</td><td>'+(res&&res.op?esc(fmtDate(res.op)):res&&res.gelezen?'<small>les gelezen</small>':'–')+'</td></tr>';
-  const body='<div class="threp"><p class="note">'+esc(rk.naam)+' · '+xp+' XP · '+((t.hoofdstukken)||0)+' van '+LEER.length+' hoofdstukken gehaald'+(ok?' · theorie gehaald op '+esc(fmtDate(t.geslaagd_op)):'')+(r.casus_vrij&&!ok?' · casus handmatig vrijgegeven':'')+(d.x&&d.x.gro?' · Waterstand en bruggen Groningen: '+gxCount(Object.assign({read:{},best:{}},d.x.gro))+' van '+GX.CH.length+' hoofdstukken afgerond':'')+(d.bezig&&d.bezig.qs?' · nu bezig met '+esc(d.bezig.id==='eind'?'de eindtoets':'hoofdstuk '+(LEER.findIndex(c=>c.id===d.bezig.id)+1))+' (vraag '+Math.min(d.bezig.qs.length,(d.bezig.i||0)+1)+' van '+d.bezig.qs.length+', '+(d.bezig.score||0)+' goed)':'')+'</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Onderdeel</th><th>Beste</th><th></th><th>Pogingen</th><th>Laatst</th></tr></thead><tbody>'+
-    LEER.map((c,i)=>{const res=d.h&&d.h[c.id];return row((i+1)+'. '+esc(c.t),res,res&&res.van?starRow(starsOf(res)):'')}).join('')+row('<b>Eindtoets</b>',e,e&&e.van?(pctOf(e)>=EIND.pass?'<span class="pill ok">gehaald</span>':'<span class="pill acc">niet gehaald</span>'):'')+'</tbody></table></div></div>';
+  const body='<div class="threp"><p class="note">'+esc(rk.naam)+' · '+xp+' XP · '+((t.hoofdstukken)||0)+' van '+HS.length+' hoofdstukken gehaald · leeromgeving: '+esc(sjNaam(SJT))+(ok?' · theorie gehaald op '+esc(fmtDate(t.geslaagd_op)):'')+(r.casus_vrij&&!ok?' · casus handmatig vrijgegeven':'')+(d.x&&d.x.gro?' · Waterstand en bruggen Groningen: '+gxCount(Object.assign({read:{},best:{}},d.x.gro))+' van '+GX.CH.length+' hoofdstukken afgerond':'')+(d.bezig&&d.bezig.qs?' · nu bezig met '+esc(d.bezig.id==='eind'?'de eindtoets':'hoofdstuk '+(HS.findIndex(c=>c.id===d.bezig.id)+1))+' (vraag '+Math.min(d.bezig.qs.length,(d.bezig.i||0)+1)+' van '+d.bezig.qs.length+', '+(d.bezig.score||0)+' goed)':'')+'</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Onderdeel</th><th>Beste</th><th></th><th>Pogingen</th><th>Laatst</th></tr></thead><tbody>'+
+    HS.map((c,i)=>{const res=d.h&&d.h[c.id];return row((i+1)+'. '+esc(c.t),res,res&&res.van?starRow(starsOf(res)):'')}).join('')+row('<b>Eindtoets</b>',e,e&&e.van?(pctOf(e)>=EIND.pass?'<span class="pill ok">gehaald</span>':'<span class="pill acc">niet gehaald</span>'):'')+'</tbody></table></div></div>';
   if(ok||APP.isLm||!LEER_GATE){await modalBox('Theorie van '+r.naam,'',body,'Sluiten',null);return}
   const y=await modalBox('Theorie van '+r.naam,'',body+'<p class="note">'+(r.casus_vrij?'De casus is vrijgegeven, ook al is de theorie nog niet gehaald.':'De casus gaat open zodra de eindtoets is gehaald. Je kunt de casus ook nu al vrijgeven.')+'</p>',r.casus_vrij?'Vrijgave intrekken':'Casus nu vrijgeven','Sluiten');
   if(!y)return;const {error}=await APP.sb.from('leden').update({casus_vrij:!r.casus_vrij}).eq('id',r.id);if(error){toast('Opslaan is mislukt: '+error.message,true);return}toast(r.casus_vrij?'Vrijgave ingetrokken':'Casus vrijgegeven voor '+r.naam);loadRoster()}
@@ -2091,9 +2106,10 @@ function groepenView(q,st){const gs=(APP.groepen||[]).filter(g=>(!q||g.naam.toLo
   return h+'<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Groep</th><th>Generale</th><th>Examen</th><th>Kandidaten</th><th></th></tr></thead><tbody>'+gs.map(g=>{const ks=APP.roster.filter(r=>r.rol==='kandidaat'&&r.groep_id===g.id);const act=ks.filter(actieNodig).length;const ex=dParse(g.examen_op);
     return'<tr><td class="c-person"><b>'+esc(g.naam)+'</b> <span class="pill stad '+g.stad+'">'+STAD_NAAM[g.stad]+'</span></td><td data-l="Generale" class="c-date">'+esc(dFmt(dParse(g.generale_op)))+'</td><td data-l="Examen" class="c-date">'+esc(dFmt(ex))+(ex?'<small>'+(dDiff(ex)<0?'geweest':overTxt(dDiff(ex)))+'</small>':'')+'</td><td data-l="Kandidaten">'+ks.length+(act?' <span class="pill acc">'+act+' actie nodig</span>':'')+'</td><td class="c-act"><div class="acts"><button type="button" class="btn sm primary" data-dact="groep-kand" data-gid="'+esc(g.id)+'">Kandidaten</button><button type="button" class="btn sm" data-dact="groep-edit" data-gid="'+esc(g.id)+'">Bewerken</button><button type="button" class="btn sm danger" data-dact="groep-weg" data-gid="'+esc(g.id)+'">Verwijderen</button></div></td></tr>'}).join('')+'</tbody></table></div>'}
 async function editGroep(g){const nieuw=!g;g=g||{naam:'',stad:STADS.includes(APP.vgMap)?APP.vgMap:STADS.includes(APP.dashMap)?APP.dashMap:'amsterdam',examen_op:null,generale_op:null};
-  const body='<div class="field"><label for="gNaam">Naam</label><input id="gNaam" type="text" maxlength="80" placeholder="Bijvoorbeeld Lichting maart 2027" value="'+esc(g.naam)+'"></div><div class="field"><label for="gStad">Vaargebied</label><select id="gStad">'+stadOpts(g.stad)+'</select></div><div class="grid2"><div class="field"><label for="gGen">Generale repetitie</label><input id="gGen" type="date" value="'+esc(g.generale_op||'')+'"></div><div class="field"><label for="gEx">Examen</label><input id="gEx" type="date" value="'+esc(g.examen_op||'')+'"></div></div><p class="note">De deadlines rekent het systeem zelf uit met de termijnen van het vaargebied (menu Voortgang → Instellingen).</p>';
+  const body='<div class="field"><label for="gNaam">Naam</label><input id="gNaam" type="text" maxlength="80" placeholder="Bijvoorbeeld Lichting maart 2027" value="'+esc(g.naam)+'"></div><div class="field"><label for="gStad">Vaargebied</label><select id="gStad">'+stadOpts(g.stad)+'</select></div><div class="grid2"><div class="field"><label for="gGen">Generale repetitie</label><input id="gGen" type="date" value="'+esc(g.generale_op||'')+'"></div><div class="field"><label for="gEx">Examen</label><input id="gEx" type="date" value="'+esc(g.examen_op||'')+'"></div></div><p class="note">De deadlines rekent het systeem zelf uit met de termijnen van het vaargebied (menu Voortgang → Instellingen).</p>'+(APP.sjDb?'<div class="field"><label for="gSj">Leeromgeving-sjabloon</label><select id="gSj"><option value="">Standaard van het vaargebied</option>'+(APP.sjAll||[]).map(s=>'<option value="'+s.id+'"'+(g.sjabloon_id===s.id?' selected':'')+'>'+esc((STAD_NAAM[s.gebied]||s.gebied)+' · '+s.naam)+'</option>').join('')+'</select></div>':'');
   const y=await modalBox(nieuw?'Groep toevoegen':'Groep bewerken','',body,nieuw?'Toevoegen':'Opslaan','Annuleren',()=>$('#gNaam').focus());if(!y)return;
   const row={naam:$('#gNaam').value.trim().replace(/\s+/g,' '),stad:$('#gStad').value,generale_op:$('#gGen').value||null,examen_op:$('#gEx').value||null};if(!row.naam){toast('Geef de groep een naam.',true);return}
+  if($('#gSj')){row.sjabloon_id=$('#gSj').value||null;const sj=(APP.sjAll||[]).find(s=>s.id===row.sjabloon_id);if(sj&&sj.gebied!==row.stad){toast('Dit sjabloon hoort bij '+(STAD_NAAM[sj.gebied]||sj.gebied)+'. Kies een sjabloon van hetzelfde vaargebied als de groep.',true);return}}
   const {error}=nieuw?await APP.sb.from('groepen').insert(row):await APP.sb.from('groepen').update(row).eq('id',g.id);if(error){toast('Opslaan is mislukt: '+error.message,true);return}
   toast(nieuw?'Groep '+row.naam+' toegevoegd':'Groep opgeslagen');await loadGroepen();loadRoster()}
 async function groepKandidaten(g){const ks=APP.roster.filter(r=>r.rol==='kandidaat'&&r.status!=='geslaagd').sort((a,b)=>((b.groep_id===g.id)-(a.groep_id===g.id))||((a.stad||'amsterdam')!==g.stad)-((b.stad||'amsterdam')!==g.stad)||a.naam.localeCompare(b.naam));
@@ -2254,8 +2270,9 @@ function gbStaat(){if(!APP.gb)APP.gb={stap:1,zoek:'',res:[],sel:null,maat:'3',ka
 function renderGebiedBouwer(){const G=gbStaat(),gs=(APP.gebieden||[]);const kand=st=>APP.roster.filter(r=>r.rol==='kandidaat'&&(r.stad||'amsterdam')===st).length;
   const tab=APP.gbTab||'gebieden';if(tab!=='nieuw'&&APP.gbMap){try{APP.gbMap.remove()}catch(e){}APP.gbMap=null}
   let h='<div class="dash-in gb"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="eyebrow">Medewerkers</div><h1>Vaargebieden</h1></div></div>';
-  h+='<div class="tabs" role="tablist">'+[['gebieden','Alle vaargebieden'],['nieuw','+ Extra gebied'],['modules','Leermodules']].map(x=>'<button type="button" role="tab" aria-selected="'+(tab===x[0])+'" class="chip'+(tab===x[0]?' on':'')+'" data-gbtab="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
+  h+='<div class="tabs" role="tablist">'+[['gebieden','Alle vaargebieden'],['nieuw','+ Extra gebied'],['sjablonen','Leeromgeving'],['modules','Leermodules']].map(x=>'<button type="button" role="tab" aria-selected="'+(tab===x[0])+'" class="chip'+(tab===x[0]?' on':'')+'" data-gbtab="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
   if(tab==='modules'){$('#dash').innerHTML=h+'<section class="lsec" id="meSec">'+meView()+'</section></div>';return}
+  if(tab==='sjablonen'){$('#dash').innerHTML=h+'<section class="lsec" id="sjSec">'+sjView()+'</section></div>';return}
   if(tab==='gebieden')h+='<section class="lsec"><div class="lsec-h"><h2>Alle vaargebieden</h2></div>'+(gs.length?'<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Vaargebied</th><th>Adres</th><th>Status</th><th>Kandidaten</th><th></th></tr></thead><tbody>'+gs.map(g=>'<tr><td class="c-person"><b>'+esc(g.naam)+'</b></td><td data-l="Adres"><a href="'+esc(cityUrl(g.slug))+'" target="_blank" rel="noopener">/'+esc(g.slug)+'/</a></td><td data-l="Status">'+(g.ingebouwd?'<span class="pill unk">Vast</span>':g.actief?'<span class="pill ok">Actief</span>':'<span class="pill warn">Concept</span>')+'</td><td data-l="Kandidaten">'+kand(g.slug)+'</td><td class="c-act"><div class="acts">'+(g.ingebouwd?'':(g.actief?'<button type="button" class="btn sm" data-gb="uit" data-slug="'+esc(g.slug)+'">Deactiveren</button>':'<button type="button" class="btn sm primary" data-gb="aan" data-slug="'+esc(g.slug)+'">Activeren</button>')+'<button type="button" class="btn sm danger" data-gb="weg" data-slug="'+esc(g.slug)+'">Verwijderen</button>')+'</div></td></tr>').join('')+'</tbody></table></div>':'<p class="note">De vaargebieden konden niet worden geladen. De database moet eerst worden bijgewerkt (migratie 015).</p>')+'</section>';
   if(tab==='gebieden'){$('#dash').innerHTML=h+'</div>';return}
   h+='<section class="lsec" id="gbNieuw"><div class="lsec-h"><h2>Nieuw vaargebied</h2><span class="pill acc">Stap '+G.stap+' van 3</span></div>';
@@ -2441,7 +2458,7 @@ function meCheck(m){if(!m.titel)return'Geef de module een titel.';const vs=m.inh
 async function meOpslaan(){const m=meLees(),st=ME.st;const fout=meCheck(m);if(fout){toast(fout,true);return}
   const inh=Object.assign({},m.inhoud,{vragen:(m.inhoud.vragen||[]).filter(q=>q.v)});const mods=(APP.meMods||{})[st]||[];
   const row={titel:m.titel,inhoud:inh,bijgewerkt:nowIso()};const res=m.id?await APP.sb.from('leermodules').update(row).eq('id',m.id):await APP.sb.from('leermodules').insert(Object.assign(row,{gebied:st,soort:m.soort,actief:false,volgorde:(mods.length?Math.max(...mods.map(x=>x.volgorde||0)):0)+10}));
-  if(res.error){toast(foutTekst(res.error,'Opslaan'),true);return}ME.edit=null;await meLoad(st);toast('Module '+m.titel+' opgeslagen'+(m.id?'':' als concept'));renderGebiedBouwer()}
+  if(res.error){toast(foutTekst(res.error,'Opslaan'),true);return}ME.edit=null;await meLoad(st);toast('Module '+m.titel+' opgeslagen'+(m.id?'':' als concept'));if(APP.sjTerug&&SJ.edit){APP.sjTerug=false;APP.gbTab='sjablonen'}renderGebiedBouwer()}
 async function meWissel(k,d){const st=ME.st,mods=APP.meMods[st],a=mods[k],b=mods[k+d];if(!a||!b)return;const va=a.volgorde,vb=b.volgorde===va?va+d:b.volgorde;
   const r1=await APP.sb.from('leermodules').update({volgorde:vb}).eq('id',a.id),r2=await APP.sb.from('leermodules').update({volgorde:va}).eq('id',b.id);if(r1.error||r2.error){toast('Verplaatsen is mislukt',true)}await meLoad(st);renderGebiedBouwer()}
 function meKaartKlik(e){const svg=e.target.closest('svg[data-medit]');if(!svg||!ME.edit)return;const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const c=pt.matrixTransform(svg.getScreenCTM().inverse());meLees();
@@ -2464,6 +2481,105 @@ $('#dash').addEventListener('click',async e=>{if(APP.dashView!=='gebied'||APP.gb
 $('#dash').addEventListener('change',e=>{if(APP.dashView!=='gebied'||APP.gbTab!=='modules')return;
   if(e.target.id==='meSt'){ME.st=e.target.value;ME.edit=null;renderGebiedBouwer()}
   else if(e.target.id==='meBrug'&&e.target.value!==''&&ME.edit){const br=BRIDGES[+e.target.value];if(br){meLees();ME.edit.inhoud.punten.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,4),naam:br.nm,soort:'brug',x:br.x,y:br.y,tekst:''});renderGebiedBouwer()}}});
+/* ---------- sjablonen voor de leeromgeving (migratie 018) ----------
+   Een sjabloon hoort bij een vaargebied en bepaalt welke theoriehoofdstukken een kandidaat krijgt, in welke
+   volgorde, en welke extra modules (tabel leermodules) ertussen staan. Alleen medewerkers beheren en wijzen toe.
+   Welk sjabloon geldt: eigen sjabloon (leden.sjabloon_id) > groep (groepen.sjabloon_id) > standaard van het gebied > alle hoofdstukken. */
+const SJ={st:null,edit:null};
+const SJ_ALLE='Alle hoofdstukken (Flagship-standaard)';
+APP.sj=null;APP.sjAll=[];APP.sjDb=true;
+const sjNieuwId=()=>(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16));
+function sjVan(r,sjs,groepen){if(!r)return null;sjs=sjs||APP.sjAll||[];groepen=groepen||APP.groepen||[];const by=id=>id?sjs.find(s=>s.id===id):null;const g=groepen.find(x=>x.id===r.groep_id);
+  return by(r.sjabloon_id)||by(g&&g.sjabloon_id)||sjs.find(s=>s.standaard&&s.gebied===(r.stad||'amsterdam'))||null}
+function sjHoofdstukken(tpl){if(!tpl)return LEER_ALL;const a=(tpl.items||[]).filter(i=>i&&i.t==='h').map(i=>LEER_ALL.find(c=>c.id===i.id)).filter(Boolean);return a.length?a:LEER_ALL}
+function sjToepassen(tpl){APP.sj=tpl||null;LEER=sjHoofdstukken(tpl)}
+function sjModulesFilter(){if(!APP.sj)return;const all=APP.modules||[];APP.modules=(APP.sj.items||[]).filter(i=>i&&i.t==='m').map(i=>all.find(m=>m.id===i.id)).filter(Boolean)}
+/* kandidaat: sjabloon ophalen en toepassen (zonder database-update 018: alle hoofdstukken, zoals voorheen) */
+async function sjLaadKandidaat(){sjToepassen(null);if(!APP.sb||!APP.lid)return;
+  try{const {data,error}=await APP.sb.from('leer_sjablonen').select('*').eq('gebied',APP.lid.stad||'amsterdam');if(error)return;let sjs=data||[];
+    const g=(APP.groepen||[]).find(x=>x.id===APP.lid.groep_id);
+    for(const id of [APP.lid.sjabloon_id,g&&g.sjabloon_id]){if(id&&!sjs.find(s=>s.id===id)){const r=await APP.sb.from('leer_sjablonen').select('*').eq('id',id).maybeSingle();if(r.data)sjs=sjs.concat([r.data])}}
+    sjToepassen(sjVan(APP.lid,sjs,APP.groepen));sjModulesFilter()}catch(e){}}
+/* medewerkers en leermeesters: alle sjablonen (voor het overzicht en de theorie-voortgang per kandidaat) */
+async function sjLaadAlles(){APP.sjAll=[];if(!APP.sb||!(APP.isStaff||APP.isLm))return;const {data,error}=await APP.sb.from('leer_sjablonen').select('*');APP.sjDb=!(error&&dbOntbreekt(error));if(!error)APP.sjAll=(data||[]).sort((a,b)=>(b.standaard-a.standaard)||String(a.naam).localeCompare(b.naam))}
+/* het leerpad: hoofdstukken en extra modules in de volgorde van het sjabloon */
+function sjPad(){const hs=LEER.map((c,i)=>({t:'h',c,i}));if(!APP.sj)return hs;const out=[];
+  (APP.sj.items||[]).forEach(it=>{if(it.t==='h'){const i=LEER.findIndex(c=>c.id===it.id);if(i>=0)out.push({t:'h',c:LEER[i],i})}else if(it.t==='m'){const m=(APP.modules||[]).find(x=>x.id===it.id);if(m)out.push({t:'m',m})}});
+  return out.some(x=>x.t==='h')?out:hs.concat(out)}
+function sjModNode(m){return'<li class="lnode open sjextra"><span class="dot" aria-hidden="true">+</span><div class="lcard"><div class="lcard-t"><small>Extra'+(m.actief?'':' · concept')+'</small><b>'+esc(m.titel)+'</b><span>'+esc(MOD_SOORT[m.soort]||'')+'</span>'+modMeta(m)+'</div><div class="lcard-a"><button type="button" class="btn sm" data-lact="mod" data-id="'+esc(m.id)+'">Openen</button></div></div></li>'}
+const sjNaam=t=>t?t.naam:SJ_ALLE;
+const sjItemNaam=(it,mods)=>{if(it.t==='h'){const i=LEER_ALL.findIndex(c=>c.id===it.id);return i<0?null:'Hoofdstuk '+(i+1)+' · '+LEER_ALL[i].t}const m=(mods||[]).find(x=>x.id===it.id);return m?'Extra · '+m.titel:null};
+const sjSamenvatting=(t,mods)=>{const it=(t.items||[]).filter(i=>sjItemNaam(i,mods));const h=it.filter(i=>i.t==='h').length,m=it.length-h;return h+' hoofdstuk'+(h===1?'':'ken')+(m?' + '+m+' extra':'')};
+
+/* ---------- beheer (tab Leeromgeving op de pagina Vaargebieden) ---------- */
+function sjView(){if(!APP.sjDb)return'<p class="note warn">'+esc(foutTekst({message:'schema cache'}))+'</p>';
+  const st=SJ.st&&STADS.includes(SJ.st)?SJ.st:CITY.id;SJ.st=st;const mods=(APP.meMods||{})[st];
+  if(!mods){meLoad(st).then(()=>{if(APP.dashView==='gebied'&&APP.gbTab==='sjablonen')renderGebiedBouwer()});return'<p class="note">Laden…</p>'}
+  let h='<div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap"><div class="field" style="margin:0"><label for="sjSt">Vaargebied</label><select id="sjSt"'+(SJ.edit?' disabled':'')+'>'+stadOpts(st)+'</select></div>'+(SJ.edit?'':'<button type="button" class="btn primary" data-sj="nieuw">+ Nieuw sjabloon</button>')+'</div>';
+  if(SJ.edit)return h+sjEditor(st,mods);
+  const sjs=APP.sjAll.filter(s=>s.gebied===st);const kand=APP.roster.filter(r=>r.rol==='kandidaat'&&(r.stad||'amsterdam')===st);
+  const telVoor=t=>kand.filter(r=>{const x=sjVan(r);return t?x&&x.id===t.id:!x}).length;
+  h+='<p class="note">Een sjabloon bepaalt welke hoofdstukken een kandidaat van '+esc(STAD_NAAM[st]||st)+' in de leeromgeving krijgt, in welke volgorde, en welke extra modules ertussen staan. Toewijzen kan per kandidaat (⋯ → Leeromgeving-sjabloon, of hieronder bij het sjabloon) en per groep. Volgorde: eigen sjabloon, dan dat van de groep, dan de standaard van het gebied.</p>';
+  const std=sjs.find(s=>s.standaard);
+  h+='<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Sjabloon</th><th>Inhoud</th><th>Kandidaten</th><th></th></tr></thead><tbody>'+
+    (std?'':'<tr><td class="c-person"><b>'+esc(SJ_ALLE)+'</b><small>Standaard zolang er geen eigen standaard is</small></td><td data-l="Inhoud">'+LEER_ALL.length+' hoofdstukken</td><td data-l="Kandidaten">'+telVoor(null)+'</td><td class="c-act"><div class="acts"><button type="button" class="btn sm" data-sj="voorbeeld">Voorbeeld</button></div></td></tr>')+
+    sjs.map(s=>'<tr><td class="c-person"><b>'+esc(s.naam)+'</b>'+(s.standaard?' <span class="pill ok">Standaard</span>':'')+'</td><td data-l="Inhoud">'+esc(sjSamenvatting(s,mods))+'</td><td data-l="Kandidaten">'+telVoor(s)+'</td><td class="c-act"><div class="acts">'+(s.standaard?'':'<button type="button" class="btn sm" data-sj="std" data-id="'+s.id+'">Standaard maken</button>')+'<button type="button" class="btn sm" data-sj="voorbeeld" data-id="'+s.id+'">Voorbeeld</button><button type="button" class="btn sm primary" data-sj="bewerk" data-id="'+s.id+'">Bewerken</button><button type="button" class="btn sm danger" data-sj="weg" data-id="'+s.id+'">Verwijderen</button></div></td></tr>').join('')+'</tbody></table></div>';
+  return h}
+function sjEditor(st,mods){const e=SJ.edit;const groepen=(APP.groepen||[]).filter(g=>(g.stad||'amsterdam')===st);
+  const kand=APP.roster.filter(r=>r.rol==='kandidaat'&&(r.stad||'amsterdam')===st&&r.status!=='geslaagd').sort((a,b)=>a.naam.localeCompare(b.naam));
+  const inLijst=it=>e.items.some(x=>x.t===it.t&&x.id===it.id);
+  const vrijH=LEER_ALL.map((c,i)=>({t:'h',id:c.id,n:'Hoofdstuk '+(i+1)+' · '+c.t})).filter(x=>!inLijst(x));
+  const vrijM=mods.map(m=>({t:'m',id:m.id,n:m.titel+(m.actief?'':' (concept)')})).filter(x=>!inLijst(x));
+  let h='<section class="lsec sjedit" id="sjForm"><div class="lsec-h"><h2>'+(e.id?'Sjabloon bewerken':'Nieuw sjabloon')+' · '+esc(STAD_NAAM[st]||st)+'</h2></div>'+
+    '<div class="field"><label for="sjNaam">Naam</label><input id="sjNaam" type="text" maxlength="80" placeholder="Bijvoorbeeld Versneld SOR of Pilot nieuwe schippers" value="'+esc(e.naam)+'"></div>'+
+    '<label class="chk"><input type="checkbox" id="sjStd"'+(e.standaard?' checked':'')+'> Standaard voor kandidaten van '+esc(STAD_NAAM[st]||st)+' zonder eigen sjabloon of groepssjabloon</label>'+
+    '<h3>Inhoud en volgorde</h3><ol class="sjitems">'+e.items.map((it,k)=>{const nm=sjItemNaam(it,mods);if(!nm)return'';const m=it.t==='m'&&mods.find(x=>x.id===it.id);
+      return'<li class="'+(it.t==='m'?'sj-m':'sj-h')+'"><span>'+esc(nm)+(m&&!m.actief?' <span class="pill warn">Concept: kandidaten zien hem pas als hij actief is</span>':'')+'</span><span class="acts"><button type="button" class="btn sm" data-sj="op" data-k="'+k+'"'+(k?'':' disabled')+' aria-label="Omhoog">↑</button><button type="button" class="btn sm" data-sj="neer" data-k="'+k+'"'+(k<e.items.length-1?'':' disabled')+' aria-label="Omlaag">↓</button><button type="button" class="btn sm" data-sj="uit" data-k="'+k+'" aria-label="Weghalen">✕</button></span></li>'}).join('')+'</ol>'+
+    (e.items.length?'':'<p class="note">Nog leeg. Voeg hieronder hoofdstukken toe.</p>')+
+    '<div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap"><div class="field" style="margin:0;flex:1;min-width:220px"><label for="sjAdd">Toevoegen</label><select id="sjAdd">'+(vrijH.length?'<optgroup label="Theoriehoofdstukken">'+vrijH.map(x=>'<option value="h:'+x.id+'">'+esc(x.n)+'</option>').join('')+'</optgroup>':'')+(vrijM.length?'<optgroup label="Extra modules van '+esc(STAD_NAAM[st]||st)+'">'+vrijM.map(x=>'<option value="m:'+x.id+'">'+esc(x.n)+'</option>').join('')+'</optgroup>':'')+'</select></div><button type="button" class="btn" data-sj="add"'+(vrijH.length||vrijM.length?'':' disabled')+'>Toevoegen</button><button type="button" class="btn soft" data-sj="nieuwmod">+ Nieuwe extra module maken</button></div>'+
+    '<p class="note">De eindtoets gaat over de theoriehoofdstukken in dit sjabloon. Extra modules hebben een eigen les en quiz en staan op hun plek in het leerpad.</p>'+
+    '<h3>Groepen</h3>'+(groepen.length?'<div class="sjchk">'+groepen.map(g=>'<label class="chk"><input type="checkbox" data-sjg="'+g.id+'"'+(e.groepen.has(g.id)?' checked':'')+'> '+esc(g.naam)+(g.sjabloon_id&&g.sjabloon_id!==e.id?' <small>(nu: '+esc(sjNaam(APP.sjAll.find(s=>s.id===g.sjabloon_id)))+')</small>':'')+'</label>').join('')+'</div>':'<p class="note">Nog geen groepen in dit gebied.</p>')+
+    '<h3>Kandidaten</h3>'+(kand.length?'<p class="note">Een eigen sjabloon gaat voor het sjabloon van de groep.</p><div class="sjchk">'+kand.map(r=>'<label class="chk"><input type="checkbox" data-sjk="'+r.id+'"'+(e.kand.has(r.id)?' checked':'')+'> '+esc(r.naam)+(r.sjabloon_id&&r.sjabloon_id!==e.id?' <small>(nu: '+esc(sjNaam(APP.sjAll.find(s=>s.id===r.sjabloon_id)))+')</small>':'')+'</label>').join('')+'</div>':'<p class="note">Nog geen kandidaten in dit gebied.</p>')+
+    '<div class="row" style="gap:8px;margin-top:14px"><button type="button" class="btn primary" data-sj="opslaan">Opslaan</button><button type="button" class="btn" data-sj="voorbeeld-edit">Voorbeeld bekijken</button><button type="button" class="btn soft" data-sj="annuleer">Annuleren</button></div></section>';
+  return h}
+function sjLees(){const e=SJ.edit;if(!e||!$('#sjForm'))return e;e.naam=$('#sjNaam').value.trim().replace(/\s+/g,' ');e.standaard=$('#sjStd').checked;
+  e.kand=new Set([...document.querySelectorAll('[data-sjk]')].filter(x=>x.checked).map(x=>x.dataset.sjk));e.groepen=new Set([...document.querySelectorAll('[data-sjg]')].filter(x=>x.checked).map(x=>x.dataset.sjg));return e}
+function sjStart(t,st){SJ.st=st;SJ.edit={id:t?t.id:null,naam:t?t.naam:'',standaard:t?!!t.standaard:!APP.sjAll.some(s=>s.gebied===st&&s.standaard),items:t?(t.items||[]).map(i=>({t:i.t,id:i.id})):sjItemsAlle(),
+  kand:new Set(t?APP.roster.filter(r=>r.sjabloon_id===t.id).map(r=>r.id):[]),groepen:new Set(t?(APP.groepen||[]).filter(g=>g.sjabloon_id===t.id).map(g=>g.id):[])}}
+const sjItemsAlle=()=>LEER_ALL.map(c=>({t:'h',id:c.id}));
+async function sjOpslaan(){const e=sjLees(),st=SJ.st;if(!e.naam){toast('Geef het sjabloon een naam.',true);return}
+  const mods=(APP.meMods||{})[st]||[];const items=e.items.filter(i=>sjItemNaam(i,mods));if(!items.some(i=>i.t==='h')){toast('Kies minstens één theoriehoofdstuk; de eindtoets gaat over de hoofdstukken.',true);return}
+  const id=e.id||sjNieuwId();let res;
+  if(e.standaard){res=await APP.sb.from('leer_sjablonen').update({standaard:false}).eq('gebied',st).eq('standaard',true);if(res.error){toast(foutTekst(res.error),true);return}}
+  const row={naam:e.naam,items,standaard:!!e.standaard,bijgewerkt:nowIso()};
+  res=e.id?await APP.sb.from('leer_sjablonen').update(row).eq('id',id):await APP.sb.from('leer_sjablonen').insert(Object.assign({id,gebied:st},row));if(res.error){toast(foutTekst(res.error),true);return}
+  const zet=async(tabel,lijst,gekozen)=>{for(const x of lijst){const nu=x.sjabloon_id===id,moet=gekozen.has(x.id);if(nu===moet)continue;const r=await APP.sb.from(tabel).update({sjabloon_id:moet?id:null}).eq('id',x.id);if(r.error)throw r.error}};
+  try{await zet('leden',APP.roster.filter(r=>r.rol==='kandidaat'&&(r.stad||'amsterdam')===st),e.kand);await zet('groepen',(APP.groepen||[]).filter(g=>(g.stad||'amsterdam')===st),e.groepen)}catch(err){toast(foutTekst(err,'Toewijzen'),true)}
+  SJ.edit=null;await sjLaadAlles();await loadGroepen();toast('Sjabloon '+e.naam+' opgeslagen');await loadRoster()}
+async function sjVoorbeeld(t){await openLeerPreview(t||null)}
+document.addEventListener('change',e=>{if(e.target.id==='sjSt'){SJ.st=e.target.value;SJ.edit=null;renderGebiedBouwer()}});
+document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-sj]');if(!b||!APP.isStaff)return;const a=b.dataset.sj,st=SJ.st||CITY.id;const t=b.dataset.id?APP.sjAll.find(s=>s.id===b.dataset.id):null;
+  if(a==='nieuw'){sjStart(null,st);renderGebiedBouwer();return}
+  if(a==='bewerk'&&t){sjStart(t,t.gebied);renderGebiedBouwer();return}
+  if(a==='annuleer'){SJ.edit=null;renderGebiedBouwer();return}
+  if(a==='voorbeeld'){sjVoorbeeld(t);return}
+  if(a==='voorbeeld-edit'){const e=sjLees();sjVoorbeeld({id:e.id,naam:e.naam||'Voorbeeld',gebied:st,items:e.items});return}
+  if(['op','neer','uit','add'].includes(a)){const e=sjLees();const k=+b.dataset.k;
+    if(a==='op'&&k>0)[e.items[k-1],e.items[k]]=[e.items[k],e.items[k-1]];
+    if(a==='neer'&&k<e.items.length-1)[e.items[k+1],e.items[k]]=[e.items[k],e.items[k+1]];
+    if(a==='uit')e.items.splice(k,1);
+    if(a==='add'){const v=($('#sjAdd')||{}).value;if(v){const [tt,id]=[v.slice(0,1),v.slice(2)];e.items.push({t:tt,id})}}
+    renderGebiedBouwer();return}
+  if(a==='opslaan'){b.disabled=true;await sjOpslaan();return}
+  if(a==='nieuwmod'){const e=sjLees();APP.sjTerug=true;APP.gbTab='modules';ME.st=st;ME.edit=meNieuw('hoofdstuk');renderGebiedBouwer();toast('Maak de module, sla hem op en kies daarna in je sjabloon “Toevoegen”.');return}
+  if(a==='std'&&t){let r=await APP.sb.from('leer_sjablonen').update({standaard:false}).eq('gebied',t.gebied).eq('standaard',true);if(!r.error)r=await APP.sb.from('leer_sjablonen').update({standaard:true}).eq('id',t.id);if(r.error){toast(foutTekst(r.error),true);return}await sjLaadAlles();toast(t.naam+' is nu de standaard');renderGebiedBouwer();return}
+  if(a==='weg'&&t){if(!(await confirmBox('Sjabloon verwijderen?','Kandidaten en groepen met “'+t.naam+'” krijgen weer het standaardsjabloon van het gebied. Hun voortgang blijft bewaard.','Verwijderen')))return;const r=await APP.sb.from('leer_sjablonen').delete().eq('id',t.id);if(r.error){toast(foutTekst(r.error),true);return}await sjLaadAlles();await loadGroepen();toast('Sjabloon verwijderd');await loadRoster();return}});
+/* ⋯ → Leeromgeving-sjabloon voor één kandidaat */
+async function sjKiesVoor(r){if(!APP.sjDb){toast(foutTekst({message:'schema cache'}),true);return}const st=r.stad||'amsterdam';const sjs=APP.sjAll.filter(s=>s.gebied===st);
+  const auto=sjVan(Object.assign({},r,{sjabloon_id:null}));
+  const body='<div class="field"><label for="sjKies">Sjabloon</label><select id="sjKies"><option value="">Automatisch: '+esc(sjNaam(auto))+'</option>'+sjs.map(s=>'<option value="'+s.id+'"'+(r.sjabloon_id===s.id?' selected':'')+'>'+esc(s.naam)+'</option>').join('')+'</select></div><p class="note">Automatisch = het sjabloon van de groep, anders de standaard van '+esc(STAD_NAAM[st]||st)+'. Sjablonen maak je onder Vaargebieden → Leeromgeving. De voortgang van de kandidaat blijft bewaard.</p>';
+  const y=await modalBox('Leeromgeving van '+r.naam,'',body,'Opslaan','Annuleren');if(!y)return;const v=$('#sjKies').value||null;
+  const {error}=await APP.sb.from('leden').update({sjabloon_id:v}).eq('id',r.id);if(error){toast(foutTekst(error),true);return}toast('Leeromgeving van '+r.naam+': '+sjNaam(v?sjs.find(s=>s.id===v):auto));loadRoster()}
 /* ---------- AI-conceptfeedback (migratie 017, Edge Function ai-feedback) ----------
    Bij het inleveren laat de casusbouwer de casus analyseren. Het concept is alleen zichtbaar voor
    medewerkers en leermeesters (APP.role==='staff'); de kandidaat ziet het nooit. Pas als een medewerker
