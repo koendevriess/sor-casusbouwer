@@ -995,6 +995,22 @@ const foutTekst=(e,actie)=>dbOntbreekt(e)?'Dit onderdeel werkt nog niet: de data
 async function loadGebieden(){if(!APP.sb)return;try{const {data,error}=await APP.sb.from('gebieden').select('slug,naam,actief,ingebouwd,volgorde,instellingen,traject');APP.verouderd=!!(error&&dbOntbreekt(error));if(error||!data)return;data.sort((a,b)=>(a.volgorde-b.volgorde)||String(a.naam).localeCompare(b.naam));APP.gebieden=data;
   data.forEach(g=>{STAD_NAAM[g.slug]=g.naam;if(!STADS.includes(g.slug)&&(g.actief||APP.isStaff))STADS.push(g.slug)})}catch(e){}}
 const gebiedVan=st=>(APP.gebieden||[]).find(g=>g.slug===st)||null;
+/* geslaagd: de kandidaat ziet alleen nog een felicitatiescherm en kan zijn casus downloaden; leeromgeving en casusbouwer zijn dicht */
+const isGeslaagd=()=>!!(APP.lid&&!APP.isStaff&&!APP.isLm&&(APP.lid.rol||'kandidaat')==='kandidaat'&&APP.lid.status==='geslaagd');
+function showGeslaagd(){unsubAll();APP.role='geslaagd';APP.mode='screen';APP.target=null;APP.fb=null;try{LQ=null}catch(e){}showMode('screen');renderTop();
+  const vn=((APP.lid&&APP.lid.naam)||'').trim().split(/\s+/)[0]||'';const op=APP.lid&&APP.lid.geslaagd_op?new Date(APP.lid.geslaagd_op).toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'}):'';
+  $('#screen').innerHTML='<div class="screen-card" style="max-width:520px"><img src="'+LOGO.b+'" alt=""><div aria-hidden="true" style="width:72px;height:72px;margin:6px auto 4px;border-radius:50%;display:grid;place-items:center;background:var(--ok-soft);color:var(--ok);font-size:38px;font-weight:800">✓</div>'+
+    '<h2>Gefeliciteerd'+(vn?', '+esc(vn):'')+'!</h2><p>Je bent geslaagd voor praktijktoets 3 Schipper Open Rondvaartboot'+(op?' ('+esc(op)+')':'')+'. Goed gedaan!</p>'+
+    '<p>Je leeromgeving en de casusbouwer zijn nu afgesloten. Je casus kun je hieronder nog downloaden als PDF.</p>'+
+    '<div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap"><button type="button" class="btn primary" data-geslaagd="pdf">Casus downloaden (PDF)</button><button type="button" class="btn ghost" data-screen="logout">Uitloggen</button></div>'+
+    '<p class="note" style="margin-top:14px">Vragen? Neem contact op met Flagship Academy.</p></div>';
+  subscribeGeslaagd();navPush({k:'geslaagd'})}
+function subscribeGeslaagd(){const id=APP.lid&&APP.lid.id;if(!id||!APP.sb)return;try{const ch=APP.sb.channel('geslaagd-'+id+'-'+uid())
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'leden',filter:'id=eq.'+id},p=>{if(p&&p.new&&p.new.status&&p.new.status!=='geslaagd'){APP.lid=Object.assign(APP.lid,p.new);afterLogin()}})
+  .on('postgres_changes',{event:'DELETE',schema:'public',table:'leden'},p=>{if(p&&p.old&&p.old.id===id)showBlocked()})
+  .subscribe();APP.chans.push(ch)}catch(e){}}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-geslaagd]');if(!b||APP.role!=='geslaagd'||!APP.lid)return;b.disabled=true;
+  try{await casusPdf({id:APP.lid.id,naam:APP.lid.naam,stad:APP.lid.stad||'amsterdam'})}finally{b.disabled=false}});
 async function afterLogin(){APP.loginTab='in';showScreen('Casusbouwer laden','Even geduld…',null,true);
   const {data,error}=await APP.sb.from('leden').select('*').eq('user_id',APP.user.id).maybeSingle();
   if(error){if(/jwt|token/i.test(error.message||'')){await APP.sb.auth.signOut();return}showScreen('Er ging iets mis','Je gegevens konden niet worden geladen. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload'],['Uitloggen','logout']]);return}
@@ -1002,7 +1018,7 @@ async function afterLogin(){APP.loginTab='in';showScreen('Casusbouwer laden','Ev
   APP.lid=data;APP.isStaff=data.rol==='medewerker';APP.isLm=data.rol==='leermeester';const st=data.stad||'amsterdam';
   await loadGebieden();
   if(!APP.isStaff&&!APP.isLm&&(PORTAL||st!==CITY.id)){showScreen('Even geduld','Je gaat naar de casusbouwer voor '+(STAD_NAAM[st]||st)+'…',null,true);location.replace(cityUrl(st));return}
-  if(APP.isStaff||APP.isLm){const sp=new URLSearchParams(location.search);if(APP.isStaff&&sp.get('leermodules')){APP.dashView='leeromgeving';APP.gbTab='modules';ME.st=CITY.id;history.replaceState(history.state,'',location.pathname)}openDashboard();const pdfId=sp.get('pdf');if(pdfId&&APP.isStaff||pdfId&&APP.isLm){history.replaceState(history.state,'',location.pathname);setTimeout(()=>casusPdfId(pdfId),300)}const op=sp.get('open');if(op){history.replaceState(history.state,'',location.pathname);openCasus(op,'staff')}}else if(LEER_LIVE)openLeer(true);else openCasus(data.id,'kandidaat')}
+  if(APP.isStaff||APP.isLm){const sp=new URLSearchParams(location.search);if(APP.isStaff&&sp.get('leermodules')){APP.dashView='leeromgeving';APP.gbTab='modules';ME.st=CITY.id;history.replaceState(history.state,'',location.pathname)}openDashboard();const pdfId=sp.get('pdf');if(pdfId&&APP.isStaff||pdfId&&APP.isLm){history.replaceState(history.state,'',location.pathname);setTimeout(()=>casusPdfId(pdfId),300)}const op=sp.get('open');if(op){history.replaceState(history.state,'',location.pathname);openCasus(op,'staff')}}else if(isGeslaagd())showGeslaagd();else if(LEER_LIVE)openLeer(true);else openCasus(data.id,'kandidaat')}
 function loginCard(inner){return'<div class="screen-card login"><img src="'+LOGO.b+'" alt="Flagship Academy"><h2>Casusbouwer</h2><p>Praktijktoets 3 SOR · Flagship Academy</p>'+inner+'</div>'}
 function showLogin(msg){unsubAll();APP.role='login';APP.target=null;APP.mode='screen';showMode('screen');renderTop();const t=APP.loginTab;
   const tabs='<div class="seg" role="tablist"><button type="button" role="tab" data-ltab="in" aria-selected="'+(t==='in')+'">Inloggen</button><button type="button" role="tab" data-ltab="up" aria-selected="'+(t==='up')+'">Account aanmaken</button></div>';
@@ -1053,7 +1069,7 @@ function unsubAll(){if(APP.sb)APP.chans.forEach(c=>{try{APP.sb.removeChannel(c)}
 
 /* casus */
 function applyLid(r){APP.meta.status=r.status==='uitgenodigd'?'bezig':r.status;APP.meta.ingeleverdOp=r.ingeleverd_op;APP.meta.geslaagdOp=r.geslaagd_op;APP.targetNaam=r.naam;APP.targetEmail=r.email||'';APP.targetStad=r.stad||'amsterdam'}
-async function openCasus(id,role){unsubAll();await flushNow();APP.role=role;APP.target=id;APP.exists=false;APP.dirty.clear();APP.fb=null;APP.meta={};APP.fbDirty=false;APP.lastRev=null;APP.ai=null;clearTimeout(APP.aiT);
+async function openCasus(id,role){if(role==='kandidaat'&&isGeslaagd()){showGeslaagd();return}unsubAll();await flushNow();APP.role=role;APP.target=id;APP.exists=false;APP.dirty.clear();APP.fb=null;APP.meta={};APP.fbDirty=false;APP.lastRev=null;APP.ai=null;clearTimeout(APP.aiT);
   showScreen('Casus laden','Even geduld…',null,true);
   const [c,f,l]=await Promise.all([APP.sb.from('casussen').select('*').eq('kandidaat_id',id).maybeSingle(),APP.sb.from('feedback').select('*').eq('kandidaat_id',id).maybeSingle(),APP.sb.from('leden').select('*').eq('id',id).maybeSingle()]);
   if(APP.target!==id)return;
@@ -1070,7 +1086,7 @@ function subscribeCasus(id){try{const ch=APP.sb.channel('casus-'+id+'-'+uid())
   .on('postgres_changes',{event:'*',schema:'public',table:'casussen',filter:'kandidaat_id=eq.'+id},p=>{const n=p&&p.new;if(n&&n.rev&&n.rev===APP.lastRev)return;refreshCasus()})
   .on('postgres_changes',{event:'*',schema:'public',table:'feedback',filter:'kandidaat_id=eq.'+id},()=>refreshFb())
   .on('postgres_changes',{event:'*',schema:'public',table:'ai_concept',filter:'kandidaat_id=eq.'+id},()=>{if(APP.role==='staff')aiLoad(id).then(()=>{if(APP.mode==='edit'&&!panel.contains(document.activeElement))renderPanel()})})
-  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'leden',filter:'id=eq.'+id},p=>{if(p&&p.new&&APP.target===id){applyLid(p.new);renderTop();if(state.ui.step==='controle')renderPanel()}})
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'leden',filter:'id=eq.'+id},p=>{if(p&&p.new&&APP.target===id&&APP.role==='kandidaat'&&p.new.status==='geslaagd'){if(APP.lid)APP.lid.status='geslaagd';showGeslaagd();return}if(p&&p.new&&APP.target===id){applyLid(p.new);renderTop();if(state.ui.step==='controle')renderPanel()}})
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'leden'},p=>{if(p&&p.old&&p.old.id===id&&APP.target===id){if(APP.role==='kandidaat')showBlocked();else{toast('Deze kandidaat is verwijderd');openDashboard()}}})
   .subscribe();APP.chans.push(ch)}catch(e){}}
 let rcT=null;
@@ -1101,7 +1117,7 @@ async function setStatus(id,status){try{let error;
   if(status==='ingeleverd')aiStart(APP.isStaff?id:(APP.target||(APP.lid&&APP.lid.id)),APP.isStaff?'handmatig':'inleveren',true);
   if(id===APP.target){APP.meta.status=status;if(APP.lid&&APP.lid.id===id)APP.lid.status=status;if(status==='ingeleverd')APP.meta.ingeleverdOp=nowIso();if(status==='geslaagd')APP.meta.geslaagdOp=nowIso();renderTop();renderBanner();if(state.ui.step==='controle')renderPanel()}
   if(APP.mode==='dash')loadRoster();
-  toast(status==='ingeleverd'?'Casus ingeleverd bij Flagship Academy':status==='geslaagd'?'Gemarkeerd als geslaagd':'Status bijgewerkt')}catch(e){dbError(e,'status')}}
+  toast(status==='ingeleverd'?'Casus ingeleverd bij Flagship Academy':status==='geslaagd'?'Gemarkeerd als geslaagd. De kandidaat ziet nu alleen nog het felicitatiescherm.':'Status bijgewerkt')}catch(e){dbError(e,'status')}}
 
 /* feedback per e-mail naar de kandidaat (Edge Function feedback-mail; anders via het eigen mailprogramma) */
 function fbMailRow(){if(!APP.targetEmail)return'<span class="note">Versturen kan zodra de kandidaat een account heeft.</span>';return'<button type="button" class="btn sm" data-top-mail>Feedback naar kandidaat sturen</button>'+(APP.fbMailOp?'<span class="note">Laatst verstuurd '+esc(fmtDate(APP.fbMailOp))+'</span>':'')}
@@ -1550,7 +1566,7 @@ $('#dash').addEventListener('click',async e=>{if(!e.target.closest('[data-dact="
   if(a==='theorie'&&r){showTheorie(r);return}
   if(APP.isLm)return;
   if(a==='add')addPerson(b.dataset.rol);
-  else if(a==='geslaagd')setStatus(id,'geslaagd');
+  else if(a==='geslaagd'){const y=await confirmBox('Markeren als geslaagd?',((r&&r.naam)||'De kandidaat')+' ziet daarna alleen nog een felicitatiescherm en kan de casus als PDF downloaden. De leeromgeving en de casusbouwer gaan dicht. Je kunt dit later ongedaan maken.','Markeren als geslaagd');if(y)setStatus(id,'geslaagd')}
   else if(a==='koppel'&&r)koppelLm(r);
   else if(a==='naam'&&r)renameLid(r);
   else if(a==='traject'&&r)editTraject(r);
@@ -1809,7 +1825,7 @@ const starRow=(n,big)=>'<span class="stars'+(big?' big':'')+'" role="img" aria-l
 
 async function loadMijnGroep(){APP.groepen=[];const gid=APP.lid&&APP.lid.groep_id;if(!gid||!APP.sb)return;try{const {data}=await APP.sb.from('groepen').select('*').eq('id',gid).maybeSingle();if(data)APP.groepen=[data]}catch(e){}}
 async function loadTheorie(id){const {data,error}=await APP.sb.from('theorie').select('*').eq('kandidaat_id',id).maybeSingle();if(error)throw error;const t=thEmpty();if(data){t.data=Object.assign({h:{},eind:null},data.data||{});t.xp=data.xp||0;t.hoofdstukken=data.hoofdstukken||0;t.geslaagd_op=data.geslaagd_op||null}return t}
-async function openLeer(auto){unsubAll();try{await flushNow()}catch(e){}APP.target=null;APP.fb=null;
+async function openLeer(auto){if(isGeslaagd()){showGeslaagd();return}unsubAll();try{await flushNow()}catch(e){}APP.target=null;APP.fb=null;
   if(!APP.lid){showLogin();return}
   if(!LEER_LIVE){openCasus(APP.lid.id,'kandidaat');return}
   showScreen('Leeromgeving laden','Even geduld…',null,true);
@@ -1822,7 +1838,7 @@ function subscribeLeer(){const id=APP.lid&&APP.lid.id;if(!id)return;try{const ch
   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'leden',filter:'id=eq.'+id},()=>refreshLeerLid())
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'leden'},p=>{if(p&&p.old&&p.old.id===id)showBlocked()})
   .subscribe();APP.chans.push(ch)}catch(e){}}
-async function refreshLeerLid(){if(APP.role!=='leer'||!APP.lid)return;const was=casusOpen();const {data,error}=await APP.sb.from('leden').select('*').eq('id',APP.lid.id).maybeSingle();if(error)return;if(!data){showBlocked();return}const sjWas=APP.lid.sjabloon_id,gWas=APP.lid.groep_id;APP.lid=Object.assign(APP.lid,data);await loadMijnGroep();if(sjWas!==APP.lid.sjabloon_id||gWas!==APP.lid.groep_id){await loadModules();await sjLaadKandidaat()}
+async function refreshLeerLid(){if(APP.role!=='leer'||!APP.lid)return;const was=casusOpen();const {data,error}=await APP.sb.from('leden').select('*').eq('id',APP.lid.id).maybeSingle();if(error)return;if(!data){showBlocked();return}const sjWas=APP.lid.sjabloon_id,gWas=APP.lid.groep_id;APP.lid=Object.assign(APP.lid,data);if(isGeslaagd()){showGeslaagd();return}await loadMijnGroep();if(sjWas!==APP.lid.sjabloon_id||gWas!==APP.lid.groep_id){await loadModules();await sjLaadKandidaat()}
   if(!was&&casusOpen())toast('Je opleider heeft je casus vrijgegeven');renderTop();if(LV.v==='home'||LV.v==='klaar'||LV.v==='start')renderLeer()}
 async function refreshLeer(){if(APP.role!=='leer'||!APP.lid||LV.v==='quiz')return;try{const t=await loadTheorie(APP.lid.id);APP.th=t}catch(e){return}refreshLeerLid()}
 let thBusy=false,thAgain=false;
