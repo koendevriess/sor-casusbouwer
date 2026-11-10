@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+//#if amsterdam,portaal,groningen,utrecht
+//#elif gebied
+<script>(function(){var p=location.pathname,m=/^(.*\/)([a-z][a-z0-9-]{1,30})\/?$/.exec(p);if(m&&p.charAt(p.length-1)!=='/'){location.replace(p+'/'+location.search+location.hash)}window.__SLUG=m?m[2]:'';window.__BASE=m?m[1]:'/';document.write('<base href="'+window.__BASE.replace(/"/g,'')+'">')})();</script>
+//#endif
+<meta name="viewport" content="width=device-width, initial-scale=1">
+//#if portaal,gebied
+<title>SOR Casusbouwer · Flagship Academy</title>
+<link rel="icon" type="image/png" href="assets/icon.png">
+//#elif amsterdam
+<title>SOR Casusbouwer · Flagship Academy</title>
+<link rel="icon" type="image/png" href="../assets/icon.png">
+//#elif groningen
+<title>SOR Casusbouwer · Groningen</title>
+<link rel="icon" type="image/png" href="../assets/icon.png">
+//#elif utrecht
+<title>SOR Casusbouwer · Utrecht</title>
+<link rel="icon" type="image/png" href="../assets/icon.png">
+//#endif
+<meta name="robots" content="noindex">
+<meta name="description" content="Casusbouwer van Flagship Academy voor praktijktoets 3 Schipper Open Rondvaartboot: route op de waterkaart, alle opdrachten, feedback van de opleider en PDF-export.">
+<style>
+//#include stijl.css
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <a class="logo-tab" href="./" id="homeLink" title="Naar de startpagina" aria-label="Flagship Academy, naar de startpagina"><img id="logoImg" alt=""></a>
+//#if amsterdam,portaal
+    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR</div></div>
+//#elif groningen
+    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR · <b style="color:var(--accent)">Groningen</b></div></div>
+//#elif utrecht
+    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR · <b style="color:var(--accent)">Utrecht</b></div></div>
+//#elif gebied
+    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR · <b style="color:var(--accent)" id="gebNaam"></b></div></div>
+//#endif
+    <div class="prog" id="prog" title="Voortgang van de casus"><div class="bar"><span id="pbar"></span></div><span class="pct" id="ppct">0%</span></div>
+    <div class="top-actions" id="topActions"></div>
+    <div class="save-state" id="saveState" aria-live="polite"></div>
+  </header>
+  <div class="banner" id="banner" hidden></div>
+  <nav class="steps" id="steps" aria-label="Stappen van de casus"></nav>
+  <main class="panel" id="panel" tabindex="-1"></main>
+  <section class="mapwrap" aria-label="Waterkaart">
+    <div id="map"></div>
+    <div class="map-hint" id="mapHint" hidden></div>
+    <div class="map-tools"><button class="btn sm" id="btnFit" type="button">Route in beeld</button></div>
+    <div class="map-legend">
+      <span><i style="background:var(--route)"></i>Route</span>
+      <span><i style="background:var(--bridge)"></i>Brug</span>
+      <span><i style="background:var(--aand)"></i>Aandachtspunt</span>
+      <span><i style="background:var(--meld);border-radius:2px"></i>Meldpunt</span>
+      <span><i style="background:var(--man);border-radius:2px"></i>Manoeuvre</span>
+      <span><i style="background:#fff;border:1px solid var(--ink-3);border-radius:2px"></i>Bord</span>
+      <span><i style="background:var(--bez)"></i>Bezienswaardigheid</span>
+    </div>
+    <div class="map-attr">Kaartdata © OpenStreetMap-bijdragers</div>
+  </section>
+  <section class="dash" id="dash" hidden></section>
+  <section class="dash" id="leer" hidden aria-label="Leeromgeving"></section>
+  <section class="screen" id="screen" hidden></section>
+</div>
+<div class="modal" id="modal" hidden><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><h2 id="modalTitle"></h2><p id="modalText"></p><div id="modalBody"></div><div class="modal-actions"><button class="btn" id="modalNo" type="button">Annuleren</button><button class="btn primary" id="modalYes" type="button">Doorgaan</button></div></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+//#if amsterdam
+<script src="../assets/leaflet-1.9.4.js"></script>
+<script src="../assets/jspdf-2.5.1.umd.min.js"></script>
+<script src="../assets/supabase-2.117.2.js"></script>
+<script>{{bestand:kaartdata/amsterdam-water.js}}
+</script>
+<script>{{bestand:kaartdata/amsterdam-straten.js}}
+</script>
+//#elif portaal
+<script src="assets/leaflet-1.9.4.js"></script>
+<script src="assets/jspdf-2.5.1.umd.min.js"></script>
+<script src="assets/supabase-2.117.2.js"></script>
+<script>{{bestand:kaartdata/amsterdam-water.js}}
+</script>
+<script>{{bestand:kaartdata/amsterdam-straten.js}}
+</script>
+//#elif groningen
+<script src="../assets/leaflet-1.9.4.js"></script>
+<script src="../assets/jspdf-2.5.1.umd.min.js"></script>
+<script src="../assets/supabase-2.117.2.js"></script>
+<script>{{bestand:kaartdata/groningen-water.js}}</script>
+<script>{{bestand:kaartdata/groningen-straten.js}}</script>
+//#elif utrecht
+<script src="../assets/leaflet-1.9.4.js"></script>
+<script src="../assets/jspdf-2.5.1.umd.min.js"></script>
+<script src="../assets/supabase-2.117.2.js"></script>
+<script>{{bestand:kaartdata/utrecht-water.js}}</script>
+<script>{{bestand:kaartdata/utrecht-straten.js}}</script>
+//#elif gebied
+<script>document.write('<script src="'+window.__BASE+'assets/leaflet-1.9.4.js"><\/script>')</script>
+<script>document.write('<script src="'+window.__BASE+'assets/jspdf-2.5.1.umd.min.js"><\/script>')</script>
+<script>document.write('<script src="'+window.__BASE+'assets/supabase-2.117.2.js"><\/script>')</script>
+//#endif
+<script>{{bestand:logo.js}}
+</script>
+<script>
+//#include app/00-kop.js
+//#include app/01-hulpfuncties.js
+//#include app/02-geodata.js
+//#include app/03-routegraaf.js
+//#include app/04-casus-state.js
+//#include app/05-platform-supabase.js
+//#include app/06-route-analyse.js
+//#include app/07-controles.js
+//#include app/08-borden.js
+//#include app/09-kaart.js
+//#include app/10-route-bewerken.js
+//#include app/11-bovenbalk.js
+//#include app/12-stappen.js
+//#include app/13-overzicht-medewerkers.js
+//#include app/14-theorie-lesstof.js
+//#include app/15-leeromgeving.js
+//#include app/16-groningen-waterstand.js
+//#include app/17-traject.js
+//#include app/18-menu-voortgang.js
+//#include app/19-extra-gebied.js
+//#include app/20-leermodules.js
+//#include app/21-beheer-leeromgeving.js
+//#include app/22-invoer.js
+//#include app/23-lokale-acties.js
+//#include app/24-bestanden-fotos.js
+//#include app/25-kaartbeeld-pdf.js
+//#include app/26-pdf.js
+//#include app/27-start.js
+</script>
+<style>.gebconcept{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:4000;background:#1a2b49;color:#fff;padding:8px 14px;border-radius:999px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.2);max-width:calc(100% - 32px);text-align:center}</style>
+<div id="betaLoad" style="position:fixed;inset:0;z-index:5000;background:var(--bg,#f0f6f9);display:grid;place-items:center;padding:16px"><div class="screen-card"><img id="betaLogo" alt=""><h2>Casusbouwer laden</h2><p id="betaMsg">Even geduld…</p><div class="spin" aria-hidden="true"></div><button type="button" class="btn primary" id="betaRetry" hidden onclick="location.reload()">Opnieuw proberen</button></div></div>
+<script>document.getElementById('betaLogo').src=(window.SOR_LOGO||{}).b||'';</script>
+<script>
+(function(){
+const msg=t=>{const el=document.getElementById('betaMsg');if(el)el.textContent=t};
+const stop=(kop,t)=>{const c=document.querySelector('#betaLoad .screen-card');c.querySelector('h2').textContent=kop;msg(t);const sp=c.querySelector('.spin');if(sp)sp.remove();const a=document.createElement('a');a.className='btn primary';a.href=window.__BASE||'/';a.textContent='Naar de casusbouwer';c.appendChild(a)};
+async function start(){const slug=window.__SLUG;if(!slug){stop('Pagina niet gevonden','Dit adres bestaat niet.');return}
+  if(!(window.supabase&&window.supabase.createClient))throw new Error('geen verbinding met de server');
+  const sb=window.supabase.createClient('https://egehozcyhbdzefjghsfb.supabase.co','sb_publishable_9tJMHZx8eKWhU_jCcjSLNA_Y9QeOrhm',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sor-casusbouwer-auth'}});
+  msg('Vaargebied laden…');const {data,error}=await sb.from('gebieden').select('slug,naam,actief,instellingen,kaart').eq('slug',slug).maybeSingle();if(error)throw new Error(error.message||'laden mislukt');
+  if(!data||!data.kaart||!data.kaart.data){stop('Vaargebied niet gevonden','Er is geen casusbouwer op dit adres. Controleer de link, of log in via de hoofdpagina.');return}
+  const i=data.instellingen||{};if(!Array.isArray(i.proj)||i.proj.length!==4){stop('Vaargebied niet compleet','Dit vaargebied heeft nog geen kaartinstellingen. Vraag een medewerker om het opnieuw op te slaan.');return}
+  window.__GEB={slug:data.slug,naam:data.naam,actief:!!data.actief,proj:i.proj,bounds:i.bounds||[[-2600,-2400],[2600,2400]],pois:i.pois||[],snelheid:Number(i.snelheid)||6,marifoon:!!i.marifoon,toel:!!i.toel,bh:i.bh!==false,bez3:i.bez3!==false,
+    opstapPh:i.opstapPh||('Bijvoorbeeld een opstapplaats in '+data.naam),vb:i.vb||('Casusbouwer voor '+data.naam+'.'),voorbeeld:i.voorbeeld||null};
+  window.SOR_DATA=data.kaart.data;window.SOR_STREETS=data.kaart.streets||{names:'',lines:''};window.SOR_KAART_OP=data.kaart.op||null;
+  document.title='SOR Casusbouwer · '+data.naam;const n=document.getElementById('gebNaam');if(n)n.textContent=data.naam+(data.actief?'':' (concept)');
+  const ov=document.getElementById('betaLoad');if(ov)ov.remove();window.__startApp();
+  if(!data.actief){const b=document.createElement('div');b.className='gebconcept';b.setAttribute('role','status');b.textContent='Concept: dit vaargebied is nog niet actief en alleen zichtbaar voor medewerkers.';document.body.appendChild(b)}}
+start().catch(e=>{msg('Het vaargebied kon niet worden geladen: '+(e&&e.message||e)+'. Probeer het later opnieuw.');const b=document.getElementById('betaRetry');if(b)b.hidden=false});
+//#endif
+})();
+</script>
+</body>
+</html>

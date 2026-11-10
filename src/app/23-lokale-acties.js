@@ -1,0 +1,6 @@
+/* ---------- local actions ---------- */
+function modalBox(title,text,body,yes,no,onOpen){return new Promise(res=>{const m=$('#modal');$('#modalTitle').textContent=title;$('#modalText').textContent=text||'';$('#modalText').hidden=!text;$('#modalBody').innerHTML=body||'';$('#modalYes').textContent=yes||'Doorgaan';const nb=$('#modalNo');nb.hidden=no===null;nb.textContent=no||'Annuleren';m.hidden=false;if(onOpen)onOpen();else $('#modalYes').focus();const done=v=>{m.hidden=true;$('#modalYes').onclick=null;nb.onclick=null;m.onkeydown=null;res(v)};$('#modalYes').onclick=()=>done(true);nb.onclick=()=>done(false);m.onkeydown=ev=>{if(ev.key==='Escape')done(false);else if(ev.key==='Enter'&&ev.target.tagName==='INPUT'){ev.preventDefault();done(true)}}})}
+function confirmBox(title,text,yes){return modalBox(title,text,'',yes,'Annuleren')}
+let toastT=null;function toast(t,bad){const el=$('#toast');el.textContent=t;el.className='toast'+(bad?' err':'');el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,4200)}
+function newCase(){confirmBox('Nieuwe casus beginnen?','De huidige casus in deze browser wordt vervangen door een lege casus. Maak eerst een back-up als je hem wilt bewaren.','Nieuwe casus').then(y=>{if(y){state=emptyState();enterEditor();saveLocal();toast('Nieuwe casus gestart')}})}
+
