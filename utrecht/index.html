@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOR Casusbouwer · Utrecht</title>
+<title>Flagship Academy Leeromgeving · Utrecht</title>
 <link rel="icon" type="image/png" href="../assets/icon.png">
 <meta name="robots" content="noindex">
-<meta name="description" content="Casusbouwer van Flagship Academy voor praktijktoets 3 Schipper Open Rondvaartboot: route op de waterkaart, alle opdrachten, feedback van de opleider en PDF-export.">
+<meta name="description" content="Leeromgeving van Flagship Academy: theorie en trainingen voor schippers, en de casusbouwer voor praktijktoets 3 Schipper Open Rondvaartboot.">
 <style>
 @font-face{font-family:"Atkinson Hyperlegible";font-style:normal;font-weight:400;font-display:swap;src:url(../assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2) format("woff2")}
 @font-face{font-family:"Atkinson Hyperlegible";font-style:italic;font-weight:400;font-display:swap;src:url(../assets/fonts/atkinson-hyperlegible-latin-400-italic.woff2) format("woff2")}
@@ -771,13 +771,41 @@ button.pill.stad.groningen,button.pill.stad.utrecht{background:var(--accent-soft
 .trq.goed .trq-u b{color:var(--ok)}.trq.fout .trq-u b{color:var(--err)}
 .trteller{margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:700;box-shadow:var(--shadow)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* instellingen */
+.inst .lsec{display:flex;flex-direction:column;gap:6px}
+.inst .lsec-h{align-items:center;flex-wrap:wrap}
+.instgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin:8px 0 4px}
+.instgrid .field input,.instgrid .field select{width:100%}
+.instcheck{grid-column:1/-1;display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-weight:700}
+.instcheck input{width:20px;height:20px;accent-color:var(--accent);flex:none;margin-top:1px}
+.instcheck small{display:block;font-weight:400;color:var(--ink-3);font-size:13px}
+.instrow{grid-column:1/-1;gap:10px;align-items:center;flex-wrap:wrap}
+.instlist{margin:6px 0;padding-left:20px}.instlist li{margin:5px 0}
+.instmeter{height:12px;border-radius:99px;background:var(--tint-2);overflow:hidden;margin:6px 0 2px}
+.instmeter span{display:block;height:100%;background:var(--ok);border-radius:99px}
+.instmeter span.vol{background:var(--err)}
+@media (max-width:700px){.instgrid{grid-template-columns:1fr}}
+/* melding zonder internet */
+.offbar{position:fixed;left:0;right:0;top:0;z-index:3200;background:var(--err);color:#fff;font-weight:700;font-size:14px;text-align:center;padding:8px max(16px,env(safe-area-inset-left,0px))}
+/* uitlegfilmpjes */
+.modal-card:has(.videobox){max-width:min(960px,100%)}
+.videobox video{display:block;width:100%;max-height:70vh;border-radius:10px;background:#000}
+/* telefoon: het menu schuift opzij (rand vervaagt als hint) en de tellers staan op één rij */
+@media (max-width:900px){.snav{padding-right:34px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent)}}
+@media (max-width:600px){
+  .dash .cards{display:flex!important;overflow-x:auto;gap:8px;margin:0 -16px;padding:0 16px 2px;scrollbar-width:none}
+  .dash .cards::-webkit-scrollbar{display:none}
+  .dash .cards .card{flex:0 0 122px;padding:10px 12px}
+  .dash .row:has(>[data-dact="add"]){flex-direction:row;flex-wrap:wrap;gap:6px;width:100%}
+  .dash [data-dact="add"]{padding:7px 11px;font-size:13px;flex:1 1 auto;justify-content:center}
+}
 </style>
 </head>
 <body>
 <div class="app" id="app">
   <header class="top">
     <a class="logo-tab" href="./" id="homeLink" title="Naar de startpagina" aria-label="Flagship Academy, naar de startpagina"><img id="logoImg" alt=""></a>
-    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR · <b style="color:var(--accent)">Utrecht</b></div></div>
+    <div class="brand-t"><div class="b1">Flagship Academy</div><div class="b2">Leeromgeving en casusbouwer · <b style="color:var(--accent)">Utrecht</b></div></div>
     <div class="prog" id="prog" title="Voortgang van de casus"><div class="bar"><span id="pbar"></span></div><span class="pct" id="ppct">0%</span></div>
     <div class="top-actions" id="topActions"></div>
     <div class="save-state" id="saveState" aria-live="polite"></div>
@@ -959,9 +987,9 @@ async function initPlatform(){
   if(!(window.supabase&&window.supabase.createClient)){showScreen('Geen verbinding','De casusbouwer kan nu geen verbinding maken. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload']]);return}
   APP.sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sor-casusbouwer-auth'}});
   APP.sb.auth.onAuthStateChange((ev,session)=>{if(ev==='SIGNED_OUT'){APP.user=null;APP.uid=null;APP.lid=null;if(APP.role!=='local')showLogin()}else if(session&&session.user){APP.user=session.user;APP.uid=session.user.id}});
-  showScreen('Casusbouwer laden','Even geduld…',null,true);
+  showScreen('Leeromgeving laden','Even geduld…',null,true);
   let session=null;try{const {data}=await APP.sb.auth.getSession();session=data&&data.session}catch(e){}
-  if(session&&session.user){APP.user=session.user;APP.uid=session.user.id;await afterLogin()}else showLogin()}
+  if(session&&session.user){APP.user=session.user;APP.uid=session.user.id;await afterLogin()}else{showLogin();instLoad().catch(()=>{})}}
 /* duidelijke foutmelding; op een database zonder de nieuwste update (015/016) geen technische tekst */
 const dbOntbreekt=e=>!!e&&/schema cache|does not exist|PGRST205|PGRST204|42P01|42703/i.test(String(e.message||'')+' '+String(e.code||''));
 const foutTekst=(e,actie)=>dbOntbreekt(e)?'Dit onderdeel werkt nog niet: de database moet eerst worden bijgewerkt (zie OVERDRACHT.md, database-update 015 t/m 019).':(actie||'Opslaan')+' is mislukt: '+((e&&e.message)||'onbekende fout');
@@ -976,7 +1004,7 @@ function showGeslaagd(){unsubAll();APP.role='geslaagd';APP.mode='screen';APP.tar
   $('#screen').innerHTML='<div class="screen-card" style="max-width:520px"><img src="'+LOGO.b+'" alt=""><div aria-hidden="true" style="width:72px;height:72px;margin:6px auto 4px;border-radius:50%;display:grid;place-items:center;background:var(--ok-soft);color:var(--ok);font-size:38px;font-weight:800">✓</div>'+
     '<h2>Gefeliciteerd'+(vn?', '+esc(vn):'')+'!</h2><p>Je bent geslaagd voor praktijktoets 3 Schipper Open Rondvaartboot'+(op?' ('+esc(op)+')':'')+'. Goed gedaan!</p>'+
     '<p>Je leeromgeving en de casusbouwer zijn nu afgesloten. Je casus kun je hieronder nog downloaden als PDF.</p>'+
-    '<div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap"><button type="button" class="btn primary" data-geslaagd="pdf">Casus downloaden (PDF)</button><button type="button" class="btn ghost" data-screen="logout">Uitloggen</button></div>'+
+    '<div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap"><button type="button" class="btn primary" data-geslaagd="pdf">Casus downloaden (PDF)</button>'+(cvoAan()?'<button type="button" class="btn" data-top="cvo">CVO’s van de schepen</button>':'')+'<button type="button" class="btn ghost" data-screen="logout">Uitloggen</button></div>'+
     '<p class="note" style="margin-top:14px">Vragen? Neem contact op met Flagship Academy.</p></div>';
   subscribeGeslaagd();navPush({k:'geslaagd'})}
 function subscribeGeslaagd(){const id=APP.lid&&APP.lid.id;if(!id||!APP.sb)return;try{const ch=APP.sb.channel('geslaagd-'+id+'-'+uid())
@@ -985,7 +1013,8 @@ function subscribeGeslaagd(){const id=APP.lid&&APP.lid.id;if(!id||!APP.sb)return
   .subscribe();APP.chans.push(ch)}catch(e){}}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-geslaagd]');if(!b||APP.role!=='geslaagd'||!APP.lid)return;b.disabled=true;
   try{await casusPdf({id:APP.lid.id,naam:APP.lid.naam,stad:APP.lid.stad||'amsterdam'})}finally{b.disabled=false}});
-async function afterLogin(){APP.loginTab='in';showScreen('Casusbouwer laden','Even geduld…',null,true);
+async function afterLogin(){APP.loginTab='in';showScreen('Leeromgeving laden','Even geduld…',null,true);
+  try{await instLoad()}catch(e){}
   const {data,error}=await APP.sb.from('leden').select('*').eq('user_id',APP.user.id).maybeSingle();
   if(error){if(/jwt|token/i.test(error.message||'')){await APP.sb.auth.signOut();return}showScreen('Er ging iets mis','Je gegevens konden niet worden geladen. Controleer je internetverbinding en probeer het opnieuw.',[['Opnieuw proberen','reload'],['Uitloggen','logout']]);return}
   if(!data){showClaim();return}
@@ -993,29 +1022,29 @@ async function afterLogin(){APP.loginTab='in';showScreen('Casusbouwer laden','Ev
   await loadGebieden();
   if(!APP.isStaff&&!APP.isLm&&(PORTAL||st!==CITY.id)){showScreen('Even geduld','Je gaat naar de casusbouwer voor '+(STAD_NAAM[st]||st)+'…',null,true);location.replace(cityUrl(st));return}
   if(APP.isStaff||APP.isLm){const sp=new URLSearchParams(location.search);if(APP.isStaff&&sp.get('leermodules')){APP.dashView='leeromgeving';APP.gbTab='modules';ME.st=CITY.id;history.replaceState(history.state,'',location.pathname)}openDashboard();const pdfId=sp.get('pdf');if(pdfId&&APP.isStaff||pdfId&&APP.isLm){history.replaceState(history.state,'',location.pathname);setTimeout(()=>casusPdfId(pdfId),300)}const op=sp.get('open');if(op){history.replaceState(history.state,'',location.pathname);openCasus(op,'staff')}}else if(isGeslaagd())showGeslaagd();else if(LEER_LIVE)openLeer(true);else openCasus(data.id,'kandidaat')}
-function loginCard(inner){return'<div class="screen-card login"><img src="'+LOGO.b+'" alt="Flagship Academy"><h2>Casusbouwer</h2><p>Praktijktoets 3 SOR · Flagship Academy</p>'+inner+'</div>'}
+function loginCard(inner){return'<div class="screen-card login"><img src="'+LOGO.b+'" alt="Flagship Academy"><h2>Flagship Academy</h2><p>Leeromgeving en casusbouwer</p>'+inner+'</div>'}
 function showLogin(msg){unsubAll();APP.role='login';APP.target=null;APP.mode='screen';showMode('screen');renderTop();const t=APP.loginTab;
   const tabs='<div class="seg" role="tablist"><button type="button" role="tab" data-ltab="in" aria-selected="'+(t==='in')+'">Inloggen</button><button type="button" role="tab" data-ltab="up" aria-selected="'+(t==='up')+'">Account aanmaken</button></div>';
   const fin='<form id="loginForm" class="lform" novalidate><div class="field"><label for="lEmail">E-mailadres</label><input id="lEmail" type="email" autocomplete="email" required></div><div class="field"><label for="lPw">Wachtwoord</label><input id="lPw" type="password" autocomplete="current-password" required></div><div class="lerr" id="lErr" role="alert"></div><button class="btn primary" type="submit">Inloggen</button><button type="button" class="linkbtn" data-lact="forgot">Wachtwoord vergeten?</button></form>';
   const fup='<form id="signupForm" class="lform" novalidate><p class="note">Je hebt een uitnodigingscode van Flagship Academy nodig.</p><div class="field"><label for="sCode">Uitnodigingscode</label><input id="sCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH" required></div><div class="field"><label for="sEmail">E-mailadres</label><input id="sEmail" type="email" autocomplete="email" required></div><div class="field"><label for="sPw">Kies een wachtwoord (minstens 8 tekens)</label><input id="sPw" type="password" autocomplete="new-password" minlength="8" required></div><div class="lerr" id="lErr" role="alert"></div><button class="btn primary" type="submit">Account aanmaken</button></form>';
-  $('#screen').innerHTML=loginCard(tabs+(t==='in'?fin:fup)+'<p class="note small">Toegang alleen met een uitnodigingscode van Flagship Academy.'+(PRIVACY_LIVE?' <button type="button" class="linkbtn" data-lact="privacy">Privacyverklaring</button>':'')+'</p>');
+  $('#screen').innerHTML=loginCard(tabs+(t==='in'?fin:fup)+'<p class="note small">Toegang alleen met een uitnodigingscode van Flagship Academy.'+'<span class="pvslot">'+(privacyLive()?' '+PV_KNOP:'')+'</span>'+'</p>');
   if(msg)setLErr(msg)}
 function showClaim(msg){unsubAll();APP.role='login';APP.mode='screen';showMode('screen');renderTop();
   $('#screen').innerHTML=loginCard('<form id="claimForm" class="lform" novalidate><p class="note">Je bent ingelogd als <b>'+esc(APP.user&&APP.user.email||'')+'</b>, maar je account is nog niet gekoppeld. Vul de uitnodigingscode in die je van Flagship Academy hebt gekregen.</p><div class="field"><label for="cCode">Uitnodigingscode</label><input id="cCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH" required></div><div class="lerr" id="lErr" role="alert"></div><button class="btn primary" type="submit">Koppelen</button><button type="button" class="linkbtn" data-lact="logout">Uitloggen</button></form>');
   if(msg)setLErr(msg)}
 /* privacyverklaring (AVG) */
-const PRIVACY_LIVE=false;
-const PV=t=>'<span class="pvfill">['+t+']</span>';
+/* gegevens komen uit Instellingen (tabel instellingen, sleutel privacy); wat nog ontbreekt staat tussen [haken] */
+const PV=(k,t)=>{const v=String((APP.inst.privacy||{})[k]||'').trim();if(!v)return'<span class="pvfill">['+t+']</span>';if(k==='datum'){const d=new Date(v+'T12:00:00');return esc(isNaN(d)?v:d.toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'}))}return esc(v)};
 function privacyHtml(){const sec=(h,b)=>'<h3>'+h+'</h3>'+b;
-  return'<div class="pvtext"><p class="note">Versie '+PV('datum')+'. In deze verklaring lees je welke gegevens Flagship Academy verwerkt als je de leeromgeving en de casusbouwer gebruikt, waarom, en welke rechten je hebt.</p>'+
-  sec('Wie is verantwoordelijk?','<p>Flagship Academy B.V., '+PV('adres')+', KvK '+PV('KvK-nummer')+'. Vragen over je gegevens stel je via '+PV('e-mailadres')+'.</p>')+
+  return'<div class="pvtext"><p class="note">Versie '+PV('datum','datum')+'. In deze verklaring lees je welke gegevens Flagship Academy verwerkt als je de leeromgeving en de casusbouwer gebruikt, waarom, en welke rechten je hebt.</p>'+
+  sec('Wie is verantwoordelijk?','<p>Flagship Academy B.V., '+PV('adres','adres')+', KvK '+PV('kvk','KvK-nummer')+'. Vragen over je gegevens stel je via '+PV('email','e-mailadres')+'.</p>')+
   sec('Welke gegevens?','<ul><li><b>Account:</b> je naam, e-mailadres, wachtwoord (versleuteld opgeslagen) en je vaargebied.</li><li><b>Casus:</b> wat je in de casusbouwer invult, zoals geboortedatum, CBR-relatienummer, opstaplocatie, gegevens van het schip, je route, teksten en foto’s die je toevoegt.</li><li><b>Theorie:</b> je antwoorden, scores en voortgang in de leeromgeving.</li><li><b>Feedback:</b> de feedback die je opleider of leermeester op je casus geeft.</li></ul><p>We gebruiken geen advertentie- of volgcookies. Alleen je inlogsessie wordt in je browser bewaard, zodat je ingelogd blijft.</p>')+
-  sec('Waarvoor?','<p>Om je op te leiden voor het kwalificatiecertificaat Schipper open rondvaartboot (SOR): je theorie en casus voor praktijktoets 3 voorbereiden, je voortgang volgen en je feedback geven. Je geboortedatum en CBR-relatienummer staan op de casus die je bij het CBR-examen gebruikt.</p><p>We verwerken je gegevens omdat dat nodig is voor de opleiding die je bij ons volgt (uitvoering van de overeenkomst).</p><p>Na het inleveren laten we je casus met hulp van AI (Claude van Anthropic) analyseren, zodat je opleider sneller feedback kan geven. Je naam, geboortedatum, CBR-relatienummer en foto’s gaan daarbij niet mee. Je opleider beoordeelt alle feedback zelf voordat je die te zien krijgt.</p>')+
-  sec('Wie kan je gegevens zien?','<ul><li>Medewerkers van Flagship Academy.</li><li>Leermeesters die aan jou of aan jouw vaargebied zijn gekoppeld.</li></ul><p>We verkopen je gegevens niet en delen ze niet met anderen. Je casus geef je zelf af bij het CBR.</p>')+
-  sec('Waar staan je gegevens?','<p>De gegevens staan in een beveiligde database van Supabase op servers in de Europese Unie (Ierland). De website wordt gehost door '+PV('hostingpartij')+'. Met deze partijen '+PV('is / wordt')+' een verwerkersovereenkomst gesloten. Feedback-e-mails worden verstuurd via '+PV('maildienst')+'.</p>')+
-  sec('Hoe lang?','<p>We bewaren je gegevens zolang je de opleiding volgt en daarna nog '+PV('termijn, bijvoorbeeld 12 maanden')+'. Daarna verwijderen we je account, je casus, je foto’s en je feedback.</p>')+
+  sec('Waarvoor?','<p>Om je op te leiden voor het kwalificatiecertificaat Schipper open rondvaartboot (SOR): je theorie en casus voor praktijktoets 3 voorbereiden, je voortgang volgen en je feedback geven. Je geboortedatum en CBR-relatienummer staan op de casus die je bij het CBR-examen gebruikt.</p><p>We verwerken je gegevens omdat dat nodig is voor de opleiding die je bij ons volgt (uitvoering van de overeenkomst).</p>'+(aiAan()?'<p>Na het inleveren laten we je casus met hulp van AI (Claude van Anthropic) analyseren, zodat je opleider sneller feedback kan geven. Je naam, geboortedatum, CBR-relatienummer en foto’s gaan daarbij niet mee. Je opleider beoordeelt alle feedback zelf voordat je die te zien krijgt.</p>':'')+'')+
+  sec('Wie kan je gegevens zien?','<ul><li>Medewerkers van Flagship Academy.</li><li>Leermeesters die aan jou, aan jouw groep of aan jouw vaargebied zijn gekoppeld.</li></ul><p>We verkopen je gegevens niet en delen ze niet met anderen. Je casus geef je zelf af bij het CBR.</p>')+
+  sec('Waar staan je gegevens?','<p>De gegevens staan in een beveiligde database van Supabase op servers in de Europese Unie (Ierland). De website wordt gehost door '+PV('hosting','hostingpartij')+'. Met deze partijen '+((APP.inst.privacy||{}).verwerker==='wordt'?'wordt':'is')+' een verwerkersovereenkomst gesloten. Feedback-e-mails worden verstuurd via '+PV('maildienst','maildienst')+'.</p>')+
+  sec('Hoe lang?','<p>We bewaren je gegevens zolang je de opleiding volgt en daarna nog '+PV('termijn','termijn, bijvoorbeeld 12 maanden')+'. Daarna verwijderen we je account, je casus, je foto’s en je feedback.</p>')+
   sec('Beveiliging','<p>De verbinding is versleuteld (https), je wachtwoord wordt versleuteld opgeslagen en iedereen ziet alleen de gegevens die bij zijn rol horen. Een account aanmaken kan alleen met een persoonlijke uitnodigingscode.</p>')+
-  sec('Jouw rechten','<p>Je mag je gegevens inzien, laten verbeteren of laten verwijderen. Je kunt ook bezwaar maken, de verwerking laten beperken of je gegevens opvragen om mee te nemen. Stuur daarvoor een e-mail naar '+PV('e-mailadres')+'. We reageren binnen een maand. Ben je niet tevreden, dan kun je een klacht indienen bij de Autoriteit Persoonsgegevens.</p>')+'</div>'}
+  sec('Jouw rechten','<p>Je mag je gegevens inzien, laten verbeteren of laten verwijderen. Je kunt ook bezwaar maken, de verwerking laten beperken of je gegevens opvragen om mee te nemen. Stuur daarvoor een e-mail naar '+PV('email','e-mailadres')+'. We reageren binnen een maand. Ben je niet tevreden, dan kun je een klacht indienen bij de Autoriteit Persoonsgegevens.</p>')+'</div>'}
 async function showPrivacy(){await modalBox('Privacyverklaring','',privacyHtml(),'Sluiten',null)}
 document.addEventListener('click',e=>{if(e.target.closest('[data-lact="privacy"]'))showPrivacy()});
 function setLErr(t,info){const el=$('#lErr');if(!el)return;el.textContent=t||'';el.classList.toggle('info',!!info)}
@@ -1290,12 +1319,12 @@ function fillWho(){}
 function topAct(a){
   if(a==='new')newCase();else if(a==='example')confirmBox('Voorbeeldcasus laden?','De huidige casus in deze browser wordt vervangen door de voorbeeldcasus.','Voorbeeld laden').then(y=>{if(y){state=exampleState();enterEditor();saveLocal()}});
   else if(a==='backup')downloadBackup();else if(a==='dash'){flushNow().then(openDashboard)}else if(a==='example-view'&&!APP.isLm){unsubAll();APP.role='voorbeeld';APP.target=null;APP.fb=null;state=exampleState();enterEditor()}
-  else if(a==='mail')mailFeedback();else if(a==='leer')flushNow().then(()=>openLeer(false));else if(a==='casus'){if(APP.lid&&casusOpen())openCasus(APP.lid.id,'kandidaat')}else if(a==='leer-view')openLeerPreview();else if(a==='cvo')openCvoMenu();else if(a==='kandidaten')navTo('');else if(['groepen','voortgang','leeromgeving','gebied','hulp'].includes(a))navTo(a);else if(a==='tr-view'){openLeerPreview().then(()=>trOpen('kvb',null))}else if(a==='leer-reset')confirmBox('Voortgang wissen?','Je voorbeeldvoortgang in deze browser wordt gewist.','Wissen').then(y=>{if(y){try{localStorage.removeItem(PV_KEY)}catch(e){}openLeerPreview()}});else if(a==='logout')logout();else if(a==='login')showLogin()}
+  else if(a==='mail')mailFeedback();else if(a==='leer')flushNow().then(()=>openLeer(false));else if(a==='casus'){if(APP.lid&&casusOpen())openCasus(APP.lid.id,'kandidaat')}else if(a==='leer-view')openLeerPreview();else if(a==='cvo')openCvoMenu();else if(a==='kandidaten')navTo('');else if(['groepen','voortgang','leeromgeving','gebied','hulp','instellingen'].includes(a))navTo(a);else if(a.indexOf('video-')===0)videoOpen(a.slice(6));else if(a==='tr-view'){openLeerPreview().then(()=>trOpen('kvb',null))}else if(a==='leer-reset')confirmBox('Voortgang wissen?','Je voorbeeldvoortgang in deze browser wordt gewist.','Wissen').then(y=>{if(y){try{localStorage.removeItem(PV_KEY)}catch(e){}openLeerPreview()}});else if(a==='logout')logout();else if(a==='login')showLogin()}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-top]');if(!b||b.disabled)return;topAct(b.dataset.top)});
 /* vaste menubalk voor medewerkers en leermeesters (onder de bovenbalk, op elk scherm) */
-const NAV_ITEMS=[['','kandidaten','👥','Kandidaten'],['groepen','groepen','🎓','Examengroepen'],['voortgang','voortgang','📊','Voortgang'],['leeromgeving','leeromgeving','📚','Leeromgeving'],['gebied','gebied','🗺️','Vaargebieden'],['hulp','hulp','🧰','Hulpmiddelen']];
+const NAV_ITEMS=[['','kandidaten','👥','Kandidaten'],['groepen','groepen','🎓','Examengroepen'],['voortgang','voortgang','📊','Voortgang'],['leeromgeving','leeromgeving','📚','Leeromgeving'],['gebied','gebied','🗺️','Vaargebieden'],['hulp','hulp','🧰','Hulpmiddelen'],['instellingen','instellingen','⚙️','Instellingen']];
 function navActief(){const m=APP.mode;if(m==='dash')return APP.dashView||'';if(m==='edit')return APP.role==='voorbeeld'?'hulp':'';if(m==='leer')return'hulp';return null}
-function renderNav(){const b1=$('.brand-t .b1'),b2=$('.brand-t .b2');if(b1&&b2){if(b1.dataset.org==null){b1.dataset.org=b1.innerHTML;b2.dataset.org=b2.innerHTML}const tr=APP.role==='leer'&&APP.lid&&!heeftSor(APP.lid);b1.innerHTML=tr?'Leeromgeving':b1.dataset.org;b2.innerHTML=tr?'Flagship Academy · Interne trainingen':b2.dataset.org}
+function renderNav(){const b1=$('.brand-t .b1'),b2=$('.brand-t .b2');if(b1&&b2){if(b1.dataset.org==null){b1.dataset.org=b1.innerHTML;b2.dataset.org=b2.innerHTML}const tr=APP.role==='leer'&&APP.lid&&!heeftSor(APP.lid);b1.innerHTML=b1.dataset.org;b2.innerHTML=tr?'Interne trainingen':b2.dataset.org}
 let n=$('#snav');const zie=!!(APP.lid&&(APP.isStaff||APP.isLm)&&['dash','edit','leer'].includes(APP.mode)&&APP.role!=='kandidaat'&&APP.role!=='leer');
   if(!n){n=document.createElement('nav');n.id='snav';n.className='snav';n.setAttribute('aria-label','Hoofdmenu');$('header.top').appendChild(n)}
   n.hidden=!zie;document.getElementById('app').classList.toggle('has-nav',zie);if(!zie){n.innerHTML='';return}const act=navActief();
@@ -1309,7 +1338,8 @@ function renderHulp(){const kaart=(act,ico,kop,sub)=>'<button type="button" clas
     (typeof cvoAan==='function'&&cvoAan()?kaart('cvo','📄','CVO’s van de schepen','Pagina 2 van het certificaat van onderzoek downloaden'):'')+
     (APP.isLm?'':kaart('example-view','⚓','Voorbeeldcasus','Een volledig ingevulde casus om te laten zien of te vergelijken'))+
     kaart('leer-view','📖','Voorbeeld SOR-leeromgeving','Zo ziet de theorie eruit voor een kandidaat')+
-    kaart('tr-view','⛵','Voorbeeld Schipper KVB – Basic Training','Zo ziet de interne training eruit voor een schipper')+'</div></div>'}
+    kaart('tr-view','⛵','Voorbeeld Schipper KVB – Basic Training','Zo ziet de interne training eruit voor een schipper')+
+    kaart('video-sor','🎬','Filmpje: zo werkt het SOR-traject','Het uitlegfilmpje dat kandidaten in hun leeromgeving zien')+kaart('video-casus','🎬','Filmpje: zo werkt de casusbouwer','Het uitlegfilmpje dat kandidaten in hun leeromgeving zien')+'</div></div>'}
 $('#topActions').addEventListener('change',async e=>{if(e.target.id==='fileImport'){const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;try{const data=JSON.parse(await f.text());if(!data||!data.kandidaat)throw new Error('format');state=loadCasus(data);state.ui={step:'kandidaat'};enterEditor();saveLocal();toast('Casus geopend')}catch(err){toast('Dit bestand is geen back-up van de casusbouwer.',true)}}
   if(e.target.matches('[data-top-status]'))setStatus(APP.target,e.target.value)});
 function stepStatus(id){const cs=CHECKS.filter(c=>c.step===id);if(id==='controle'){const all=CHECKS.length,ok=CHECKS.filter(c=>c.ok).length;return ok===all?'done':(ok?'part':'todo')}if(!cs.length)return'todo';const ok=cs.filter(c=>c.ok).length;return ok===cs.length?'done':(ok?'part':'todo')}
@@ -1459,8 +1489,8 @@ const lmNames=id=>{const k=APP.roster.find(x=>x.id===id);const st=(k&&k.stad)||'
   const kg=k&&groepOf(k);if(kg)((APP.lmGroep&&APP.lmGroep[kg.id])||[]).forEach(l=>{if(ids.has(l)||((APP.lmGeb||{})[l]||[]).includes(st))return;const r=APP.roster.find(x=>x.id===l);if(r)out.push(r.naam+' (groep '+kg.naam+')')});return out};
 const gebChips=r=>'<div class="gebchips" role="group" aria-label="Vaargebieden van '+esc(r.naam)+'">'+STADS.map(st=>{const on=(APP.lmGeb[r.id]||[]).includes(st);return'<button type="button" class="chip'+(on?' on':'')+'" data-dact="gebied" data-id="'+esc(r.id)+'" data-stad="'+st+'" aria-pressed="'+on+'" title="'+(on?'Klik om '+STAD_NAAM[st]+' uit te zetten':'Klik om '+esc(r.naam)+' alle kandidaten uit '+STAD_NAAM[st]+' te laten zien')+'">'+(on?'✓ ':'')+STAD_NAAM[st]+'</button>'}).join('')+'</div>';
 /* CVO's downloaden: knop in de bovenste balk, alleen voor medewerkers en leermeesters */
-/* CVO's: medewerkers en leermeesters op de Amsterdamse site, en elke (niet-geslaagde) kandidaat uit Amsterdam */
-const cvoKandidaat=()=>!!(APP.lid&&!APP.isStaff&&!APP.isLm&&(APP.lid.rol||'kandidaat')==='kandidaat'&&APP.lid.status!=='geslaagd'&&(APP.lid.stad||'amsterdam')==='amsterdam');
+/* CVO's: medewerkers en leermeesters op de Amsterdamse site, en elke kandidaat uit Amsterdam (ook na het slagen) */
+const cvoKandidaat=()=>!!(APP.lid&&!APP.isStaff&&!APP.isLm&&(APP.lid.rol||'kandidaat')==='kandidaat'&&(APP.lid.stad||'amsterdam')==='amsterdam');
 function cvoAan(){return!!(typeof BOATS!=='undefined'&&BOATS.some(b=>b.cvo)&&((CITY.boats&&(APP.isStaff||APP.isLm))||cvoKandidaat()))}
 async function cvoBlob(pad){try{const r=await fetch(CITY.assets+'assets/cvo/'+pad);return r.ok?await r.blob():null}catch(e){return null}}
 function saveBlob(blob,naam){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=naam;document.body.appendChild(a);a.dispatchEvent(new MouseEvent('click',{bubbles:false}));setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
@@ -1474,7 +1504,7 @@ async function cvoPdf(id,btn){const bt=BOATS.find(b=>b.id===id);const J=window.j
     const doc=new J({unit:'mm',format:'a4'}),W=210,H=297,M=10;let w=W-2*M,h=w*bt.cvo[1]/bt.cvo[0];if(h>H-2*M){h=H-2*M;w=h*bt.cvo[0]/bt.cvo[1]}
     doc.setProperties({title:'CVO '+bt.naam+' (pagina 2)'});doc.addImage(du,'JPEG',(W-w)/2,(H-h)/2,w,h);doc.save('CVO '+bt.naam+' (pagina 2).pdf')}
   finally{if(btn)btn.disabled=false}}
-function renderDash(){if(APP.mode!=='dash')return;if(APP.dashView==='voortgang'&&APP.isStaff){renderVoortgang();return}if(gbPagina()&&APP.isStaff){renderGebiedBouwer();return}if(APP.dashView==='hulp'){renderHulp();return}if(APP.dashView==='groepen'&&APP.isStaff){renderGroepen();return}const lm=APP.isLm;let f=APP.dashFilter;if(lm&&f==='team')f='actief';if(f==='actie'||f==='groepen')f='actief';
+function renderDash(){if(APP.mode!=='dash')return;if(APP.dashView==='voortgang'&&APP.isStaff){renderVoortgang();return}if(gbPagina()&&APP.isStaff){renderGebiedBouwer();return}if(APP.dashView==='hulp'){renderHulp();return}if(APP.dashView==='groepen'&&APP.isStaff){renderGroepen();return}if(APP.dashView==='instellingen'&&APP.isStaff){renderInstellingen();return}const lm=APP.isLm;let f=APP.dashFilter;if(lm&&f==='team')f='actief';if(f==='actie'||f==='groepen')f='actief';
   const map=STADS.includes(APP.dashMap)?APP.dashMap:'alle',q=(APP.dashQ||'').trim().toLowerCase(),qc=q.replace(/[^a-z0-9]/g,'');
   const qm=r=>!q||(r.naam||'').toLowerCase().includes(q)||(r.email||'').toLowerCase().includes(q)||(qc.length>=3&&(r.code||'').toLowerCase().includes(qc));
   const kandAll=APP.roster.filter(r=>r.rol==='kandidaat');const kand=kandAll.filter(r=>(map==='alle'||(r.stad||'amsterdam')===map)&&qm(r)),team=APP.roster.filter(r=>(r.rol==='medewerker'||r.rol==='leermeester')&&qm(r));
@@ -1495,7 +1525,7 @@ function renderDash(){if(APP.mode!=='dash')return;if(APP.dashView==='voortgang'&
     h+=list.length?'<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Kandidaat</th>'+(showTh?'<th>Theorie</th>':'')+'<th>Casus</th><th>Status</th>'+(trajectZichtbaar()?'<th>Traject</th>':'')+'<th></th></tr></thead><tbody>'+list.map(r=>{const v=(r.cas&&r.cas.voortgang)||0;const st=(r.fbk&&r.fbk.stappen)||{};const open=Object.values(st).filter(x=>x&&x.status==='aanpassen').length,okc=Object.values(st).filter(x=>x&&x.status==='ok').length;const lmn=lm?[]:lmNames(r.id);
       return'<tr><td class="c-person"><div class="person">'+avatar(r)+'<div><b>'+esc(r.naam)+'</b> '+stadPill(r)+aiPill(r)+trPill(r)+codeCell(r)+(lmn.length?'<small>Leermeester: '+esc(lmn.join(', '))+'</small>':'')+'</div></div></td>'+(showTh?'<td data-l="Theorie">'+((LEER_LIVE||(r.stad||'amsterdam')!=='amsterdam')?thCell(r):'<span class="note">–</span>')+'</td>':'')+'<td data-l="Casus"><div class="row nw" style="gap:6px"><div class="pbar"><span style="width:'+v+'%"></span></div><span class="num">'+v+'%</span></div><small class="note">'+esc(r.cas?'Bijgewerkt '+ago(r.cas.bijgewerkt):'Nog niet begonnen')+'</small></td><td data-l="Status" class="c-status">'+stPill(r.status)+(open?'<span class="pill acc">'+open+(open===1?' aanpassing':' aanpassingen')+'</span>':okc?'<span class="pill ok">'+okc+' akkoord</span>':'')+'</td>'+(trajectZichtbaar()?'<td data-l="Traject" class="c-traject">'+trCell(r)+'</td>':'')+'<td class="c-act"><div class="acts"><button type="button" class="btn sm primary" data-dact="open" data-id="'+esc(r.id)+'">Openen</button>'+(lm?'':'<button type="button" class="btn sm soft amore" data-dact="menu" data-id="'+esc(r.id)+'" aria-haspopup="menu" aria-label="Meer acties voor '+esc(r.naam)+'" title="Meer acties">⋯</button>')+'</div></td></tr>'}).join('')+'</tbody></table></div>':'<p class="note">'+(q?'Geen kandidaten gevonden voor “'+esc(APP.dashQ.trim())+'”'+(map!=='alle'?' in de map '+STAD_NAAM[map]:'')+'.':map!=='alle'&&!kand.length?'De map '+STAD_NAAM[map]+' is nog leeg.':'')+(q||(map!=='alle'&&!kand.length)?'':(lm?(f==='actief'&&!kand.length?'Er zijn nog geen kandidaten aan je gekoppeld. Een medewerker van Flagship Academy kan kandidaten aan je koppelen.':'Geen kandidaten in deze lijst.'):(f==='actief'&&!kand.length?'Nog geen kandidaten. Klik op “Kandidaat toevoegen” om te beginnen.':'Geen kandidaten in deze lijst.')))+'</p>'}
   h+=lm?'<div class="info"><b>Zo werkt het</b><ol><li>'+((APP.lmGeb&&APP.lid&&(APP.lmGeb[APP.lid.id]||[]).length)?'Je ziet alle kandidaten uit '+esc(APP.lmGeb[APP.lid.id].map(s=>STAD_NAAM[s]).join(' en '))+', en de kandidaten die een medewerker los aan je heeft gekoppeld. Nieuwe kandidaten uit dat gebied verschijnen vanzelf.':'Je ziet de kandidaten die een medewerker aan je heeft gekoppeld.')+lmMijnGroepenTxt()+'</li><li>Klik op <b>Openen</b> om de casus te bekijken. Bij elke stap kun je feedback geven: <b>Akkoord</b> of <b>Aanpassen</b>, met een toelichting.</li><li>De kandidaat ziet je feedback direct. Met <b>Feedback mailen</b> stuur je een samenvatting.</li></ol></div></div>'
-    :'<div class="info"><b>Zo werkt het</b><ol><li>Klik op <b>Kandidaat toevoegen</b> en vul de naam in. Je krijgt een uitnodigingscode en een bericht om te versturen.</li><li>De kandidaat opent de casusbouwer, kiest <b>Account aanmaken</b> en vult de code in. Elke code werkt één keer.</li>'+(LEER_LIVE?(LEER_GATE?'<li>De kandidaat begint in de <b>leeromgeving</b>. Na de eindtoets gaat de casus open. Klik op de theorie-voortgang om details te zien of de casus eerder vrij te geven.</li>':'<li>De kandidaat begint in de <b>leeromgeving</b> en kan meteen naar de casus. Klik op de theorie-voortgang om per hoofdstuk de scores te zien.</li>'):'')+'<li>Zet kandidaten in een <b>groep</b> met een datum voor de generale en het examen (tab <b>Groepen</b>), of geef iemand via <b>⋯</b> → <b>Traject en datums</b> een eigen datum. Casus en vrijstelling moeten een week voor de generale rond zijn. Onder <b>Voortgang → Actie nodig</b> zie je wie achterloopt. '+(TRAJECT_KANDIDAAT?'De kandidaat ziet zijn deadlines en een waarschuwing in de leeromgeving.':'Kandidaten en leermeesters zien dit nog niet; in de voorbeeld-leeromgeving zie je hoe het voor kandidaten wordt.')+'</li><li>Een <b>leermeester</b> ziet alleen de kandidaten die je koppelt. Onder <b>Team</b> klik je op een vaargebied (bijvoorbeeld <b>Groningen</b>): de leermeester ziet dan alle kandidaten uit dat gebied, ook nieuwe. Met <b>Losse kandidaten</b> koppel je daarnaast losse kandidaten. Hij kan hun casus bekijken en feedback geven, maar niets wijzigen of beheren.</li>'+(cvoAan()?'<li>CVO van een schip nodig? Klik bovenin op <b>CVO\'s</b>. Leermeesters hebben die knop ook.</li>':'')+'<li>Wachtwoord vergeten? Klik bij de kandidaat op <b>⋯</b> → <b>Nieuwe code</b>. Het oude account vervalt, de casus blijft bewaard.</li><li>Geslaagd? Klik op <b>⋯</b> → <b>Verwijderen</b>. Dat wist de casus, de feedback, de foto’s en het account definitief.</li></ol></div></div>';
+    :'<div class="info"><b>Zo werkt het</b><ol><li>Klik op <b>Kandidaat toevoegen</b> en vul de naam in. Je krijgt een uitnodigingscode en een bericht om te versturen.</li><li>De kandidaat opent de website, kiest <b>Account aanmaken</b> en vult de code in. Elke code werkt één keer.</li>'+(LEER_LIVE?(LEER_GATE?'<li>De kandidaat begint in de <b>leeromgeving</b>. Na de eindtoets gaat de casus open. Klik op de theorie-voortgang om details te zien of de casus eerder vrij te geven.</li>':'<li>De kandidaat begint in de <b>leeromgeving</b> en kan meteen naar de casus. Klik op de theorie-voortgang om per hoofdstuk de scores te zien.</li>'):'')+'<li>Zet kandidaten in een <b>groep</b> met een datum voor de generale en het examen (menu <b>Examengroepen</b>), of geef iemand via <b>⋯</b> → <b>Traject en datums</b> een eigen datum. Casus en vrijstelling moeten een week voor de generale rond zijn. Onder <b>Voortgang → Actie nodig</b> zie je wie achterloopt. '+(TRAJECT_KANDIDAAT?'De kandidaat ziet zijn deadlines en een waarschuwing in de leeromgeving.':'Kandidaten en leermeesters zien dit nog niet; in de voorbeeld-leeromgeving zie je hoe het voor kandidaten wordt.')+'</li><li>Een <b>leermeester</b> ziet alleen de kandidaten die je koppelt. Onder <b>Team</b> klik je op een vaargebied (bijvoorbeeld <b>Groningen</b>): de leermeester ziet dan alle kandidaten uit dat gebied, ook nieuwe. Met <b>Losse kandidaten</b> koppel je daarnaast losse kandidaten, en bij <b>Examengroepen</b> koppel je een leermeester aan een hele groep. Hij kan hun casus bekijken en feedback geven, maar niets wijzigen of beheren.</li>'+(cvoAan()?'<li>CVO van een schip nodig? Ga naar <b>Hulpmiddelen</b> → <b>CVO’s van de schepen</b>. Leermeesters en kandidaten uit Amsterdam kunnen er ook bij.</li>':'')+'<li>Wachtwoord vergeten? Klik bij de kandidaat op <b>⋯</b> → <b>Nieuwe code</b>. Het oude account vervalt, de casus blijft bewaard.</li><li>Geslaagd? Klik op <b>⋯</b> → <b>Markeren als geslaagd</b>. De kandidaat ziet dan alleen nog een felicitatiescherm en kan de casus downloaden. Met <b>Verwijderen</b> wis je de casus, de feedback, de foto’s en het account definitief.</li><li>Privacyverklaring, AI-feedback, opslag en back-up regel je bij <b>Instellingen</b>.</li></ol></div></div>';
   $('#dash').innerHTML=h}
 function codeMessage(r,code){const url=r.rol==='kandidaat'?cityUrl(r.stad||'amsterdam'):ROOT();const from=(APP.lid&&APP.lid.naam)||'Flagship Academy';
   if(r.rol==='medewerker')return'Hoi '+r.naam+',\n\nJe bent toegevoegd als medewerker in de casusbouwer van Flagship Academy:\n'+url+'\n\nKies "Account aanmaken" en vul deze code in: '+fmtCode(code)+'\nDe code werkt één keer.\n\nGroet,\n'+from;
@@ -1526,7 +1556,7 @@ async function renameLid(r){const y=await modalBox('Naam wijzigen','Pas de naam 
   toast('Naam gewijzigd in '+naam);if(APP.lid&&r.id===APP.lid.id){APP.lid.naam=naam;renderTop()}loadRoster()}
 /* actiemenu (⋯) in het overzicht */
 function closeAmenu(){const m=$('#amenu');if(m)m.remove()}
-function openAmenu(btn,r){closeAmenu();const me=APP.lid&&r.id===APP.lid.id;const items=[['naam','Naam wijzigen']];if(r.rol==='kandidaat'){items.push(['traject','Traject en datums']);if(APP.isStaff)items.push(['sjabloon','Leeromgeving en trainingen']);items.push(['pdf','PDF van de casus downloaden']);if((APP.cbrAll||{})[r.id])items.push(['cbr','CBR-bevestiging bekijken']);if(AI_LIVE&&APP.isStaff&&r.cas)items.push(['aivb',(APP.aiVoorbeeld||{})[r.id]?'Niet meer als voorbeeldcasus gebruiken':'Als voorbeeldcasus voor de AI gebruiken'])}
+function openAmenu(btn,r){closeAmenu();const me=APP.lid&&r.id===APP.lid.id;const items=[['naam','Naam wijzigen']];if(r.rol==='kandidaat'){items.push(['traject','Traject en datums']);if(APP.isStaff)items.push(['sjabloon','Leeromgeving en trainingen']);items.push(['pdf','PDF van de casus downloaden']);if((APP.cbrAll||{})[r.id])items.push(['cbr','CBR-bevestiging bekijken']);if(aiAan()&&APP.isStaff&&r.cas)items.push(['aivb',(APP.aiVoorbeeld||{})[r.id]?'Niet meer als voorbeeldcasus gebruiken':'Als voorbeeldcasus voor de AI gebruiken'])}
   if(r.rol==='kandidaat'){if(r.status!=='geslaagd')items.push(['geslaagd','Markeren als geslaagd']);else items.push(['terug','Geslaagd ongedaan maken']);items.push(['stad','Vaargebied wijzigen']);if(r.user_id)items.push(['newcode','Nieuwe code (wachtwoord vergeten)']);else if(r.code)items.push(['code','Code en bericht tonen'])}
   else if(!me){if(r.user_id)items.push(['newcode','Nieuwe code (wachtwoord vergeten)']);else if(r.code)items.push(['code','Code en bericht tonen'])}
   if(!me)items.push(['remove','Verwijderen','danger']);
@@ -1839,7 +1869,7 @@ function viewStart(){if(!isPreview()&&!heeftSor(APP.lid))return trStart();const 
   h+='<div class="ltiles">'+tile('theorie','📖','Theorie','Lessen en quizzen per hoofdstuk, en de eindtoets',done+' van '+LEER.length+' hoofdstukken gehaald · eindtoets '+(theoryDone()?'gehaald':'nog niet gehaald'))+
     tile('casus','⚓','Je casus','Je uitwerking voor praktijktoets 3',st==='geslaagd'?'Geslaagd':st==='ingeleverd'?'Ingeleverd':open?'Staat open':'Gaat open na de eindtoets',!open&&!pv)+
     tile('voortgang','🗓️','Je voortgang','Deadlines, vrijstelling vaardagen en je examen',nx)+'</div>';
-  if(!pv)h+=(cvoAan()?'<section class="lsec"><div class="lsec-h"><h2>Hulpmiddelen</h2></div><div class="ltiles"><button type="button" class="ltile" data-top="cvo"><span class="ltile-i" aria-hidden="true">📄</span><span class="ltile-t"><b>CVO’s van de schepen</b><span>Pagina 2 van het certificaat van onderzoek downloaden, en van sommige schepen het volledige CVO</span></span><span class="ltile-go" aria-hidden="true">→</span></button></div></section>':'');
+  if(!pv)h+=leerHulpSec(true);
   const trs=pv?Object.values(TRAININGEN):trVan(APP.lid).map(k=>TRAININGEN[k]);if(trs.length)h+='<section class="lsec"><div class="lsec-h"><h2>'+(pv?'Interne trainingen':'Je trainingen')+'</h2></div>'+(pv?'<p class="note">Kandidaten zien alleen de trainingen die een medewerker aan ze heeft toegewezen.</p>':'')+'<div class="ltiles">'+trs.map(trTegel).join('')+'</div></section>';
   const bz=bezigInfo();if(bz)h+='<div class="lresume"><div><b>Ga verder waar je was</b><span>'+esc(bz.naam)+' · '+bz.nr+' van '+bz.n+' vragen beantwoord</span></div><button type="button" class="btn primary" data-lact="resume">Ga verder</button></div>';
   return h}
@@ -2304,7 +2334,7 @@ $('#dash').addEventListener('click',async e=>{if(!(APP.dashView==='voortgang'&&A
 const gbPagina=()=>APP.dashView==='gebied'||APP.dashView==='leeromgeving';
 /* ---------- Extra gebied (alleen medewerkers): nieuw vaargebied uit OpenStreetMap ---------- */
 /* openbare Overpass-servers (getest 16 okt 2026 vanuit een browser: FOSSGIS gaf het volledige antwoord, Kumi alleen bij kleine verzoeken) */
-const OSM_EPS=[['Overpass (FOSSGIS)','https://overpass-api.de/api/interpreter'],['Kumi Systems','https://overpass.kumi.systems/api/interpreter'],['VK Maps','https://maps.mail.ru/osm/tools/overpass/api/interpreter'],['Private.coffee','https://overpass.private.coffee/api/interpreter']];
+const OSM_EPS=[['Overpass (FOSSGIS)','https://overpass-api.de/api/interpreter'],['Kumi Systems','https://overpass.kumi.systems/api/interpreter'],['Private.coffee','https://overpass.private.coffee/api/interpreter']];
 const GB_MATEN=[['2','2 × 2 km',1000,1000],['3','3 × 3 km',1500,1500],['4','4 × 3,4 km (maximaal)',2000,1700]];
 /* projectie rond het midden van het kader (zelfde formules als de vaste gebieden) */
 function gbProj(lat,lon){const f=lat*Math.PI/180;return[+lat.toFixed(4),+lon.toFixed(4),Math.round(111412.84*Math.cos(f)-93.5*Math.cos(3*f)),Math.round(111132.954-559.822*Math.cos(2*f)+1.175*Math.cos(4*f))]}
@@ -2600,7 +2630,7 @@ function sjView(){if(!APP.sjDb)return'<p class="note warn">'+esc(foutTekst({mess
   h+='<p class="note">Een sjabloon bepaalt welke hoofdstukken een kandidaat van '+esc(STAD_NAAM[st]||st)+' in de leeromgeving krijgt, in welke volgorde, en welke extra modules ertussen staan. Toewijzen kan per kandidaat (⋯ → Leeromgeving-sjabloon, of hieronder bij het sjabloon) en per groep. Volgorde: eigen sjabloon, dan dat van de groep, dan de standaard van het gebied.</p>';
   const std=sjs.find(s=>s.standaard);
   h+='<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Sjabloon</th><th>Inhoud</th><th>Kandidaten</th><th></th></tr></thead><tbody>'+
-    (std?'':'<tr><td class="c-person"><b>'+esc(SJ_ALLE)+'</b><small>Standaard zolang er geen eigen standaard is</small></td><td data-l="Inhoud">'+LEER_ALL.length+' hoofdstukken</td><td data-l="Kandidaten">'+telVoor(null)+'</td><td class="c-act"><div class="acts"><button type="button" class="btn sm" data-sj="voorbeeld">Voorbeeld</button></div></td></tr>')+
+    (std?'':'<tr><td class="c-person"><b>'+esc(SJ_ALLE)+'</b><br><small>Standaard zolang er geen eigen standaard is</small></td><td data-l="Inhoud">'+LEER_ALL.length+' hoofdstukken</td><td data-l="Kandidaten">'+telVoor(null)+'</td><td class="c-act"><div class="acts"><button type="button" class="btn sm" data-sj="voorbeeld">Voorbeeld</button></div></td></tr>')+
     sjs.map(s=>'<tr><td class="c-person"><b>'+esc(s.naam)+'</b>'+(s.standaard?' <span class="pill ok">Standaard</span>':'')+'</td><td data-l="Inhoud">'+esc(sjSamenvatting(s,mods))+'</td><td data-l="Kandidaten">'+telVoor(s)+'</td><td class="c-act"><div class="acts">'+(s.standaard?'':'<button type="button" class="btn sm" data-sj="std" data-id="'+s.id+'">Standaard maken</button>')+'<button type="button" class="btn sm" data-sj="voorbeeld" data-id="'+s.id+'">Voorbeeld</button><button type="button" class="btn sm primary" data-sj="bewerk" data-id="'+s.id+'">Bewerken</button><button type="button" class="btn sm danger" data-sj="weg" data-id="'+s.id+'">Verwijderen</button></div></td></tr>').join('')+'</tbody></table></div>';
   return h}
 function sjEditor(st,mods){const e=SJ.edit;const groepen=(APP.groepen||[]).filter(g=>(g.stad||'amsterdam')===st);
@@ -2738,7 +2768,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-trac
 function trPill(r){if(r.rol!=='kandidaat')return'';return trVan(r).map(id=>{const tr=TRAININGEN[id],s=trStand(tr,trStVan(r.th,id));return' <span class="pill '+(s.klaar?'ok':'blue')+'" title="'+esc(tr.titel)+'">'+(id==='kvb'?'KVB':esc(tr.titel))+' '+(s.klaar?'afgerond':s.pct+'%')+'</span>'}).join('')+(heeftSor(r)?'':' <span class="pill unk" title="Geen SOR-traject">Geen SOR</span>')}
 /* startpagina voor iemand zonder SOR-traject: alleen de toegewezen trainingen */
 function trStart(){const trs=trVan(APP.lid).map(k=>TRAININGEN[k]);let h='<section class="lhero lstart"><div class="lhero-t"><div class="eyebrow">Leeromgeving · Flagship Academy</div><h1>Hoi '+esc(voornaam())+', welkom aan boord</h1><p>Hier vind je je trainingen. Je voortgang wordt automatisch bewaard.</p></div></section>';
-  h+=trs.length?'<div class="ltiles">'+trs.map(trTegel).join('')+'</div>':'<p class="note">Er is nog geen training aan je toegewezen. Neem contact op met Flagship Academy.</p>';h+=(cvoAan()?'<section class="lsec"><div class="lsec-h"><h2>Hulpmiddelen</h2></div><div class="ltiles"><button type="button" class="ltile" data-top="cvo"><span class="ltile-i" aria-hidden="true">📄</span><span class="ltile-t"><b>CVO’s van de schepen</b><span>Pagina 2 van het certificaat van onderzoek downloaden, en van sommige schepen het volledige CVO</span></span><span class="ltile-go" aria-hidden="true">→</span></button></div></section>':'');return h}
+  h+=trs.length?'<div class="ltiles">'+trs.map(trTegel).join('')+'</div>':'<p class="note">Er is nog geen training aan je toegewezen. Neem contact op met Flagship Academy.</p>';h+=leerHulpSec(false);return h}
 /* beheer: Leeromgeving → Interne trainingen (alleen medewerkers) */
 function trBeheer(){const tr=TRAININGEN.kvb;const kand=APP.roster.filter(r=>r.rol==='kandidaat'&&r.status!=='geslaagd').sort((a,b)=>(trVan(b).includes('kvb')-trVan(a).includes('kvb'))||a.naam.localeCompare(b.naam));
   const ingedeeld=kand.filter(r=>trVan(r).includes('kvb'));const us=trUnits(tr);
@@ -2757,8 +2787,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-trbe
    Bij het inleveren laat de casusbouwer de casus analyseren. Het concept is alleen zichtbaar voor
    medewerkers en leermeesters (APP.role==='staff'); de kandidaat ziet het nooit. Pas als een medewerker
    op Overnemen klikt, komt de tekst in de gewone feedback die de kandidaat wel ziet. */
-/* AI_LIVE=false: AI-conceptfeedback geparkeerd (geen aanroepen, niets zichtbaar). Aan zodra de API-sleutel in Supabase staat. */
-const AI_LIVE=false;
+/* Aan of uit via Instellingen (aiAan(), tabel instellingen). Staat het uit, dan gebeurt er niets en is er niets zichtbaar.
+   De Edge Function controleert de schakelaar, de API-sleutel en de maandlimiet zelf nog een keer. */
 const AI_ZEKER={hoog:'zeker',middel:'redelijk zeker',laag:'twijfel'};
 APP.ai=null;APP.aiAll={};APP.aiVoorbeeld={};
 function aiExtras(){const out={controles:[],route:null};
@@ -2766,7 +2796,7 @@ function aiExtras(){const out={controles:[],route:null};
   try{if(R&&R.ok&&R.pts&&R.pts.length>1){const d=duration();out.route={minuten:Math.round(d.total),tegen_eenrichting:R.against||[],te_groot_voor:(R.viol||[]).map(v=>v.nm),
     bruggen:(R.bridges||[]).map((f,i)=>{const s=bridgeStatus(f.br);return{nr:i+1,naam:f.br.nm||f.br.name||f.br.n||'',status:s.t}})}}}catch(e){}
   return out}
-async function aiLoad(id){if(!AI_LIVE||!APP.sb||APP.role!=='staff')return;
+async function aiLoad(id){if(!aiAan()||!APP.sb||APP.role!=='staff')return;
   const {data,error}=await APP.sb.from('ai_concept').select('*').eq('kandidaat_id',id).maybeSingle();
   if(APP.target!==id)return;APP.aiDb=!(error&&dbOntbreekt(error));APP.ai=error?null:(data||null);aiPoll(id)}
 function aiPoll(id){clearTimeout(APP.aiT);if(!APP.ai||APP.ai.status!=='bezig')return;let n=0;
@@ -2774,11 +2804,11 @@ function aiPoll(id){clearTimeout(APP.aiT);if(!APP.ai||APP.ai.status!=='bezig')re
     if(APP.ai&&APP.ai.status!=='bezig'){if(was==='bezig'&&APP.ai.status==='klaar')toast('AI-conceptfeedback is klaar');if(APP.mode==='edit')renderPanel();return}APP.aiT=setTimeout(tik,4000)};
   APP.aiT=setTimeout(tik,4000)}
 /* reden: 'inleveren' (kandidaat), 'openen' (automatisch bij openen door medewerker), 'handmatig' */
-async function aiStart(id,reden,stil){if(!AI_LIVE||!APP.sb||!id)return false;
+async function aiStart(id,reden,stil){if(!aiAan()||!APP.sb||!id)return false;
   try{const {data,error}=await APP.sb.functions.invoke('ai-feedback',{body:Object.assign({kandidaat_id:id,reden},aiExtras())});
     if(error){let j={};try{j=await error.context.json()}catch(e){}
       if(APP.role==='staff'&&APP.target===id){await aiLoad(id);if(APP.mode==='edit')renderPanel()}
-      if(!stil)toast(j.error==='niet_ingesteld'?'AI-feedback staat nog niet aan: de API-sleutel ontbreekt (zie OVERDRACHT.md).':'Conceptfeedback maken is mislukt.',true);return false}
+      if(!stil)toast(j.error==='niet_ingesteld'?'AI-feedback werkt nog niet: de API-sleutel ontbreekt in Supabase.':j.error==='uitgeschakeld'?'AI-feedback staat uit. Zet het aan bij Instellingen.':j.error==='limiet'?'De maandlimiet voor AI-feedback is bereikt. Verhoog de limiet bij Instellingen of wacht tot volgende maand.':'Conceptfeedback maken is mislukt.',true);return false}
     if(APP.role==='staff'&&APP.target===id){await aiLoad(id);if(APP.mode==='edit')renderPanel()}
     return true}catch(e){if(!stil)toast('Conceptfeedback maken is mislukt.',true);return false}}
 /* medewerker opent een ingeleverde casus zonder concept: alsnog laten maken (bijv. als het bij inleveren mislukte) */
@@ -2790,7 +2820,7 @@ function aiOvernemen(step,mode){const a=APP.ai;const s=a&&(step==='algemeen'?{te
   const tekst=mode==='erbij'&&cur&&(cur.tekst||'').trim()?cur.tekst.trim()+'\n\n'+s.tekst:s.tekst;
   setFb(step,step==='algemeen'?{tekst}:{status:s.status||'',tekst});aiMark(step,'over');renderPanel();renderRail()}
 /* concept bij een stap, direct onder het feedbackvak van de medewerker */
-function aiBox(id){const a=APP.ai;if(!AI_LIVE||APP.role!=='staff'||!a||id==='controle')return'';
+function aiBox(id){const a=APP.ai;if(!aiAan()||APP.role!=='staff'||!a||id==='controle')return'';
   if(a.status==='bezig')return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>Concept wordt gemaakt…</b></div><p class="note">De casus wordt geanalyseerd. Dit duurt meestal een minuut.</p></section>';
   if(a.status!=='klaar')return'';const s=(a.stappen||{})[id];if(!s)return'';const af=(a.afgehandeld||{})[id];
   if(af)return'<div class="ai-done"><span class="ai-tag">AI</span> Concept '+(af==='over'?'overgenomen':'genegeerd')+' · <a role="button" tabindex="0" data-ai="terug" data-step-ai="'+id+'">Concept weer tonen</a></div>';
@@ -2799,13 +2829,13 @@ function aiBox(id){const a=APP.ai;if(!AI_LIVE||APP.role!=='staff'||!a||id==='con
     '<div class="row"><button type="button" class="btn sm primary" data-ai="over" data-step-ai="'+id+'">'+(heeft?'Vervangen':'Overnemen')+'</button>'+(heeft?'<button type="button" class="btn sm" data-ai="erbij" data-step-ai="'+id+'">Toevoegen</button>':'')+'<button type="button" class="btn sm soft" data-ai="neg" data-step-ai="'+id+'">Negeren</button></div>'+
     '<div class="fb-meta">Alleen zichtbaar voor medewerkers en leermeesters. De kandidaat ziet dit pas als je het overneemt.</div></section>'}
 /* overzicht op de stap Controle */
-function aiOverzicht(){const a=APP.ai;if(!AI_LIVE||APP.role!=='staff')return'';
-  if(!APP.aiDb)return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>AI-conceptfeedback</b></div><p class="note">Werkt nog niet: de database moet eerst worden bijgewerkt (database-update 017, zie OVERDRACHT.md).</p></section>';
+function aiOverzicht(){const a=APP.ai;if(!aiAan()||APP.role!=='staff')return'';
+  if(!APP.aiDb)return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>AI-conceptfeedback</b></div><p class="note">Werkt nog niet: de database moet eerst worden bijgewerkt (database-update 017).</p></section>';
   const knop=(t,cls)=>'<button type="button" class="btn sm '+(cls||'')+'" data-ai="nieuw">'+t+'</button>';
   let h='<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>AI-conceptfeedback</b></div>';
   if(!a)h+='<p class="note">'+(APP.meta.status==='ingeleverd'?'Er is nog geen concept.':'Het concept wordt automatisch gemaakt zodra de kandidaat inlevert.')+'</p><div class="row">'+knop('Concept maken','primary')+'</div>';
   else if(a.status==='bezig')h+='<p class="note">Concept wordt gemaakt…</p>';
-  else if(a.status==='uit')h+='<p class="note">AI-feedback staat nog niet aan: de API-sleutel ontbreekt in Supabase (zie OVERDRACHT.md).</p><div class="row">'+knop('Opnieuw proberen')+'</div>';
+  else if(a.status==='uit')h+='<p class="note">'+(a.fout==='limiet'?'De maandlimiet voor AI-feedback is bereikt (zie Instellingen).':a.fout==='uitgeschakeld'?'AI-feedback stond uit toen deze casus werd ingeleverd.':'AI-feedback werkt nog niet: de API-sleutel ontbreekt in Supabase.')+'</p><div class="row">'+knop('Opnieuw proberen')+'</div>';
   else if(a.status==='fout')h+='<p class="note">Het concept kon niet worden gemaakt: '+esc(a.fout||'onbekende fout')+'</p><div class="row">'+knop('Opnieuw proberen','primary')+'</div>';
   else{const st=a.stappen||{},af=a.afgehandeld||{};const ids=STEPS.filter(s=>st[s.id]).map(s=>s.id);const open=ids.filter(i=>!af[i]);const aanp=ids.filter(i=>st[i].status==='aanpassen');
     h+='<p class="note">Gemaakt '+esc(fmtDate(a.gemaakt))+(a.voorbeelden?' · vergeleken met '+a.voorbeelden+' goede casus'+(a.voorbeelden>1?'sen':''):' · nog geen voorbeeldcasus beschikbaar')+' · '+aanp.length+' van '+ids.length+' stappen aanpassen · '+open.length+' nog te beoordelen</p>'+
@@ -2823,7 +2853,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-ai]'
     if(n)await aiMark('_',null);renderPanel();renderRail();toast(n+' concept'+(n===1?'':'en')+' overgenomen'+(over?'; '+over+' stap'+(over===1?'':'pen')+' met eigen feedback overgeslagen':'')+'. Controleer de feedback en mail hem daarna naar de kandidaat.');return}
   if(act==='nieuw'){b.disabled=true;const ok=await aiStart(APP.target,'handmatig',false);if(ok)toast('Concept wordt gemaakt…');return}});
 /* overzicht: labels per kandidaat */
-async function aiLoadAll(){APP.aiAll={};APP.aiVoorbeeld={};if(!AI_LIVE||!APP.sb||!(APP.isStaff||APP.isLm))return;
+async function aiLoadAll(){APP.aiAll={};APP.aiVoorbeeld={};if(!aiAan()||!APP.sb||!(APP.isStaff||APP.isLm))return;
   const [c,v]=await Promise.all([APP.sb.from('ai_concept').select('kandidaat_id,status,gemaakt'),APP.isStaff?APP.sb.from('ai_voorbeeld').select('kandidaat_id'):Promise.resolve({data:[]})]);
   if(c&&!c.error)(c.data||[]).forEach(x=>{APP.aiAll[x.kandidaat_id]=x});if(v&&!v.error)(v.data||[]).forEach(x=>{APP.aiVoorbeeld[x.kandidaat_id]=true})}
 function aiPill(r){if(r.rol!=='kandidaat')return'';const a=APP.aiAll[r.id];let h='';
@@ -2834,6 +2864,113 @@ async function aiVoorbeeldZetten(r){const aan=!APP.aiVoorbeeld[r.id];
   const {error}=aan?await APP.sb.from('ai_voorbeeld').insert({kandidaat_id:r.id}):await APP.sb.from('ai_voorbeeld').delete().eq('kandidaat_id',r.id);
   if(error){toast(foutTekst(error,'Opslaan'),true);return}toast(aan?'Casus van '+r.naam+' is nu een voorbeeldcasus':'Voorbeeldcasus uitgezet');loadRoster()}
 
+/* ---------- instellingen (alleen medewerkers): privacyverklaring, AI, opslag en back-up ----------
+   Alles op deze pagina staat in de tabel instellingen (database-update 022). Zo kan een medewerker
+   de privacyverklaring publiceren en AI-conceptfeedback aan- of uitzetten zonder de code aan te passen. */
+APP.inst={privacy:{},ai:{},opslag:{}};APP.instDb=null;APP.instX={};
+const PV_VELDEN=[['datum','Versiedatum','date',''],['adres','Adres van Flagship Academy','text','Straat 1, 1000 AA Amsterdam'],['kvk','KvK-nummer','text','12345678'],['email','E-mailadres voor vragen over gegevens','email','privacy@voorbeeld.nl'],['hosting','Hostingpartij van de website','text','bijvoorbeeld GitHub of Flagship'],['maildienst','Maildienst voor feedback-mails','text','bijvoorbeeld Microsoft 365'],['termijn','Bewaartermijn na de opleiding','text','bijvoorbeeld 12 maanden']];
+const pvCompleet=()=>PV_VELDEN.every(v=>String((APP.inst.privacy||{})[v[0]]||'').trim());
+function privacyLive(){return!!(APP.instDb&&APP.inst.privacy&&APP.inst.privacy.gepubliceerd&&pvCompleet())}
+function aiAan(){return!!(APP.instDb&&APP.inst.ai&&APP.inst.ai.aan)}
+const PV_KNOP='<button type="button" class="linkbtn" data-lact="privacy">Privacyverklaring</button>';
+function pvLinkZet(){$$('.pvslot').forEach(el=>{el.innerHTML=privacyLive()?' '+PV_KNOP:''})}
+async function instLoad(){if(!APP.sb)return;const {data,error}=await APP.sb.from('instellingen').select('sleutel,waarde');
+  if(error){if(dbOntbreekt(error))APP.instDb=false;return}
+  APP.instDb=true;const o={privacy:{},ai:{},opslag:{}};(data||[]).forEach(r=>{if(o[r.sleutel])o[r.sleutel]=r.waarde||{}});APP.inst=o;pvLinkZet()}
+async function instSave(sleutel,waarde){const {error}=await APP.sb.from('instellingen').upsert({sleutel,waarde,bijgewerkt:new Date().toISOString(),bijgewerkt_door:APP.uid});
+  if(error){toast('Opslaan is mislukt: '+(error.message||''),true);return false}APP.inst[sleutel]=waarde;return true}
+const fmtMB=b=>{b=+b||0;return b>=1048576?(b/1048576).toFixed(b>=10485760?0:1).replace('.',',')+' MB':Math.max(b?1:0,Math.round(b/1024))+' kB'};
+const OPSLAG_GRENS=500*1048576;/* gratis Supabase-plan: 500 MB database */
+
+/* extra gegevens voor de pagina: opslagoverzicht, AI-gebruik, AI-status en voorbeeldcasussen */
+async function instExtraLoad(){const mnd=Math.max(1,Math.min(120,parseInt((APP.inst.opslag||{}).maanden,10)||6));const m=new Date();const maand=m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0')+'-01';
+  const [op,ge,vb,st]=await Promise.all([APP.sb.rpc('opslag_overzicht',{p_maanden:mnd}),APP.sb.from('ai_gebruik').select('aantal').eq('maand',maand).maybeSingle(),APP.sb.from('ai_voorbeeld').select('kandidaat_id'),
+    APP.sb.functions.invoke('ai-feedback',{body:{status:true}}).then(r=>r,()=>({error:true}))]);
+  APP.instX={opslag:op&&!op.error?op.data:null,gebruik:ge&&!ge.error?((ge.data||{}).aantal||0):null,voorbeelden:vb&&!vb.error?(vb.data||[]).map(x=>x.kandidaat_id):null,
+    ai:st&&!st.error&&st.data&&typeof st.data.sleutel==='boolean'?st.data:null,geladen:true};
+  if(APP.mode==='dash'&&APP.dashView==='instellingen')renderInstellingen()}
+
+function renderInstellingen(){const el=$('#dash');const p=APP.inst.privacy||{},ai=APP.inst.ai||{},os=APP.inst.opslag||{},x=APP.instX||{};
+  let h='<div class="dash-in inst"><div><div class="eyebrow">Medewerkers</div><h1 class="pagetitle">Instellingen</h1></div>';
+  if(APP.instDb===false){el.innerHTML=h+'<section class="lsec"><h2>Database-update nodig</h2><p>Deze pagina werkt pas als database-update 022 is uitgevoerd in Supabase (SQL Editor). Tot die tijd blijven de privacyverklaring en AI-conceptfeedback uit.</p></section></div>';return}
+  if(APP.instDb==null){el.innerHTML=h+'<p class="note">Instellingen laden…</p></div>';instLoad().then(()=>{if(APP.mode==='dash'&&APP.dashView==='instellingen'&&APP.instDb!=null)renderInstellingen()});return}
+  if(!x.geladen&&!APP.instBezig){APP.instBezig=true;instExtraLoad().finally(()=>{APP.instBezig=false})}
+  /* privacyverklaring */
+  const compl=pvCompleet(),live=privacyLive();const mist=PV_VELDEN.filter(v=>!String(p[v[0]]||'').trim()).map(v=>v[1]);
+  h+='<section class="lsec" id="instPrivacy"><div class="lsec-h"><h2>Privacyverklaring</h2>'+(live?'<span class="pill ok">Zichtbaar voor kandidaten</span>':compl?'<span class="pill warn">Ingevuld, nog niet zichtbaar</span>':'<span class="pill unk">Nog niet compleet</span>')+'</div>'+
+    '<p class="note">De tekst staat klaar. Vul hier de laatste gegevens in. Daarna kun je de verklaring zichtbaar maken; kandidaten zien dan een link op de inlogpagina.</p><form id="instPvForm" class="instgrid">'+
+    PV_VELDEN.map(v=>'<div class="field"><label for="pv_'+v[0]+'">'+v[1]+'</label><input id="pv_'+v[0]+'" name="'+v[0]+'" type="'+v[2]+'" value="'+esc(p[v[0]]||'')+'" placeholder="'+esc(v[3])+'" maxlength="200"></div>').join('')+
+    '<div class="field"><label for="pv_verwerker">Verwerkersovereenkomst met hosting en database</label><select id="pv_verwerker" name="verwerker"><option value="is"'+(p.verwerker!=='wordt'?' selected':'')+'>Is gesloten</option><option value="wordt"'+(p.verwerker==='wordt'?' selected':'')+'>Wordt nog gesloten</option></select></div>'+
+    '<label class="instcheck"><input type="checkbox" name="gepubliceerd"'+(p.gepubliceerd?' checked':'')+'> <span>Zichtbaar maken voor kandidaten<small>Kan pas als alle velden zijn ingevuld.</small></span></label>'+
+    '<div class="row instrow"><button type="submit" class="btn primary">Opslaan</button><button type="button" class="btn" data-inst="pv-voorbeeld">Voorbeeld bekijken</button></div></form>'+
+    (mist.length?'<p class="note">Nog invullen: '+esc(mist.join(', '))+'.</p>':'')+'</section>';
+  /* AI */
+  const sleutel=x.ai?x.ai.sleutel:null;const lim=Math.max(0,parseInt(ai.maandlimiet,10)||100);
+  h+='<section class="lsec" id="instAi"><div class="lsec-h"><h2>AI-conceptfeedback</h2>'+(ai.aan?(sleutel===false?'<span class="pill warn">Aan, maar de sleutel ontbreekt</span>':'<span class="pill ok">Aan</span>'):'<span class="pill unk">Uit</span>')+'</div>'+
+    '<p class="note">Na het inleveren maakt de AI per stap een concept voor de feedback. Alleen medewerkers en leermeesters zien dat concept; de kandidaat ziet pas iets als jij het overneemt. Er worden alleen kosten gemaakt als dit aan staat én de API-sleutel in Supabase is ingesteld.</p>'+
+    '<ul class="instlist"><li><b>API-sleutel in Supabase:</b> '+(sleutel===true?'<span class="pill ok">Ingesteld</span>':sleutel===false?'<span class="pill unk">Nog niet ingesteld</span> <span class="note">Zolang de sleutel ontbreekt, wordt er niets verstuurd en kost het niets.</span>':x.geladen?'<span class="pill unk">Onbekend</span>':'laden…')+'</li>'+
+    '<li><b>Gebruik deze maand:</b> '+(x.gebruik==null?(x.geladen?'onbekend':'laden…'):x.gebruik+' van '+lim+' analyses')+'</li>'+
+    '<li><b>Voorbeeldcasussen:</b> de modelcasus van Flagship Academy'+(x.voorbeelden&&x.voorbeelden.length?' en '+x.voorbeelden.length+' aangewezen casus'+(x.voorbeelden.length===1?'':'sen')+' ('+esc(x.voorbeelden.map(id=>{const r=APP.roster.find(q=>q.id===id);return r?r.naam:'onbekend'}).join(', '))+')':'')+'. <span class="note">Aanwijzen doe je bij Kandidaten via ⋯ → Als voorbeeldcasus voor de AI gebruiken. Dat kan als AI aan staat.</span></li></ul>'+
+    '<form id="instAiForm" class="instgrid"><label class="instcheck"><input type="checkbox" name="aan"'+(ai.aan?' checked':'')+'> <span>AI-conceptfeedback aanzetten<small>Zet dit pas aan als de kosten zijn goedgekeurd.</small></span></label>'+
+    '<div class="field"><label for="ai_lim">Maximaal aantal analyses per maand</label><input id="ai_lim" name="maandlimiet" type="number" min="0" max="100000" step="1" value="'+lim+'"></div>'+
+    '<div class="row instrow"><button type="submit" class="btn primary">Opslaan</button></div></form></section>';
+  /* opslag */
+  const o=x.opslag;const mnd=Math.max(1,Math.min(120,parseInt(os.maanden,10)||6));
+  h+='<section class="lsec" id="instOpslag"><div class="lsec-h"><h2>Opslag</h2></div>';
+  if(!o)h+='<p class="note">'+(x.geladen?'Het opslagoverzicht kon niet worden geladen.':'Opslag laden…')+'</p>';
+  else{const pct=Math.min(100,Math.round(o.database/OPSLAG_GRENS*100));
+    h+='<div class="instmeter" role="img" aria-label="'+pct+' procent van de database in gebruik"><span style="width:'+Math.max(2,pct)+'%"'+(pct>=80?' class="vol"':'')+'></span></div>'+
+      '<p><b>'+fmtMB(o.database)+'</b> van 500 MB in gebruik ('+pct+'%). Dat is de grens van het gratis Supabase-plan.</p>'+
+      '<ul class="instlist"><li>Foto’s in casussen: '+o.fotos_aantal+' ('+fmtMB(o.fotos)+')</li><li>CBR-bevestigingen: '+o.cbr_aantal+' ('+fmtMB(o.cbr)+')</li><li>Kandidaten: '+o.kandidaten+', waarvan '+o.geslaagd+' geslaagd</li></ul>'+
+      '<form id="instOpslagForm" class="instgrid"><div class="field"><label for="os_mnd">Opruimen: aantal maanden na het slagen</label><input id="os_mnd" name="maanden" type="number" min="1" max="120" step="1" value="'+mnd+'"></div>'+
+      '<div class="row instrow"><button type="submit" class="btn">Termijn opslaan</button><button type="button" class="btn danger" data-inst="opruimen"'+(o.weg_fotos+o.weg_cbr?'':' disabled')+'>Nu opruimen</button></div></form>'+
+      '<p class="note">'+(o.weg_fotos+o.weg_cbr?'Nu op te ruimen: '+o.weg_fotos+' foto’s en '+o.weg_cbr+' CBR-bevestiging'+(o.weg_cbr===1?'':'en')+' van '+o.weg_kandidaten+' kandida'+(o.weg_kandidaten===1?'at':'ten')+' ('+fmtMB(o.weg_bytes)+').':'Er valt nu niets op te ruimen.')+' Opruimen wist alleen foto’s en CBR-bevestigingen van kandidaten die langer dan '+mnd+' maanden geleden zijn geslaagd. De casus zelf, de feedback en het account blijven staan.</p>'}
+  h+='</section>';
+  /* back-up */
+  h+='<section class="lsec" id="instBackup"><div class="lsec-h"><h2>Back-up</h2></div><p class="note">Download alle gegevens uit de database als één bestand: kandidaten, casussen, foto’s, feedback, theorie, groepen en instellingen. Bewaar het bestand op een veilige plek; er staan persoonsgegevens in. Wachtwoorden zitten er niet in.</p>'+
+    '<div class="row instrow"><button type="button" class="btn primary" data-inst="backup">Back-up downloaden</button><span class="note" id="instBackupStatus" role="status"></span></div></section>';
+  el.innerHTML=h+'</div>'}
+
+const BACKUP_TABELLEN=[['leden',['id'],500],['casussen',['kandidaat_id'],100],['feedback',['kandidaat_id'],200],['fotos',['id'],20],['theorie',['kandidaat_id'],200],['cbr_bevestiging',['kandidaat_id'],5],['groepen',['id'],500],['gebieden',['slug'],100],['leermodules',['id'],100],['leer_sjablonen',['id'],100],['leermeester_toegang',['leermeester_id','kandidaat_id'],500],['leermeester_gebied',['leermeester_id','stad'],500],['leermeester_groep',['leermeester_id','groep_id'],500],['instellingen',['sleutel'],100],['ai_voorbeeld',['kandidaat_id'],500],['ai_concept',['kandidaat_id'],100]];
+async function backupDownload(knop){const st=$('#instBackupStatus');const zeg=t=>{if(st)st.textContent=t};knop.disabled=true;const uit={soort:'flagship-academy-backup',versie:1,gemaakt:new Date().toISOString(),tabellen:{},overgeslagen:[]};let rijen=0;
+  try{for(const [tabel,sleutels,stap] of BACKUP_TABELLEN){zeg('Bezig met '+tabel+'…');const alle=[];let van=0;
+      for(;;){let q=APP.sb.from(tabel).select('*');sleutels.forEach(k=>{q=q.order(k)});const {data,error}=await q.range(van,van+stap-1);
+        if(error){if(dbOntbreekt(error)){uit.overgeslagen.push(tabel);break}throw new Error(tabel+': '+(error.message||'fout'))}
+        alle.push(...(data||[]));if(!data||data.length<stap)break;van+=stap}
+      if(!uit.overgeslagen.includes(tabel)){uit.tabellen[tabel]=alle;rijen+=alle.length}}
+    const blob=new Blob([JSON.stringify(uit)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='flagship-academy-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    zeg('Klaar: '+rijen+' rijen, '+fmtMB(blob.size)+'.');toast('Back-up gedownload')}
+  catch(e){zeg('');toast('De back-up is mislukt: '+(e&&e.message||e),true)}finally{knop.disabled=false}}
+
+$('#dash').addEventListener('submit',async e=>{if(APP.dashView!=='instellingen'||!APP.isStaff)return;const f=e.target;if(!['instPvForm','instAiForm','instOpslagForm'].includes(f.id))return;e.preventDefault();const fd=new FormData(f);const knop=f.querySelector('button[type=submit]');if(knop)knop.disabled=true;
+  if(f.id==='instPvForm'){const w={verwerker:fd.get('verwerker')==='wordt'?'wordt':'is'};PV_VELDEN.forEach(v=>{w[v[0]]=String(fd.get(v[0])||'').trim().slice(0,200)});const wil=!!fd.get('gepubliceerd');const compl=PV_VELDEN.every(v=>w[v[0]]);w.gepubliceerd=wil&&compl;
+    if(await instSave('privacy',w))toast(wil&&!compl?'Opgeslagen. Zichtbaar maken kan pas als alle velden zijn ingevuld.':w.gepubliceerd?'Opgeslagen. De privacyverklaring is zichtbaar voor kandidaten.':'Opgeslagen',wil&&!compl)}
+  else if(f.id==='instAiForm'){const w={aan:!!fd.get('aan'),maandlimiet:Math.max(0,Math.min(100000,parseInt(fd.get('maandlimiet'),10)||0))};const was=aiAan();
+    if(w.aan&&!was){const y=await confirmBox('AI-conceptfeedback aanzetten?','Vanaf nu wordt elke ingeleverde casus door de AI geanalyseerd, tot maximaal '+w.maandlimiet+' per maand. Dat kost geld zodra de API-sleutel in Supabase staat. Zet dit alleen aan als de kosten zijn goedgekeurd.','Aanzetten');if(!y){renderInstellingen();return}}
+    if(await instSave('ai',w))toast(w.aan?'AI-conceptfeedback staat aan':'AI-conceptfeedback staat uit')}
+  else{const w={maanden:Math.max(1,Math.min(120,parseInt(fd.get('maanden'),10)||6))};if(await instSave('opslag',w)){toast('Termijn opgeslagen');APP.instX={}}}
+  renderInstellingen()});
+$('#dash').addEventListener('click',async e=>{const b=e.target.closest('[data-inst]');if(!b||APP.dashView!=='instellingen'||!APP.isStaff)return;const a=b.dataset.inst;
+  if(a==='pv-voorbeeld'){const f=$('#instPvForm');const oud=APP.inst.privacy;const w=Object.assign({},oud);if(f){const fd=new FormData(f);PV_VELDEN.forEach(v=>{w[v[0]]=String(fd.get(v[0])||'').trim()});w.verwerker=fd.get('verwerker')}APP.inst.privacy=w;await showPrivacy();APP.inst.privacy=oud}
+  else if(a==='backup')backupDownload(b);
+  else if(a==='opruimen'){const o=(APP.instX||{}).opslag;const mnd=Math.max(1,Math.min(120,parseInt((APP.inst.opslag||{}).maanden,10)||6));if(!o)return;
+    const y=await confirmBox('Foto’s en CBR-bevestigingen wissen?','Je wist '+o.weg_fotos+' foto’s en '+o.weg_cbr+' CBR-bevestiging'+(o.weg_cbr===1?'':'en')+' van '+o.weg_kandidaten+' kandida'+(o.weg_kandidaten===1?'at':'ten')+' die langer dan '+mnd+' maanden geleden zijn geslaagd. In hun PDF staan daarna geen foto’s meer. Dit kun je niet ongedaan maken. Maak eerst een back-up als je de bestanden wilt bewaren.','Wissen');if(!y)return;
+    b.disabled=true;const {data,error}=await APP.sb.rpc('opslag_opruimen',{p_maanden:mnd});if(error){toast('Opruimen is mislukt: '+(error.message||''),true);b.disabled=false;return}
+    toast('Gewist: '+((data||{}).fotos||0)+' foto’s en '+((data||{}).cbr||0)+' CBR-bevestigingen');APP.instX={};renderInstellingen()}});
+
+/* ---------- melding als de internetverbinding wegvalt ---------- */
+(function(){const bar=document.createElement('div');bar.className='offbar';bar.setAttribute('role','status');bar.hidden=true;bar.textContent='Geen internetverbinding. Wijzigingen worden nu niet opgeslagen. Wacht met verder werken tot je weer online bent.';document.body.appendChild(bar);
+  const zet=()=>{const uit=navigator.onLine===false;const was=!bar.hidden;bar.hidden=!uit;if(!uit&&was){toast('Je bent weer online.');try{if(APP.dirty&&APP.dirty.size)flush()}catch(e){}}};
+  window.addEventListener('offline',zet);window.addEventListener('online',zet);zet()})();
+
+/* ---------- uitlegfilmpjes ---------- */
+const VIDEOS={sor:['Zo werkt het SOR-traject','sor-traject'],casus:['Zo werkt de casusbouwer','casusbouwer']};
+async function videoOpen(k){const v=VIDEOS[k];if(!v)return;const p=CITY.assets+'assets/video/'+v[1];
+  await modalBox(v[0],'','<div class="videobox"><video controls playsinline preload="metadata" poster="'+p+'.jpg" src="'+p+'.mp4"></video></div>','Sluiten',null);$('#modalBody').innerHTML=''}
+function videoTegels(){return Object.keys(VIDEOS).map(k=>'<button type="button" class="ltile" data-top="video-'+k+'"><span class="ltile-i" aria-hidden="true">🎬</span><span class="ltile-t"><b>'+VIDEOS[k][0]+'</b><span>Uitlegfilmpje van een paar minuten</span></span><span class="ltile-go" aria-hidden="true">→</span></button>').join('')}
+/* blok Hulpmiddelen op de startpagina van de leeromgeving; sor=true: ook de filmpjes over het SOR-traject */
+function leerHulpSec(sor){const t=(sor?videoTegels():'')+(cvoAan()?'<button type="button" class="ltile" data-top="cvo"><span class="ltile-i" aria-hidden="true">📄</span><span class="ltile-t"><b>CVO’s van de schepen</b><span>Pagina 2 van het certificaat van onderzoek downloaden, en van sommige schepen het volledige CVO</span></span><span class="ltile-go" aria-hidden="true">→</span></button>':'');
+  return t?'<section class="lsec"><div class="lsec-h"><h2>Hulpmiddelen</h2></div><div class="ltiles">'+t+'</div></section>':''}
 /* ---------- change handling ---------- */
 function changed(o){o=o||{};if(o.route)drawRoute();CHECKS=checks();renderProgress();renderRail();if(o.items)drawItems();if(o.route)drawWps();if(o.panel)renderPanel();updateHint()}
 function setStep(id){if(state.ui.step!==id)navPush({k:'step',step:id,id:APP.target||null,role:APP.role});state.ui.step=id;state.ui.pending=null;map.closePopup();renderRail();renderPanel();drawWps();drawItems();updateHint();panel.scrollTop=0;if(APP.role==='local')saveLocal();if(window.matchMedia('(max-width:780px)').matches){const b=$('#steps .stp.on');if(b)b.scrollIntoView({inline:'center',block:'nearest'})}}

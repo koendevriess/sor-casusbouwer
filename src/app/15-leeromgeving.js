@@ -57,7 +57,7 @@ function viewStart(){if(!isPreview()&&!heeftSor(APP.lid))return trStart();const 
   h+='<div class="ltiles">'+tile('theorie','📖','Theorie','Lessen en quizzen per hoofdstuk, en de eindtoets',done+' van '+LEER.length+' hoofdstukken gehaald · eindtoets '+(theoryDone()?'gehaald':'nog niet gehaald'))+
     tile('casus','⚓','Je casus','Je uitwerking voor praktijktoets 3',st==='geslaagd'?'Geslaagd':st==='ingeleverd'?'Ingeleverd':open?'Staat open':'Gaat open na de eindtoets',!open&&!pv)+
     tile('voortgang','🗓️','Je voortgang','Deadlines, vrijstelling vaardagen en je examen',nx)+'</div>';
-  if(!pv)h+=(cvoAan()?'<section class="lsec"><div class="lsec-h"><h2>Hulpmiddelen</h2></div><div class="ltiles"><button type="button" class="ltile" data-top="cvo"><span class="ltile-i" aria-hidden="true">📄</span><span class="ltile-t"><b>CVO’s van de schepen</b><span>Pagina 2 van het certificaat van onderzoek downloaden, en van sommige schepen het volledige CVO</span></span><span class="ltile-go" aria-hidden="true">→</span></button></div></section>':'');
+  if(!pv)h+=leerHulpSec(true);
   const trs=pv?Object.values(TRAININGEN):trVan(APP.lid).map(k=>TRAININGEN[k]);if(trs.length)h+='<section class="lsec"><div class="lsec-h"><h2>'+(pv?'Interne trainingen':'Je trainingen')+'</h2></div>'+(pv?'<p class="note">Kandidaten zien alleen de trainingen die een medewerker aan ze heeft toegewezen.</p>':'')+'<div class="ltiles">'+trs.map(trTegel).join('')+'</div></section>';
   const bz=bezigInfo();if(bz)h+='<div class="lresume"><div><b>Ga verder waar je was</b><span>'+esc(bz.naam)+' · '+bz.nr+' van '+bz.n+' vragen beantwoord</span></div><button type="button" class="btn primary" data-lact="resume">Ga verder</button></div>';
   return h}

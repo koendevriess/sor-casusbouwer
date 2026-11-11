@@ -1,0 +1,47 @@
+name: Controle
+on:
+  push:
+  pull_request:
+jobs:
+  controle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pagina's horen bij de bron
+        run: python3 bouw.py --controle
+      - name: JavaScript is geldig
+        run: |
+          python3 - <<'PY'
+          import re, subprocess, sys
+          fout = False
+          for p in ['index.html', 'amsterdam/index.html', 'groningen/index.html', 'utrecht/index.html', '404.html']:
+              s = open(p, encoding='utf-8').read()
+              open('/tmp/app.js', 'w', encoding='utf-8').write(max(re.findall(r'<script>(.*?)</script>', s, re.S), key=len))
+              r = subprocess.run(['node', '--check', '/tmp/app.js'], capture_output=True, text=True)
+              print(p, 'ok' if r.returncode == 0 else r.stderr[:500]); fout = fout or r.returncode != 0
+          sys.exit(1 if fout else 0)
+          PY
+      - name: Database-scripts
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: python3 tests/database_test.py
+      - name: Browser installeren
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+      - name: Site in de browser
+        run: python3 tests/browser_test.py

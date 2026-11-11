@@ -8,20 +8,20 @@
 //#endif
 <meta name="viewport" content="width=device-width, initial-scale=1">
 //#if portaal,gebied
-<title>SOR Casusbouwer · Flagship Academy</title>
+<title>Flagship Academy Leeromgeving</title>
 <link rel="icon" type="image/png" href="assets/icon.png">
 //#elif amsterdam
-<title>SOR Casusbouwer · Flagship Academy</title>
+<title>Flagship Academy Leeromgeving</title>
 <link rel="icon" type="image/png" href="../assets/icon.png">
 //#elif groningen
-<title>SOR Casusbouwer · Groningen</title>
+<title>Flagship Academy Leeromgeving · Groningen</title>
 <link rel="icon" type="image/png" href="../assets/icon.png">
 //#elif utrecht
-<title>SOR Casusbouwer · Utrecht</title>
+<title>Flagship Academy Leeromgeving · Utrecht</title>
 <link rel="icon" type="image/png" href="../assets/icon.png">
 //#endif
 <meta name="robots" content="noindex">
-<meta name="description" content="Casusbouwer van Flagship Academy voor praktijktoets 3 Schipper Open Rondvaartboot: route op de waterkaart, alle opdrachten, feedback van de opleider en PDF-export.">
+<meta name="description" content="Leeromgeving van Flagship Academy: theorie en trainingen voor schippers, en de casusbouwer voor praktijktoets 3 Schipper Open Rondvaartboot.">
 <style>
 //#include stijl.css
 </style>
@@ -31,13 +31,13 @@
   <header class="top">
     <a class="logo-tab" href="./" id="homeLink" title="Naar de startpagina" aria-label="Flagship Academy, naar de startpagina"><img id="logoImg" alt=""></a>
 //#if amsterdam,portaal
-    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR</div></div>
+    <div class="brand-t"><div class="b1">Flagship Academy</div><div class="b2">Leeromgeving en casusbouwer</div></div>
 //#elif groningen
-    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR · <b style="color:var(--accent)">Groningen</b></div></div>
+    <div class="brand-t"><div class="b1">Flagship Academy</div><div class="b2">Leeromgeving en casusbouwer · <b style="color:var(--accent)">Groningen</b></div></div>
 //#elif utrecht
-    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR · <b style="color:var(--accent)">Utrecht</b></div></div>
+    <div class="brand-t"><div class="b1">Flagship Academy</div><div class="b2">Leeromgeving en casusbouwer · <b style="color:var(--accent)">Utrecht</b></div></div>
 //#elif gebied
-    <div class="brand-t"><div class="b1">Casusbouwer</div><div class="b2">Flagship Academy · Praktijktoets 3 SOR · <b style="color:var(--accent)" id="gebNaam"></b></div></div>
+    <div class="brand-t"><div class="b1">Flagship Academy</div><div class="b2">Leeromgeving en casusbouwer · <b style="color:var(--accent)" id="gebNaam"></b></div></div>
 //#endif
     <div class="prog" id="prog" title="Voortgang van de casus"><div class="bar"><span id="pbar"></span></div><span class="pct" id="ppct">0%</span></div>
     <div class="top-actions" id="topActions"></div>
@@ -126,6 +126,7 @@
 //#include app/19-extra-gebied.js
 //#include app/20-leermodules.js
 //#include app/21-beheer-leeromgeving.js
+//#include app/21b-instellingen.js
 //#include app/22-invoer.js
 //#include app/23-lokale-acties.js
 //#include app/24-bestanden-fotos.js

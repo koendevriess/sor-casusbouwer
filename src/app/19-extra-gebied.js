@@ -1,6 +1,6 @@
 /* ---------- Extra gebied (alleen medewerkers): nieuw vaargebied uit OpenStreetMap ---------- */
 /* openbare Overpass-servers (getest 16 okt 2026 vanuit een browser: FOSSGIS gaf het volledige antwoord, Kumi alleen bij kleine verzoeken) */
-const OSM_EPS=[['Overpass (FOSSGIS)','https://overpass-api.de/api/interpreter'],['Kumi Systems','https://overpass.kumi.systems/api/interpreter'],['VK Maps','https://maps.mail.ru/osm/tools/overpass/api/interpreter'],['Private.coffee','https://overpass.private.coffee/api/interpreter']];
+const OSM_EPS=[['Overpass (FOSSGIS)','https://overpass-api.de/api/interpreter'],['Kumi Systems','https://overpass.kumi.systems/api/interpreter'],['Private.coffee','https://overpass.private.coffee/api/interpreter']];
 const GB_MATEN=[['2','2 × 2 km',1000,1000],['3','3 × 3 km',1500,1500],['4','4 × 3,4 km (maximaal)',2000,1700]];
 /* projectie rond het midden van het kader (zelfde formules als de vaste gebieden) */
 function gbProj(lat,lon){const f=lat*Math.PI/180;return[+lat.toFixed(4),+lon.toFixed(4),Math.round(111412.84*Math.cos(f)-93.5*Math.cos(3*f)),Math.round(111132.954-559.822*Math.cos(2*f)+1.175*Math.cos(4*f))]}

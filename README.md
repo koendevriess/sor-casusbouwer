@@ -1,26 +1,47 @@
-# SOR Casusbouwer · Flagship Academy
+# Flagship Academy Leeromgeving
 
-Website waarmee kandidaten van de opleiding Schipper Open Rondvaartboot (SOR) stap voor stap hun casus voor praktijktoets 3 maken: route op de waterkaart van Amsterdam, alle opdrachten, feedback van de opleider en een PDF om in te leveren.
+Website van Flagship Academy voor schippers in opleiding:
 
-## Hoe het werkt
+- **Leeromgeving SOR**: theorie met quizzen en eindtoets, het traject met deadlines, en uitlegfilmpjes.
+- **Casusbouwer**: kandidaten maken stap voor stap hun casus voor praktijktoets 3 (Schipper Open Rondvaartboot) op de waterkaart, met feedback van de opleider en een PDF om in te leveren.
+- **Interne training**: Schipper KVB – Basic Training.
+- **Voor medewerkers en leermeesters**: kandidaten, examengroepen, voortgang, sjablonen, vaargebieden, hulpmiddelen en instellingen.
 
-- **Website:** `index.html`, gehost met GitHub Pages. De kaartgegevens (© OpenStreetMap-bijdragers, ODbL) zitten in de pagina zelf.
-- **Inloggen en opslag:** Supabase (project in de EU, regio Ierland). Kandidaten en medewerkers loggen in met e-mail en wachtwoord en koppelen hun account één keer met een uitnodigingscode.
-- **Database-opzet:** `supabase/setup.sql` bevat de tabellen, toegangsregels (row level security) en functies. Dit script is al uitgevoerd in Supabase; bewaar het als documentatie.
+Vaargebieden: Amsterdam, Groningen en Utrecht zijn ingebouwd. Medewerkers kunnen in de site zelf extra gebieden toevoegen.
 
-## Beheer
+## Hoe het in elkaar zit
 
-- Medewerkers voegen kandidaten en collega's toe via **Kandidaat toevoegen** / **Medewerker toevoegen** in het overzicht en geven de code door.
-- **Wachtwoord vergeten:** klik op *Nieuwe code*. Het oude account vervalt, de casus blijft bewaard.
-- **Na het examen:** klik op *Verwijderen*. Dat wist de casus, feedback, foto's en het account.
-- Toegang is alleen mogelijk met een uitnodigingscode. Feedback mailen gaat via de knop *Feedback mailen*; die opent een e-mail aan de kandidaat in het mailprogramma van de medewerker.
-- In Supabase moet onder Authentication → Sign In / Providers → Email de optie **Confirm email** uit staan (de ingebouwde mail van Supabase stuurt geen mail naar kandidaten).
-- Het gratis Supabase-plan pauzeert een project na een week zonder gebruik. Zet het dan in het Supabase-dashboard weer aan; de gegevens blijven bewaard.
+| Onderdeel | Waar |
+| --- | --- |
+| Website (statisch) | GitHub Pages, vanuit de branch `main` |
+| Inloggen en gegevens | Supabase (database in de EU), met toegangsregels per rol |
+| Mail en AI | Supabase Edge Functions `feedback-mail` en `ai-feedback` |
 
-## Bestanden
+In de site staan alleen het adres van het Supabase-project en de publieke sleutel. Geheime sleutels staan uitsluitend in Supabase (Edge Functions → Secrets) en horen nooit in deze repo.
+
+## Mappen
 
 | Pad | Inhoud |
 | --- | --- |
-| `index.html` | De volledige app |
-| `assets/` | Leaflet 1.9.4, jsPDF 2.5.1, supabase-js 2.117.2, lettertype Atkinson Hyperlegible, icoon |
-| `supabase/setup.sql` | Database-opzet |
+| `src/` | **De broncode.** Hier pas je de site aan. |
+| `bouw.py` | Bouwt de vijf pagina's uit `src/` |
+| `index.html`, `amsterdam/`, `groningen/`, `utrecht/`, `404.html` | De gebouwde pagina's (niet met de hand aanpassen) |
+| `assets/` | Bibliotheken, lettertype, CVO's, theorie-afbeeldingen, trainingsmateriaal en filmpjes |
+| `supabase/setup.sql` | Database-opzet voor een leeg project (t/m update 019) |
+| `supabase/updates/` | Database-updates op volgorde; 020 en hoger komen na `setup.sql` |
+| `supabase/functions/` | Broncode van de Edge Functions |
+| `tests/` | Automatische tests van de database-scripts en van de site |
+| `server/`, `.htaccess`, `web.config` | Instellingen voor nginx, Apache en IIS (voor een eigen server) |
+
+Hoe je een wijziging maakt, test en online zet staat in **[ONTWIKKELEN.md](ONTWIKKELEN.md)**.
+
+## Beheer in het kort
+
+- **Kandidaat, leermeester of medewerker toevoegen**: menu Kandidaten. Geef de uitnodigingscode door; daarmee maakt iemand zelf een account.
+- **Wachtwoord vergeten**: ⋯ → Nieuwe code. Het oude account vervalt, de casus blijft bewaard.
+- **Geslaagd**: ⋯ → Markeren als geslaagd. De kandidaat ziet dan alleen nog een felicitatiescherm en kan de casus downloaden.
+- **Examengroepen**: groepen per vaargebied, met leermeesters die de hele groep zien.
+- **Instellingen**: privacyverklaring invullen en zichtbaar maken, AI-conceptfeedback aan of uit (met maandlimiet), opslag opruimen en een back-up downloaden.
+- **Supabase**: onder Authentication → Sign In / Providers → Email moet *Confirm email* uit staan. Het gratis plan pauzeert een project na een week zonder gebruik; zet het dan in het dashboard weer aan.
+
+Kaartgegevens: © OpenStreetMap-bijdragers (ODbL).

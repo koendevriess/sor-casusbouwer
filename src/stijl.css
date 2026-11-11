@@ -768,3 +768,31 @@ button.pill.stad.groningen,button.pill.stad.utrecht{background:var(--accent-soft
 .trq.goed .trq-u b{color:var(--ok)}.trq.fout .trq-u b{color:var(--err)}
 .trteller{margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:700;box-shadow:var(--shadow)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* instellingen */
+.inst .lsec{display:flex;flex-direction:column;gap:6px}
+.inst .lsec-h{align-items:center;flex-wrap:wrap}
+.instgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin:8px 0 4px}
+.instgrid .field input,.instgrid .field select{width:100%}
+.instcheck{grid-column:1/-1;display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-weight:700}
+.instcheck input{width:20px;height:20px;accent-color:var(--accent);flex:none;margin-top:1px}
+.instcheck small{display:block;font-weight:400;color:var(--ink-3);font-size:13px}
+.instrow{grid-column:1/-1;gap:10px;align-items:center;flex-wrap:wrap}
+.instlist{margin:6px 0;padding-left:20px}.instlist li{margin:5px 0}
+.instmeter{height:12px;border-radius:99px;background:var(--tint-2);overflow:hidden;margin:6px 0 2px}
+.instmeter span{display:block;height:100%;background:var(--ok);border-radius:99px}
+.instmeter span.vol{background:var(--err)}
+@media (max-width:700px){.instgrid{grid-template-columns:1fr}}
+/* melding zonder internet */
+.offbar{position:fixed;left:0;right:0;top:0;z-index:3200;background:var(--err);color:#fff;font-weight:700;font-size:14px;text-align:center;padding:8px max(16px,env(safe-area-inset-left,0px))}
+/* uitlegfilmpjes */
+.modal-card:has(.videobox){max-width:min(960px,100%)}
+.videobox video{display:block;width:100%;max-height:70vh;border-radius:10px;background:#000}
+/* telefoon: het menu schuift opzij (rand vervaagt als hint) en de tellers staan op één rij */
+@media (max-width:900px){.snav{padding-right:34px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent)}}
+@media (max-width:600px){
+  .dash .cards{display:flex!important;overflow-x:auto;gap:8px;margin:0 -16px;padding:0 16px 2px;scrollbar-width:none}
+  .dash .cards::-webkit-scrollbar{display:none}
+  .dash .cards .card{flex:0 0 122px;padding:10px 12px}
+  .dash .row:has(>[data-dact="add"]){flex-direction:row;flex-wrap:wrap;gap:6px;width:100%}
+  .dash [data-dact="add"]{padding:7px 11px;font-size:13px;flex:1 1 auto;justify-content:center}
+}

@@ -9,7 +9,7 @@ function sjView(){if(!APP.sjDb)return'<p class="note warn">'+esc(foutTekst({mess
   h+='<p class="note">Een sjabloon bepaalt welke hoofdstukken een kandidaat van '+esc(STAD_NAAM[st]||st)+' in de leeromgeving krijgt, in welke volgorde, en welke extra modules ertussen staan. Toewijzen kan per kandidaat (⋯ → Leeromgeving-sjabloon, of hieronder bij het sjabloon) en per groep. Volgorde: eigen sjabloon, dan dat van de groep, dan de standaard van het gebied.</p>';
   const std=sjs.find(s=>s.standaard);
   h+='<div class="tbl-wrap"><table class="tbl dtbl"><thead><tr><th>Sjabloon</th><th>Inhoud</th><th>Kandidaten</th><th></th></tr></thead><tbody>'+
-    (std?'':'<tr><td class="c-person"><b>'+esc(SJ_ALLE)+'</b><small>Standaard zolang er geen eigen standaard is</small></td><td data-l="Inhoud">'+LEER_ALL.length+' hoofdstukken</td><td data-l="Kandidaten">'+telVoor(null)+'</td><td class="c-act"><div class="acts"><button type="button" class="btn sm" data-sj="voorbeeld">Voorbeeld</button></div></td></tr>')+
+    (std?'':'<tr><td class="c-person"><b>'+esc(SJ_ALLE)+'</b><br><small>Standaard zolang er geen eigen standaard is</small></td><td data-l="Inhoud">'+LEER_ALL.length+' hoofdstukken</td><td data-l="Kandidaten">'+telVoor(null)+'</td><td class="c-act"><div class="acts"><button type="button" class="btn sm" data-sj="voorbeeld">Voorbeeld</button></div></td></tr>')+
     sjs.map(s=>'<tr><td class="c-person"><b>'+esc(s.naam)+'</b>'+(s.standaard?' <span class="pill ok">Standaard</span>':'')+'</td><td data-l="Inhoud">'+esc(sjSamenvatting(s,mods))+'</td><td data-l="Kandidaten">'+telVoor(s)+'</td><td class="c-act"><div class="acts">'+(s.standaard?'':'<button type="button" class="btn sm" data-sj="std" data-id="'+s.id+'">Standaard maken</button>')+'<button type="button" class="btn sm" data-sj="voorbeeld" data-id="'+s.id+'">Voorbeeld</button><button type="button" class="btn sm primary" data-sj="bewerk" data-id="'+s.id+'">Bewerken</button><button type="button" class="btn sm danger" data-sj="weg" data-id="'+s.id+'">Verwijderen</button></div></td></tr>').join('')+'</tbody></table></div>';
   return h}
 function sjEditor(st,mods){const e=SJ.edit;const groepen=(APP.groepen||[]).filter(g=>(g.stad||'amsterdam')===st);
@@ -147,7 +147,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-trac
 function trPill(r){if(r.rol!=='kandidaat')return'';return trVan(r).map(id=>{const tr=TRAININGEN[id],s=trStand(tr,trStVan(r.th,id));return' <span class="pill '+(s.klaar?'ok':'blue')+'" title="'+esc(tr.titel)+'">'+(id==='kvb'?'KVB':esc(tr.titel))+' '+(s.klaar?'afgerond':s.pct+'%')+'</span>'}).join('')+(heeftSor(r)?'':' <span class="pill unk" title="Geen SOR-traject">Geen SOR</span>')}
 /* startpagina voor iemand zonder SOR-traject: alleen de toegewezen trainingen */
 function trStart(){const trs=trVan(APP.lid).map(k=>TRAININGEN[k]);let h='<section class="lhero lstart"><div class="lhero-t"><div class="eyebrow">Leeromgeving · Flagship Academy</div><h1>Hoi '+esc(voornaam())+', welkom aan boord</h1><p>Hier vind je je trainingen. Je voortgang wordt automatisch bewaard.</p></div></section>';
-  h+=trs.length?'<div class="ltiles">'+trs.map(trTegel).join('')+'</div>':'<p class="note">Er is nog geen training aan je toegewezen. Neem contact op met Flagship Academy.</p>';h+=(cvoAan()?'<section class="lsec"><div class="lsec-h"><h2>Hulpmiddelen</h2></div><div class="ltiles"><button type="button" class="ltile" data-top="cvo"><span class="ltile-i" aria-hidden="true">📄</span><span class="ltile-t"><b>CVO’s van de schepen</b><span>Pagina 2 van het certificaat van onderzoek downloaden, en van sommige schepen het volledige CVO</span></span><span class="ltile-go" aria-hidden="true">→</span></button></div></section>':'');return h}
+  h+=trs.length?'<div class="ltiles">'+trs.map(trTegel).join('')+'</div>':'<p class="note">Er is nog geen training aan je toegewezen. Neem contact op met Flagship Academy.</p>';h+=leerHulpSec(false);return h}
 /* beheer: Leeromgeving → Interne trainingen (alleen medewerkers) */
 function trBeheer(){const tr=TRAININGEN.kvb;const kand=APP.roster.filter(r=>r.rol==='kandidaat'&&r.status!=='geslaagd').sort((a,b)=>(trVan(b).includes('kvb')-trVan(a).includes('kvb'))||a.naam.localeCompare(b.naam));
   const ingedeeld=kand.filter(r=>trVan(r).includes('kvb'));const us=trUnits(tr);
@@ -166,8 +166,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-trbe
    Bij het inleveren laat de casusbouwer de casus analyseren. Het concept is alleen zichtbaar voor
    medewerkers en leermeesters (APP.role==='staff'); de kandidaat ziet het nooit. Pas als een medewerker
    op Overnemen klikt, komt de tekst in de gewone feedback die de kandidaat wel ziet. */
-/* AI_LIVE=false: AI-conceptfeedback geparkeerd (geen aanroepen, niets zichtbaar). Aan zodra de API-sleutel in Supabase staat. */
-const AI_LIVE=false;
+/* Aan of uit via Instellingen (aiAan(), tabel instellingen). Staat het uit, dan gebeurt er niets en is er niets zichtbaar.
+   De Edge Function controleert de schakelaar, de API-sleutel en de maandlimiet zelf nog een keer. */
 const AI_ZEKER={hoog:'zeker',middel:'redelijk zeker',laag:'twijfel'};
 APP.ai=null;APP.aiAll={};APP.aiVoorbeeld={};
 function aiExtras(){const out={controles:[],route:null};
@@ -175,7 +175,7 @@ function aiExtras(){const out={controles:[],route:null};
   try{if(R&&R.ok&&R.pts&&R.pts.length>1){const d=duration();out.route={minuten:Math.round(d.total),tegen_eenrichting:R.against||[],te_groot_voor:(R.viol||[]).map(v=>v.nm),
     bruggen:(R.bridges||[]).map((f,i)=>{const s=bridgeStatus(f.br);return{nr:i+1,naam:f.br.nm||f.br.name||f.br.n||'',status:s.t}})}}}catch(e){}
   return out}
-async function aiLoad(id){if(!AI_LIVE||!APP.sb||APP.role!=='staff')return;
+async function aiLoad(id){if(!aiAan()||!APP.sb||APP.role!=='staff')return;
   const {data,error}=await APP.sb.from('ai_concept').select('*').eq('kandidaat_id',id).maybeSingle();
   if(APP.target!==id)return;APP.aiDb=!(error&&dbOntbreekt(error));APP.ai=error?null:(data||null);aiPoll(id)}
 function aiPoll(id){clearTimeout(APP.aiT);if(!APP.ai||APP.ai.status!=='bezig')return;let n=0;
@@ -183,11 +183,11 @@ function aiPoll(id){clearTimeout(APP.aiT);if(!APP.ai||APP.ai.status!=='bezig')re
     if(APP.ai&&APP.ai.status!=='bezig'){if(was==='bezig'&&APP.ai.status==='klaar')toast('AI-conceptfeedback is klaar');if(APP.mode==='edit')renderPanel();return}APP.aiT=setTimeout(tik,4000)};
   APP.aiT=setTimeout(tik,4000)}
 /* reden: 'inleveren' (kandidaat), 'openen' (automatisch bij openen door medewerker), 'handmatig' */
-async function aiStart(id,reden,stil){if(!AI_LIVE||!APP.sb||!id)return false;
+async function aiStart(id,reden,stil){if(!aiAan()||!APP.sb||!id)return false;
   try{const {data,error}=await APP.sb.functions.invoke('ai-feedback',{body:Object.assign({kandidaat_id:id,reden},aiExtras())});
     if(error){let j={};try{j=await error.context.json()}catch(e){}
       if(APP.role==='staff'&&APP.target===id){await aiLoad(id);if(APP.mode==='edit')renderPanel()}
-      if(!stil)toast(j.error==='niet_ingesteld'?'AI-feedback staat nog niet aan: de API-sleutel ontbreekt (zie OVERDRACHT.md).':'Conceptfeedback maken is mislukt.',true);return false}
+      if(!stil)toast(j.error==='niet_ingesteld'?'AI-feedback werkt nog niet: de API-sleutel ontbreekt in Supabase.':j.error==='uitgeschakeld'?'AI-feedback staat uit. Zet het aan bij Instellingen.':j.error==='limiet'?'De maandlimiet voor AI-feedback is bereikt. Verhoog de limiet bij Instellingen of wacht tot volgende maand.':'Conceptfeedback maken is mislukt.',true);return false}
     if(APP.role==='staff'&&APP.target===id){await aiLoad(id);if(APP.mode==='edit')renderPanel()}
     return true}catch(e){if(!stil)toast('Conceptfeedback maken is mislukt.',true);return false}}
 /* medewerker opent een ingeleverde casus zonder concept: alsnog laten maken (bijv. als het bij inleveren mislukte) */
@@ -199,7 +199,7 @@ function aiOvernemen(step,mode){const a=APP.ai;const s=a&&(step==='algemeen'?{te
   const tekst=mode==='erbij'&&cur&&(cur.tekst||'').trim()?cur.tekst.trim()+'\n\n'+s.tekst:s.tekst;
   setFb(step,step==='algemeen'?{tekst}:{status:s.status||'',tekst});aiMark(step,'over');renderPanel();renderRail()}
 /* concept bij een stap, direct onder het feedbackvak van de medewerker */
-function aiBox(id){const a=APP.ai;if(!AI_LIVE||APP.role!=='staff'||!a||id==='controle')return'';
+function aiBox(id){const a=APP.ai;if(!aiAan()||APP.role!=='staff'||!a||id==='controle')return'';
   if(a.status==='bezig')return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>Concept wordt gemaakt…</b></div><p class="note">De casus wordt geanalyseerd. Dit duurt meestal een minuut.</p></section>';
   if(a.status!=='klaar')return'';const s=(a.stappen||{})[id];if(!s)return'';const af=(a.afgehandeld||{})[id];
   if(af)return'<div class="ai-done"><span class="ai-tag">AI</span> Concept '+(af==='over'?'overgenomen':'genegeerd')+' · <a role="button" tabindex="0" data-ai="terug" data-step-ai="'+id+'">Concept weer tonen</a></div>';
@@ -208,13 +208,13 @@ function aiBox(id){const a=APP.ai;if(!AI_LIVE||APP.role!=='staff'||!a||id==='con
     '<div class="row"><button type="button" class="btn sm primary" data-ai="over" data-step-ai="'+id+'">'+(heeft?'Vervangen':'Overnemen')+'</button>'+(heeft?'<button type="button" class="btn sm" data-ai="erbij" data-step-ai="'+id+'">Toevoegen</button>':'')+'<button type="button" class="btn sm soft" data-ai="neg" data-step-ai="'+id+'">Negeren</button></div>'+
     '<div class="fb-meta">Alleen zichtbaar voor medewerkers en leermeesters. De kandidaat ziet dit pas als je het overneemt.</div></section>'}
 /* overzicht op de stap Controle */
-function aiOverzicht(){const a=APP.ai;if(!AI_LIVE||APP.role!=='staff')return'';
-  if(!APP.aiDb)return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>AI-conceptfeedback</b></div><p class="note">Werkt nog niet: de database moet eerst worden bijgewerkt (database-update 017, zie OVERDRACHT.md).</p></section>';
+function aiOverzicht(){const a=APP.ai;if(!aiAan()||APP.role!=='staff')return'';
+  if(!APP.aiDb)return'<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>AI-conceptfeedback</b></div><p class="note">Werkt nog niet: de database moet eerst worden bijgewerkt (database-update 017).</p></section>';
   const knop=(t,cls)=>'<button type="button" class="btn sm '+(cls||'')+'" data-ai="nieuw">'+t+'</button>';
   let h='<section class="ai-box"><div class="fb-h"><span class="ai-tag">AI</span><b>AI-conceptfeedback</b></div>';
   if(!a)h+='<p class="note">'+(APP.meta.status==='ingeleverd'?'Er is nog geen concept.':'Het concept wordt automatisch gemaakt zodra de kandidaat inlevert.')+'</p><div class="row">'+knop('Concept maken','primary')+'</div>';
   else if(a.status==='bezig')h+='<p class="note">Concept wordt gemaakt…</p>';
-  else if(a.status==='uit')h+='<p class="note">AI-feedback staat nog niet aan: de API-sleutel ontbreekt in Supabase (zie OVERDRACHT.md).</p><div class="row">'+knop('Opnieuw proberen')+'</div>';
+  else if(a.status==='uit')h+='<p class="note">'+(a.fout==='limiet'?'De maandlimiet voor AI-feedback is bereikt (zie Instellingen).':a.fout==='uitgeschakeld'?'AI-feedback stond uit toen deze casus werd ingeleverd.':'AI-feedback werkt nog niet: de API-sleutel ontbreekt in Supabase.')+'</p><div class="row">'+knop('Opnieuw proberen')+'</div>';
   else if(a.status==='fout')h+='<p class="note">Het concept kon niet worden gemaakt: '+esc(a.fout||'onbekende fout')+'</p><div class="row">'+knop('Opnieuw proberen','primary')+'</div>';
   else{const st=a.stappen||{},af=a.afgehandeld||{};const ids=STEPS.filter(s=>st[s.id]).map(s=>s.id);const open=ids.filter(i=>!af[i]);const aanp=ids.filter(i=>st[i].status==='aanpassen');
     h+='<p class="note">Gemaakt '+esc(fmtDate(a.gemaakt))+(a.voorbeelden?' · vergeleken met '+a.voorbeelden+' goede casus'+(a.voorbeelden>1?'sen':''):' · nog geen voorbeeldcasus beschikbaar')+' · '+aanp.length+' van '+ids.length+' stappen aanpassen · '+open.length+' nog te beoordelen</p>'+
@@ -232,7 +232,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-ai]'
     if(n)await aiMark('_',null);renderPanel();renderRail();toast(n+' concept'+(n===1?'':'en')+' overgenomen'+(over?'; '+over+' stap'+(over===1?'':'pen')+' met eigen feedback overgeslagen':'')+'. Controleer de feedback en mail hem daarna naar de kandidaat.');return}
   if(act==='nieuw'){b.disabled=true;const ok=await aiStart(APP.target,'handmatig',false);if(ok)toast('Concept wordt gemaakt…');return}});
 /* overzicht: labels per kandidaat */
-async function aiLoadAll(){APP.aiAll={};APP.aiVoorbeeld={};if(!AI_LIVE||!APP.sb||!(APP.isStaff||APP.isLm))return;
+async function aiLoadAll(){APP.aiAll={};APP.aiVoorbeeld={};if(!aiAan()||!APP.sb||!(APP.isStaff||APP.isLm))return;
   const [c,v]=await Promise.all([APP.sb.from('ai_concept').select('kandidaat_id,status,gemaakt'),APP.isStaff?APP.sb.from('ai_voorbeeld').select('kandidaat_id'):Promise.resolve({data:[]})]);
   if(c&&!c.error)(c.data||[]).forEach(x=>{APP.aiAll[x.kandidaat_id]=x});if(v&&!v.error)(v.data||[]).forEach(x=>{APP.aiVoorbeeld[x.kandidaat_id]=true})}
 function aiPill(r){if(r.rol!=='kandidaat')return'';const a=APP.aiAll[r.id];let h='';
